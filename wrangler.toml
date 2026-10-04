@@ -1,6 +1,12 @@
 name = "sbop-tracking-program"
+main = "worker/index.ts"
 compatibility_date = "2024-04-01"
-pages_build_output_dir = "dist"
+
+# Serve Frontend static assets from ./dist (Vite build)
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
 
 # Cloudflare D1 Database Binding
 [[d1_databases]]
@@ -15,4 +21,4 @@ bucket_name = "r2sbop"
 
 [vars]
 R2_PUBLIC_URL = "https://bfdba11ba88cafd6f064809c2fe29b99.r2.cloudflarestorage.com/r2sbop"
-JWT_SECRET = "sbop_super_secret_jwt_key_2026"
+JWT_SECRET = "sbop_super_secret_jwt_security_key_2026_d1_r2"
