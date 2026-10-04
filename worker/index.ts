@@ -8,15 +8,47 @@ export interface Env {
   JWT_SECRET?: string;
 }
 
-// Helpers for JWT with Web Crypto
+// Helpers for JWT with Web Crypto supporting UTF-8 (Thai) characters
 const DEFAULT_JWT_SECRET = 'sbop_super_secret_jwt_security_key_2026_d1_r2';
+
+function utf8ToBase64Url(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary)
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
+function base64UrlToUtf8(str: string): string {
+  const binary = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+function bytesToBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary)
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
 
 async function signJWT(payload: any, secret: string): Promise<string> {
   const encoder = new TextEncoder();
   const header = { alg: 'HS256', typ: 'JWT' };
 
-  const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
-  const encodedPayload = btoa(JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + 7 * 86400 })).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  const encodedHeader = utf8ToBase64Url(JSON.stringify(header));
+  const encodedPayload = utf8ToBase64Url(JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + 7 * 86400 }));
   const data = `${encodedHeader}.${encodedPayload}`;
 
   const key = await crypto.subtle.importKey(
@@ -28,10 +60,7 @@ async function signJWT(payload: any, secret: string): Promise<string> {
   );
 
   const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(data));
-  const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
+  const encodedSignature = bytesToBase64Url(new Uint8Array(signature));
 
   return `${data}.${encodedSignature}`;
 }
@@ -63,7 +92,7 @@ async function verifyJWT(token: string, secret: string): Promise<any | null> {
     const isValid = await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(data));
     if (!isValid) return null;
 
-    const payload = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
+    const payload = JSON.parse(base64UrlToUtf8(payloadB64));
     if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
 
     return payload;
