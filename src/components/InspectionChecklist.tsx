@@ -15,10 +15,15 @@ import {
   Clock, 
   Send, 
   Save, 
-  RotateCcw,
-  Sparkles,
-  Info,
-  Check
+  Sparkles, 
+  Info, 
+  Check, 
+  Lock, 
+  ExternalLink,
+  ShieldAlert,
+  UserCheck,
+  ChevronRight,
+  Eye
 } from 'lucide-react';
 
 interface ChecklistItemState {
@@ -42,14 +47,25 @@ interface ChecklistItemState {
 export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ onSuccessSave }) => {
   const { user, t } = useAuth();
 
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const currentDateStr = new Date().toISOString().split('T')[0];
+
+  // Determine initial layer based on user role
+  const getInitialLayer = () => {
+    if (user?.role === 'manager') return 'Layer 3';
+    if (user?.role === 'supervisor') return 'Layer 2';
+    return 'Layer 1';
+  };
+
   // Header State
-  const [departmentCode, setDepartmentCode] = useState<string>('MOLD');
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
-  const [layer, setLayer] = useState<string>('Layer 1');
+  const [departmentCode, setDepartmentCode] = useState<string>(user?.department || 'MOLD');
+  const [year] = useState<number>(currentYear); // Locked to current year
+  const [month] = useState<number>(currentMonth); // Locked to current month
+  const [auditDate] = useState<string>(currentDateStr); // Locked to current date
+  const [layer, setLayer] = useState<string>(getInitialLayer());
   const [shift, setShift] = useState<string>('กะ A (เช้า)');
   const [mcAndProducts, setMcAndProducts] = useState<string>('');
-  const [auditDate, setAuditDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [comments, setComments] = useState<string>('');
   const [previousFindings, setPreviousFindings] = useState<string>('');
 
@@ -59,6 +75,13 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
+
+  // Prior layers inspection data for Layer 2 & Layer 3 verification
+  const [priorLayersData, setPriorLayersData] = useState<{ layer1: any; layer2: any } | null>(null);
+  const [loadingPrior, setLoadingPrior] = useState<boolean>(false);
+
+  // Is department locked? (Locked if user has a department and is not admin)
+  const isDeptLocked = Boolean(user?.department && user.role !== 'admin');
 
   // Quick fill all OK
   const handleQuickFillAllOk = () => {
@@ -70,15 +93,34 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     );
   };
 
-  // Load Departments
+  // Load Departments & enforce user's department
   useEffect(() => {
     api.getDepartments().then((data) => {
       setDepartments(data || []);
-      if (user?.department) {
+      if (user?.department && user.role !== 'admin') {
         setDepartmentCode(user.department);
       }
     }).catch(console.error);
   }, [user]);
+
+  // Load prior layers data when layer is Layer 2 or Layer 3
+  useEffect(() => {
+    if (layer === 'Layer 2' || layer === 'Layer 3') {
+      setLoadingPrior(true);
+      api.getPriorLayers(departmentCode, year, month)
+        .then((data) => {
+          setPriorLayersData(data);
+        })
+        .catch((err) => {
+          console.warn('Failed to load prior layers data:', err);
+        })
+        .finally(() => {
+          setLoadingPrior(false);
+        });
+    } else {
+      setPriorLayersData(null);
+    }
+  }, [departmentCode, layer, year, month]);
 
   // Load Checklist questions when Department or Layer changes
   useEffect(() => {
@@ -101,7 +143,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           severity: 'Minor',
           actionPlan: '',
           responsiblePerson: '',
-          dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0], // 3 days default
+          dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
           imageUrl: '',
           imageKey: '',
           uploadingImage: false,
@@ -159,7 +201,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     }
   };
 
-  // Remove Photo
   const handleRemovePhoto = (index: number) => {
     setItems((prev) => {
       const next = [...prev];
@@ -188,7 +229,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       return;
     }
 
-    // Check if any NO items lack finding details
     const invalidDefect = items.find((i) => i.result === 'NO' && !i.findingTopic.trim());
     if (invalidDefect) {
       setFeedback({ text: `กรุณากรอกรายละเอียดปัญหาที่พบสำหรับข้อ: "${invalidDefect.question.substring(0, 40)}..."`, type: 'error' });
@@ -230,12 +270,12 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
       if (res.defectsFound > 0) {
         setFeedback({
-          text: `บันทึกข้อมูลสำเร็จ! ตรวจพบข้อบกพร่อง ${res.defectsFound} จุด ระบบได้ส่งอีเมลแจ้งเตือนพร้อมรูปภาพไปยังผู้รับผิดชอบและแอดมินเรียบร้อยแล้ว`,
+          text: `บันทึกข้อมูลการตรวจสำเร็จ! ตรวจพบข้อบกพร่อง ${res.defectsFound} จุด ระบบได้ส่งอีเมลแจ้งเตือนไปยังผู้รับผิดชอบและแอดมินเรียบร้อยแล้ว`,
           type: 'warning',
         });
       } else {
         setFeedback({
-          text: 'บันทึกการตรวจเช็คความปลอดภัย SBOP สำเร็จครบถ้วน 100% (Safety Score: ' + scorePercent + '%)',
+          text: `บันทึกการตรวจเช็คระดับ ${layer} สำเร็จครบถ้วน 100% (Safety Score: ${scorePercent}%)`,
           type: 'success',
         });
       }
@@ -251,7 +291,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     }
   };
 
-  // Group items by Category for clean UI view
+  // Group items by Category
   const categorizedItems: Record<string, ChecklistItemState[]> = {};
   items.forEach((item) => {
     const cat = item.category || 'ข้อกำหนดทั่วไป';
@@ -274,9 +314,12 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold border border-slate-200">
                   Doc. TE-EHS-053
                 </span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  {layer === 'Layer 1' ? 'Layer 1 (Leader)' : layer === 'Layer 2' ? 'Layer 2 (Supervisor)' : 'Layer 3 (Manager)'}
+                </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                บันทึกการสังเกตและตรวจประเมินพฤติกรรมความปลอดภัยหน้างาน แยกแผนก แยกรอบเดือนรอบปี
+                ระบบสังเกตและตรวจประเมินพฤติกรรมความปลอดภัยหน้างาน (SBOP) แยกระดับ Leader / Supervisor / Manager
               </p>
             </div>
           </div>
@@ -320,19 +363,33 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           </div>
         )}
 
-        {/* Form Selection Controls: Department, Year, Month, Layer, Shift, M/C */}
+        {/* Form Controls: Locked Department, Locked Year/Month, Layer Level */}
         <form onSubmit={handleSave} className="mt-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Department */}
+            
+            {/* 1. Department (Locked to user's department) */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-sky-600" />
-                <span>{t.department} (Department)</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-sky-600" />
+                  <span>{t.department}</span>
+                </label>
+                {isDeptLocked && (
+                  <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5 border border-amber-200">
+                    <Lock className="w-2.5 h-2.5" />
+                    <span>ล็อคตามแผนกของคุณ</span>
+                  </span>
+                )}
+              </div>
               <select
+                disabled={isDeptLocked}
                 value={departmentCode}
                 onChange={(e) => setDepartmentCode(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                className={`w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold text-slate-800 transition ${
+                  isDeptLocked 
+                    ? 'bg-slate-100 border-slate-300 cursor-not-allowed text-slate-600'
+                    : 'bg-slate-50 border-slate-300 focus:ring-2 focus:ring-sky-500 focus:bg-white'
+                }`}
               >
                 {departments.map((d) => (
                   <option key={d.code} value={d.code}>
@@ -342,59 +399,57 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               </select>
             </div>
 
-            {/* Cycle Year & Month */}
+            {/* 2. Cycle Year & Month (Locked to current period) */}
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-sky-600" />
-                  <span>{t.year}</span>
-                </label>
-                <select
-                  value={year}
-                  onChange={(e) => setYear(parseInt(e.target.value, 10))}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white"
-                >
-                  <option value={2026}>2026</option>
-                  <option value={2025}>2025</option>
-                  <option value={2024}>2024</option>
-                </select>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-sky-600" />
+                    <span>{t.year}</span>
+                  </label>
+                  <Lock className="w-2.5 h-2.5 text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  disabled
+                  value={`${year} (ปัจจุบัน)`}
+                  className="w-full px-3 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 cursor-not-allowed"
+                />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  {t.month}
-                </label>
-                <select
-                  value={month}
-                  onChange={(e) => setMonth(parseInt(e.target.value, 10))}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white"
-                >
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                    <option key={m} value={m}>
-                      เดือน {m}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-slate-700">
+                    {t.month}
+                  </label>
+                  <Lock className="w-2.5 h-2.5 text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  disabled
+                  value={`เดือน ${month} (ปัจจุบัน)`}
+                  className="w-full px-3 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 cursor-not-allowed"
+                />
               </div>
             </div>
 
-            {/* Inspection Layer */}
+            {/* 3. Layer Level Selection (Layer 1 Leader, Layer 2 Supervisor, Layer 3 Manager) */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                <span>{t.layer}</span>
+                <span>ระดับการตรวจ (Inspection Layer) *</span>
               </label>
               <select
                 value={layer}
                 onChange={(e) => setLayer(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                className="w-full px-3.5 py-2.5 bg-sky-50 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
               >
-                <option value="Layer 1">Layer 1 (ตรวจประจำกะ/วัน - Daily)</option>
-                <option value="Layer 2">Layer 2 (ตรวจรายสัปดาห์ - Weekly)</option>
-                <option value="Layer 3">Layer 3 (ตรวจรายเดือน - Monthly Systems)</option>
+                <option value="Layer 1">Layer 1 — Leader (ตรวจรายกะ/รายวัน)</option>
+                <option value="Layer 2">Layer 2 — Supervisor (ตรวจรายสัปดาห์ & ตรวจทาน Layer 1)</option>
+                <option value="Layer 3">Layer 3 — Manager (ตรวจรายเดือน & ตรวจทาน Layer 1-2)</option>
               </select>
             </div>
 
-            {/* Shift */}
+            {/* 4. Shift */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {t.shift}
@@ -413,8 +468,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             </div>
           </div>
 
+          {/* Machine & Products and Locked Current Date */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-            {/* Machine & Products */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {t.machineAndProduct} *
@@ -424,32 +479,213 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 required
                 value={mcAndProducts}
                 onChange={(e) => setMcAndProducts(e.target.value)}
-                placeholder="เช่น เครื่องฉีด M/C 08 (ชิ้นส่วน Connector Type-C)"
+                placeholder="เช่น เครื่องฉีด M/C 08 (Connector Type-C) หรือ โซนประกอบ Line 3"
                 className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white font-medium"
               />
             </div>
 
-            {/* Audit Date */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {t.auditDate}
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700">
+                  {t.auditDate}
+                </label>
+                <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
+                  <Lock className="w-2.5 h-2.5" />
+                  <span>วันปัจจุบัน</span>
+                </span>
+              </div>
               <input
-                type="date"
-                required
+                type="text"
+                disabled
                 value={auditDate}
-                onChange={(e) => setAuditDate(e.target.value)}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                className="w-full px-3.5 py-2 bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 cursor-not-allowed"
               />
             </div>
           </div>
+
+          {/* ============================================================== */}
+          {/* SPECIAL SECTION: PRIOR LAYER VERIFICATION BOX                  */}
+          {/* When Layer 2: Shows Layer 1 answers to verify                  */}
+          {/* When Layer 3: Shows Layer 1 & 2 answers to review & audit       */}
+          {/* ============================================================== */}
+
+          {/* Layer 2: Supervisor reviewing Layer 1 Leader's inspection */}
+          {layer === 'Layer 2' && (
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl p-5 space-y-4 shadow-sm animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-indigo-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-sm">
+                    <UserCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-indigo-950">
+                      การตรวจสอบคำตอบและผลการตรวจของ Layer 1 (Leader Verification)
+                    </h3>
+                    <p className="text-[11px] text-indigo-700">
+                      Supervisor ตรวจสอบผลการตรวจเช็คหน้างานของ Leader เพื่อยืนยันว่าปัญหาได้รับการแก้ไขและนำขึ้นบอร์ด SBOP แล้ว
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] px-2.5 py-1 rounded-full font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                  Supervisor Audit
+                </span>
+              </div>
+
+              {loadingPrior ? (
+                <div className="py-6 text-center text-xs text-indigo-600">กำลังดึงผลตรวจของ Layer 1...</div>
+              ) : priorLayersData?.layer1 ? (
+                <div className="space-y-3 text-xs">
+                  {/* Layer 1 Summary */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3.5 rounded-xl border border-indigo-100 shadow-sm">
+                    <div>
+                      <span className="text-slate-400 font-medium block">ผู้ตรวจ (Leader):</span>
+                      <strong className="text-slate-800 text-xs">{priorLayersData.layer1.auditor_name}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">วันที่ & กะ:</span>
+                      <strong className="text-slate-800 text-xs">{priorLayersData.layer1.audit_date} ({priorLayersData.layer1.shift})</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">ผลการตรวจ (OK / NO):</span>
+                      <strong className="text-xs">
+                        <span className="text-emerald-600">{priorLayersData.layer1.total_ok} ผ่าน</span> / <span className="text-red-600">{priorLayersData.layer1.total_no} ไม่ผ่าน</span>
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium block">คะแนนความปลอดภัย:</span>
+                      <span className="font-bold text-sky-700 text-sm">{priorLayersData.layer1.score_percent}%</span>
+                    </div>
+                  </div>
+
+                  {/* Defects found in Layer 1 */}
+                  {priorLayersData.layer1.items?.filter((it: any) => it.result === 'NO').length > 0 ? (
+                    <div className="space-y-2">
+                      <div className="font-bold text-red-900 flex items-center gap-1.5">
+                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                        <span>รายการปัญหาที่พบใน Layer 1 (กรุณาตรวจสอบว่าได้รับการแก้ไขบนบอร์ด SBOP แล้วหรือไม่):</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {priorLayersData.layer1.items.filter((it: any) => it.result === 'NO').map((defect: any, idx: number) => (
+                          <div key={idx} className="bg-white p-3 rounded-xl border border-red-200 shadow-sm space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-800">
+                                {defect.severity || 'Minor'}
+                              </span>
+                              <span className="text-[10px] text-slate-400">กำหนดเสร็จ: {defect.due_date || '-'}</span>
+                            </div>
+                            <div className="font-semibold text-slate-800 text-xs">{defect.finding_topic || defect.question}</div>
+                            {defect.action_plan && (
+                              <div className="text-[11px] text-slate-600">
+                                <strong>แผนแก้ไข:</strong> {defect.action_plan} (ผู้รับผิดชอบ: {defect.responsible_person || '-'})
+                              </div>
+                            )}
+                            {defect.image_url && (
+                              <a href={defect.image_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] text-sky-600 hover:underline">
+                                <span>ดูรูปหลักฐาน (Cloudflare R2)</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-800 flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                      <span>ผลตรวจ Layer 1 ล่าสุดไม่พบข้อบกพร่อง (All Passed)</span>
+                    </div>
+                  )}
+
+                  {priorLayersData.layer1.comments && (
+                    <div className="p-2.5 bg-white/80 rounded-xl border border-indigo-100 text-[11px] text-slate-600">
+                      <strong>ข้อเสนอแนะจาก Leader:</strong> {priorLayersData.layer1.comments}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-4 text-center bg-white/60 rounded-xl border border-dashed border-indigo-200 text-slate-500 text-xs">
+                  ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 1 (Leader) ในรอบเดือนนี้ สามารถตอบแบบประเมิน Layer 2 ได้ตามปกติ
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Layer 3: Manager reviewing Layer 1 Leader & Layer 2 Supervisor */}
+          {layer === 'Layer 3' && (
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-5 space-y-4 shadow-sm animate-fadeIn">
+              <div className="flex items-center justify-between border-b border-purple-100 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-purple-700 text-white shadow-sm">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-purple-950">
+                      การทบทวนผลของ Layer 1 (Leader) และ Layer 2 (Supervisor) Systems Verification
+                    </h3>
+                    <p className="text-[11px] text-purple-700">
+                      Manager ทบทวนการดำเนินงานด้านความปลอดภัย เพื่อนำประเด็นเข้าที่ประชุม GO-Meeting หรือขยายผลสู่ Plant VSM
+                    </p>
+                  </div>
+                </div>
+                <span className="text-[11px] px-2.5 py-1 rounded-full font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                  Manager Review
+                </span>
+              </div>
+
+              {loadingPrior ? (
+                <div className="py-6 text-center text-xs text-purple-600">กำลังดึงผลตรวจของ Layer 1 & 2...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  {/* Layer 1 Summary */}
+                  <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <span>ผลตรวจ Layer 1 (Leader)</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400">{priorLayersData?.layer1?.audit_date || '-'}</span>
+                    </div>
+                    {priorLayersData?.layer1 ? (
+                      <div className="space-y-1.5 text-[11px] text-slate-600">
+                        <div><strong>ผู้ตรวจ:</strong> {priorLayersData.layer1.auditor_name} ({priorLayersData.layer1.shift})</div>
+                        <div><strong>คะแนน:</strong> <span className="text-sky-700 font-bold">{priorLayersData.layer1.score_percent}%</span> (ผ่าน {priorLayersData.layer1.total_ok} / พบปัญหา {priorLayersData.layer1.total_no})</div>
+                        {priorLayersData.layer1.comments && <div><strong>ความเห็น:</strong> {priorLayersData.layer1.comments}</div>}
+                      </div>
+                    ) : (
+                      <div className="text-slate-400 italic text-[11px]">ยังไม่มีข้อมูล Layer 1 ในรอบนี้</div>
+                    )}
+                  </div>
+
+                  {/* Layer 2 Summary */}
+                  <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm space-y-2">
+                    <div className="flex items-center justify-between border-b pb-2">
+                      <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                        <span>ผลตรวจ Layer 2 (Supervisor)</span>
+                      </span>
+                      <span className="text-[10px] text-slate-400">{priorLayersData?.layer2?.audit_date || '-'}</span>
+                    </div>
+                    {priorLayersData?.layer2 ? (
+                      <div className="space-y-1.5 text-[11px] text-slate-600">
+                        <div><strong>ผู้ตรวจ:</strong> {priorLayersData.layer2.auditor_name} ({priorLayersData.layer2.shift})</div>
+                        <div><strong>คะแนน:</strong> <span className="text-sky-700 font-bold">{priorLayersData.layer2.score_percent}%</span> (ผ่าน {priorLayersData.layer2.total_ok} / พบปัญหา {priorLayersData.layer2.total_no})</div>
+                        {priorLayersData.layer2.comments && <div><strong>ความเห็น:</strong> {priorLayersData.layer2.comments}</div>}
+                      </div>
+                    ) : (
+                      <div className="text-slate-400 italic text-[11px]">ยังไม่มีข้อมูล Layer 2 ในรอบนี้</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Real-time Score Board */}
           <div className="bg-gradient-to-r from-slate-900 to-sky-950 p-4 rounded-xl text-white flex flex-wrap items-center justify-between gap-4 shadow-sm border border-slate-800">
             <div className="flex items-center gap-6">
               <div>
-                <span className="text-[11px] text-slate-400 font-medium block">รายการทั้งหมด</span>
-                <span className="text-xl font-bold text-white">{items.length}</span>
+                <span className="text-[11px] text-slate-400 font-medium block">รายการตรวจระดับ {layer}</span>
+                <span className="text-xl font-bold text-white">{items.length} ข้อ</span>
               </div>
               <div className="border-l border-slate-800 pl-6">
                 <span className="text-[11px] text-emerald-400 font-medium block">ผ่าน (OK)</span>
@@ -491,11 +727,11 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             {loading ? (
               <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200">
                 <div className="w-8 h-8 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                <p className="text-xs text-slate-500">กำลังโหลดหัวข้อการตรวจประเมินของแผนก {departmentCode}...</p>
+                <p className="text-xs text-slate-500">กำลังโหลดหัวข้อการตรวจประเมินของแผนก {departmentCode} ({layer})...</p>
               </div>
             ) : items.length === 0 ? (
               <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-xs">
-                ไม่พบคำถามการตรวจเช็คในหมวดนี้
+                ไม่พบคำถามการตรวจเช็คในระดับนี้
               </div>
             ) : (
               Object.entries(categorizedItems).map(([categoryName, catItems]) => (
@@ -584,7 +820,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                             </div>
                           </div>
 
-                          {/* When NO (Defect Found): Expandable Defect Form + Photo Upload to Cloudflare R2 */}
+                          {/* When NO: Defect Form + Photo Upload to Cloudflare R2 */}
                           {isDefect && (
                             <div className="mt-3.5 pt-3.5 border-t border-red-200 bg-red-50/70 p-4 rounded-xl space-y-3 animate-fadeIn">
                               <div className="flex items-center justify-between text-xs font-bold text-red-800">
@@ -762,7 +998,11 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-xs text-slate-500 flex items-center gap-1.5">
                 <Info className="w-4 h-4 text-sky-600" />
-                <span>เมื่อบันทึกข้อมูล หากมีข้อบกพร่อง (NO) ระบบจะส่งอีเมลแจ้งเตือนผู้รับผิดชอบทันที</span>
+                <span>
+                  {layer === 'Layer 1' && 'Leader: บันทึกการตรวจความปลอดภัยหน้างานประจำวัน/กะ'}
+                  {layer === 'Layer 2' && 'Supervisor: ทบทวนและติดตามผลของ Layer 1 พร้อมรายงานประจำสัปดาห์'}
+                  {layer === 'Layer 3' && 'Manager: ตรวจประเมินระดับระบบและติดตามผลเพื่อนำเข้าที่ประชุม GO-Meeting'}
+                </span>
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto">

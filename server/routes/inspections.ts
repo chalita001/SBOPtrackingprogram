@@ -3,10 +3,28 @@ import db from '../db.js';
 import { authenticate, AuthRequest } from '../auth.js';
 import { sendDefectAlertEmail } from '../email.js';
 
+import { getRecentLayerInspections } from '../layerVerification.js';
+
 const router = Router();
 
 // Protect all inspection endpoints
 router.use(authenticate);
+
+// Get prior layers inspection data (Layer 1 for Layer 2 verification; Layer 1 & 2 for Layer 3 verification)
+router.get('/prior-layers', (req: AuthRequest, res: Response) => {
+  try {
+    const { department, year, month } = req.query;
+    if (!department) return res.status(400).json({ error: 'Department required' });
+
+    const curYear = year ? parseInt(year as string, 10) : new Date().getFullYear();
+    const curMonth = month ? parseInt(month as string, 10) : new Date().getMonth() + 1;
+
+    const data = getRecentLayerInspections(department as string, curYear, curMonth);
+    return res.json(data);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // 1. List inspections with filters (department, year, month, layer)
 router.get('/', (req: AuthRequest, res: Response) => {

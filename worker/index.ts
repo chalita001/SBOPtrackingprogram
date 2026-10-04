@@ -387,6 +387,51 @@ export default {
       });
     }
 
+    // Prior layers inspection data for Layer 2 & 3 verification
+    if (url.pathname === '/api/inspections/prior-layers' && request.method === 'GET') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const dept = url.searchParams.get('department') || '';
+      const year = parseInt(url.searchParams.get('year') || String(new Date().getFullYear()), 10);
+      const month = parseInt(url.searchParams.get('month') || String(new Date().getMonth() + 1), 10);
+
+      // Layer 1
+      const layer1: any = await env.DB.prepare(`
+        SELECT i.*, 
+          (SELECT COUNT(*) FROM inspection_items WHERE inspection_id = i.id AND result = 'NO') as defects_count
+        FROM inspections i
+        WHERE department_code = ? AND year = ? AND month = ? AND layer = 'Layer 1'
+        ORDER BY audit_date DESC, id DESC
+        LIMIT 1
+      `).bind(dept, year, month).first();
+
+      let layer1Items: any[] = [];
+      if (layer1) {
+        const { results } = await env.DB.prepare('SELECT * FROM inspection_items WHERE inspection_id = ?').bind(layer1.id).all();
+        layer1Items = results || [];
+      }
+
+      // Layer 2
+      const layer2: any = await env.DB.prepare(`
+        SELECT i.*, 
+          (SELECT COUNT(*) FROM inspection_items WHERE inspection_id = i.id AND result = 'NO') as defects_count
+        FROM inspections i
+        WHERE department_code = ? AND year = ? AND month = ? AND layer = 'Layer 2'
+        ORDER BY audit_date DESC, id DESC
+        LIMIT 1
+      `).bind(dept, year, month).first();
+
+      let layer2Items: any[] = [];
+      if (layer2) {
+        const { results } = await env.DB.prepare('SELECT * FROM inspection_items WHERE inspection_id = ?').bind(layer2.id).all();
+        layer2Items = results || [];
+      }
+
+      return jsonResponse({
+        layer1: layer1 ? { ...layer1, items: layer1Items } : null,
+        layer2: layer2 ? { ...layer2, items: layer2Items } : null,
+      });
+    }
+
     // Inspections: List & Create
     if (url.pathname === '/api/inspections') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);

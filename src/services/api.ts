@@ -12,7 +12,7 @@ export function removeAuthToken() {
   localStorage.removeItem('sbop_token');
 }
 
-async function request(endpoint: string, options: RequestInit = {}) {
+async function request(endpoint: string, options: RequestInit = {}): Promise<any> {
   const token = getAuthToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -28,7 +28,7 @@ async function request(endpoint: string, options: RequestInit = {}) {
     headers,
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data: any = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new Error(data.error || 'An error occurred during request');
@@ -70,6 +70,8 @@ export const api = {
     return request(`/inspections${query ? `?${query}` : ''}`);
   },
   getInspection: (id: number) => request(`/inspections/${id}`),
+  getPriorLayers: (deptCode: string, year: number, month: number) =>
+    request(`/inspections/prior-layers?department=${encodeURIComponent(deptCode)}&year=${year}&month=${month}`),
   createInspection: (data: any) => request('/inspections', { method: 'POST', body: JSON.stringify(data) }),
   deleteInspection: (id: number) => request(`/inspections/${id}`, { method: 'DELETE' }),
 
@@ -90,7 +92,7 @@ export const api = {
       body: formData,
     });
 
-    const data = await response.json();
+    const data: any = await response.json();
     if (!response.ok) {
       throw new Error(data.error || 'Failed to upload photo');
     }

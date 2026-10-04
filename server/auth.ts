@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'sbop_super_secret_jwt_security_key
 export interface UserPayload {
   id: number;
   email: string;
-  role: 'admin' | 'supervisor' | 'inspector' | 'staff';
+  role: 'admin' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
   status: 'pending' | 'approved' | 'rejected';
   firstName: string;
   lastName: string;
