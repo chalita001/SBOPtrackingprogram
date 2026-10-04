@@ -107,4 +107,10 @@ export const api = {
   // Email Notification Logs
   getEmailLogs: () => request('/email/logs'),
   sendCustomEmail: (emailData: any) => request('/email/send-alert', { method: 'POST', body: JSON.stringify(emailData) }),
+
+  // Admin Dashboard
+  getDashboardStats: (params?: Record<string, string>) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/dashboard/stats${query ? `?${query}` : ''}`);
+  },
 };

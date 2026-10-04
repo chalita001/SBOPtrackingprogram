@@ -5,6 +5,7 @@ import { InspectionChecklist } from './components/InspectionChecklist';
 import { InspectionHistory } from './components/InspectionHistory';
 import { DefectTracker } from './components/DefectTracker';
 import { AccountManager } from './components/AccountManager';
+import { AdminDashboard } from './components/AdminDashboard';
 import { LoginModal } from './components/LoginModal';
 import { RegisterModal } from './components/RegisterModal';
 import { AccountInfoModal } from './components/AccountInfoModal';
@@ -71,6 +72,13 @@ const MainContent: React.FC = () => {
         {activeTab === 'history' && <InspectionHistory />}
 
         {activeTab === 'defects' && <DefectTracker />}
+
+        {activeTab === 'dashboard' && user?.role === 'admin' && (
+          <AdminDashboard
+            onNavigateToAccounts={() => setActiveTab('accounts')}
+            onNavigateToDefects={() => setActiveTab('defects')}
+          />
+        )}
 
         {activeTab === 'accounts' && user?.role === 'admin' && <AccountManager />}
       </main>

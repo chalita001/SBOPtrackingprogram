@@ -103,6 +103,23 @@ export const InspectionHistory: React.FC = () => {
           </button>
         </div>
 
+        {/* User Scope Indicator: Admin Sees All vs User Sees Own */}
+        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          {user?.role === 'admin' ? (
+            <div className="flex items-center gap-2 text-purple-900 bg-purple-50 px-3.5 py-1.5 rounded-xl border border-purple-200">
+              <span className="font-bold">👑 โหมดผู้ดูแลระบบ (Admin View):</span>
+              <span>แสดงประวัติการตรวจเช็คทั้งหมดของทุกแผนกและพนักงานทุกคน</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sky-900 bg-sky-50 px-3.5 py-1.5 rounded-xl border border-sky-200">
+              <span className="font-bold">👤 บันทึกการตรวจส่วนตัวของคุณ:</span>
+              <span>
+                แสดงเฉพาะข้อมูลที่คุณ (<strong>{user ? `${user.firstName} ${user.lastName}` : ''}</strong>) ได้บันทึกไว้ในระบบ
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Aggregate Stats */}
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">

@@ -27,6 +27,7 @@ import {
   Hash,
   Tag
 } from 'lucide-react';
+import { PriorLayerChecklistView } from './PriorLayerChecklistView';
 
 interface ChecklistItemState {
   templateItemId: number;
@@ -691,118 +692,58 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
           {/* Layer 2: Supervisor reviewing Layer 1 Leader's inspection */}
           {layer === 'Layer 2' && (
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-2xl p-5 space-y-4 shadow-sm animate-fadeIn">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-3xl p-5 sm:p-6 space-y-4 shadow-sm animate-fadeIn">
               <div className="flex items-center justify-between border-b border-indigo-100 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-sm">
+                  <div className="p-2.5 rounded-2xl bg-indigo-600 text-white shadow-sm">
                     <UserCheck className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-indigo-950">
+                    <h3 className="text-base font-bold text-indigo-950">
                       การตรวจสอบคำตอบและผลการตรวจของ Layer 1 (Leader Verification)
                     </h3>
-                    <p className="text-[11px] text-indigo-700">
-                      Supervisor ตรวจสอบผลการตรวจเช็คหน้างานของ Leader เพื่อยืนยันว่าปัญหาได้รับการแก้ไขและนำขึ้นบอร์ด SBOP แล้ว
+                    <p className="text-xs text-indigo-700">
+                      Supervisor ตรวจสอบผลการตรวจเช็คหน้างานของ Leader รายการต่อรายการตามแบบฟอร์ม เพื่อยืนยันว่าปัญหาได้รับการแก้ไขและนำขึ้นบอร์ด SBOP แล้ว
                     </p>
                   </div>
                 </div>
-                <span className="text-[11px] px-2.5 py-1 rounded-full font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                <span className="text-xs px-3 py-1 rounded-full font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 shrink-0">
                   Supervisor Audit
                 </span>
               </div>
 
               {/* Inspection Code Target Info */}
-              <div className="flex items-center justify-between bg-indigo-100/70 text-indigo-900 px-3.5 py-2 rounded-xl text-xs font-semibold">
+              <div className="flex flex-wrap items-center justify-between bg-indigo-100/70 text-indigo-900 px-4 py-2.5 rounded-2xl text-xs font-semibold gap-2">
                 <div className="flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>ตรวจสอบผลตรวจรหัสรายการ: <strong className="text-indigo-950 font-bold bg-white px-2 py-0.5 rounded border border-indigo-200">#{inspectionCode}</strong></span>
-                  {mcAndProducts && <span className="text-indigo-700">({mcAndProducts})</span>}
+                  <span>ตรวจสอบผลตรวจรหัสรายการ: <strong className="text-indigo-950 font-bold bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200">#{inspectionCode}</strong></span>
+                  {mcAndProducts && <span className="text-indigo-700 font-normal">({mcAndProducts})</span>}
                 </div>
                 {priorLayersData?.layer1 ? (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                     พบผลตรวจ Layer 1 เรียบร้อย ✅
                   </span>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
                     ยังไม่มีผลตรวจ Layer 1 ในรหัสนี้ ⏳
                   </span>
                 )}
               </div>
 
               {loadingPrior ? (
-                <div className="py-6 text-center text-xs text-indigo-600">กำลังดึงผลตรวจของ Layer 1 (รหัส {inspectionCode})...</div>
-              ) : priorLayersData?.layer1 ? (
-                <div className="space-y-3 text-xs">
-                  {/* Layer 1 Summary */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-3.5 rounded-xl border border-indigo-100 shadow-sm">
-                    <div>
-                      <span className="text-slate-400 font-medium block">ผู้ตรวจ (Leader):</span>
-                      <strong className="text-slate-800 text-xs">{priorLayersData.layer1.auditor_name}</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-medium block">วันที่ & กะ:</span>
-                      <strong className="text-slate-800 text-xs">{priorLayersData.layer1.audit_date} ({priorLayersData.layer1.shift})</strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-medium block">ผลการตรวจ (OK / NO):</span>
-                      <strong className="text-xs">
-                        <span className="text-emerald-600">{priorLayersData.layer1.total_ok} ผ่าน</span> / <span className="text-red-600">{priorLayersData.layer1.total_no} ไม่ผ่าน</span>
-                      </strong>
-                    </div>
-                    <div>
-                      <span className="text-slate-400 font-medium block">คะแนนความปลอดภัย:</span>
-                      <span className="font-bold text-sky-700 text-sm">{priorLayersData.layer1.score_percent}%</span>
-                    </div>
-                  </div>
-
-                  {/* Defects found in Layer 1 */}
-                  {priorLayersData.layer1.items?.filter((it: any) => it.result === 'NO').length > 0 ? (
-                    <div className="space-y-2">
-                      <div className="font-bold text-red-900 flex items-center gap-1.5">
-                        <AlertTriangle className="w-4 h-4 text-red-600" />
-                        <span>รายการปัญหาที่พบใน Layer 1 (กรุณาตรวจสอบว่าได้รับการแก้ไขบนบอร์ด SBOP แล้วหรือไม่):</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {priorLayersData.layer1.items.filter((it: any) => it.result === 'NO').map((defect: any, idx: number) => (
-                          <div key={idx} className="bg-white p-3 rounded-xl border border-red-200 shadow-sm space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-800">
-                                {defect.severity || 'Minor'}
-                              </span>
-                              <span className="text-[10px] text-slate-400">กำหนดเสร็จ: {defect.due_date || '-'}</span>
-                            </div>
-                            <div className="font-semibold text-slate-800 text-xs">{defect.finding_topic || defect.question}</div>
-                            {defect.action_plan && (
-                              <div className="text-[11px] text-slate-600">
-                                <strong>แผนแก้ไข:</strong> {defect.action_plan} (ผู้รับผิดชอบ: {defect.responsible_person || '-'})
-                              </div>
-                            )}
-                            {defect.image_url && (
-                              <a href={defect.image_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] text-sky-600 hover:underline">
-                                <span>ดูรูปหลักฐาน (Cloudflare R2)</span>
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-800 flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span>ผลตรวจ Layer 1 ล่าสุดไม่พบข้อบกพร่อง (All Passed)</span>
-                    </div>
-                  )}
-
-                  {priorLayersData.layer1.comments && (
-                    <div className="p-2.5 bg-white/80 rounded-xl border border-indigo-100 text-[11px] text-slate-600">
-                      <strong>ข้อเสนอแนะจาก Leader:</strong> {priorLayersData.layer1.comments}
-                    </div>
-                  )}
+                <div className="py-8 text-center text-xs text-indigo-600 font-medium">
+                  กำลังดึงผลตรวจของ Layer 1 (รหัส {inspectionCode})...
                 </div>
+              ) : priorLayersData?.layer1 ? (
+                <PriorLayerChecklistView
+                  inspection={priorLayersData.layer1}
+                  layerTitle="Layer 1 (Leader)"
+                  inspectionCode={inspectionCode}
+                  defaultExpanded={true}
+                />
               ) : (
-                <div className="py-4 text-center bg-white/60 rounded-xl border border-dashed border-indigo-200 text-slate-500 text-xs">
-                  ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 1 (Leader) ในรอบเดือนนี้ สามารถตอบแบบประเมิน Layer 2 ได้ตามปกติ
+                <div className="py-6 text-center bg-white/70 rounded-2xl border border-dashed border-indigo-200 text-slate-500 text-xs">
+                  ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 1 (Leader) ในรอบและรหัสนี้ สามารถตอบแบบประเมิน Layer 2 ได้ตามปกติ
                 </div>
               )}
             </div>
@@ -810,40 +751,40 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
           {/* Layer 3: Manager reviewing Layer 1 Leader & Layer 2 Supervisor */}
           {layer === 'Layer 3' && (
-            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-5 space-y-4 shadow-sm animate-fadeIn">
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-3xl p-5 sm:p-6 space-y-5 shadow-sm animate-fadeIn">
               <div className="flex items-center justify-between border-b border-purple-100 pb-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-xl bg-purple-700 text-white shadow-sm">
+                  <div className="p-2.5 rounded-2xl bg-purple-700 text-white shadow-sm">
                     <ShieldAlert className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-purple-950">
+                    <h3 className="text-base font-bold text-purple-950">
                       การทบทวนผลของ Layer 1 (Leader) และ Layer 2 (Supervisor) Systems Verification
                     </h3>
-                    <p className="text-[11px] text-purple-700">
-                      Manager ทบทวนการดำเนินงานด้านความปลอดภัย เพื่อนำประเด็นเข้าที่ประชุม GO-Meeting หรือขยายผลสู่ Plant VSM
+                    <p className="text-xs text-purple-700">
+                      Manager ทบทวนคำตอบและการดำเนินงานด้านความปลอดภัยของทั้งสองระดับ เพื่อนำประเด็นเข้าที่ประชุม GO-Meeting หรือขยายผลสู่ Plant VSM
                     </p>
                   </div>
                 </div>
-                <span className="text-[11px] px-2.5 py-1 rounded-full font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                <span className="text-xs px-3 py-1 rounded-full font-bold bg-purple-100 text-purple-800 border border-purple-200 shrink-0">
                   Manager Review
                 </span>
               </div>
 
               {/* Inspection Code Target Info */}
-              <div className="flex items-center justify-between bg-purple-100/70 text-purple-900 px-3.5 py-2 rounded-xl text-xs font-semibold">
+              <div className="flex flex-wrap items-center justify-between bg-purple-100/70 text-purple-900 px-4 py-2.5 rounded-2xl text-xs font-semibold gap-2">
                 <div className="flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-purple-600" />
-                  <span>ทบทวนผลตรวจรหัสรายการ: <strong className="text-purple-950 font-bold bg-white px-2 py-0.5 rounded border border-purple-200">#{inspectionCode}</strong></span>
-                  {mcAndProducts && <span className="text-purple-700">({mcAndProducts})</span>}
+                  <span>ทบทวนผลตรวจรหัสรายการ: <strong className="text-purple-950 font-bold bg-white px-2.5 py-0.5 rounded-lg border border-purple-200">#{inspectionCode}</strong></span>
+                  {mcAndProducts && <span className="text-purple-700 font-normal">({mcAndProducts})</span>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                     priorLayersData?.layer1 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500'
                   }`}>
                     Layer 1: {priorLayersData?.layer1 ? 'ตรวจแล้ว ✅' : 'ไม่มี ⏳'}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                     priorLayersData?.layer2 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500'
                   }`}>
                     Layer 2: {priorLayersData?.layer2 ? 'ตรวจแล้ว ✅' : 'ไม่มี ⏳'}
@@ -852,46 +793,62 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               </div>
 
               {loadingPrior ? (
-                <div className="py-6 text-center text-xs text-purple-600">กำลังดึงผลตรวจของ Layer 1 & 2 (รหัส {inspectionCode})...</div>
+                <div className="py-8 text-center text-xs text-purple-600 font-medium">
+                  กำลังดึงผลตรวจของ Layer 1 & 2 (รหัส {inspectionCode})...
+                </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  {/* Layer 1 Summary */}
-                  <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm space-y-2">
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                        <span>ผลตรวจ Layer 1 (Leader)</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400">{priorLayersData?.layer1?.audit_date || '-'}</span>
+                <div className="space-y-6">
+                  {/* Layer 1 Inspection Results */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                        <span>1. ผลการตรวจของ Layer 1 (Leader)</span>
+                      </h4>
+                      {priorLayersData?.layer1 && (
+                        <span className="text-[11px] text-slate-500">
+                          ผู้ตรวจ: {priorLayersData.layer1.auditor_name} ({priorLayersData.layer1.audit_date})
+                        </span>
+                      )}
                     </div>
                     {priorLayersData?.layer1 ? (
-                      <div className="space-y-1.5 text-[11px] text-slate-600">
-                        <div><strong>ผู้ตรวจ:</strong> {priorLayersData.layer1.auditor_name} ({priorLayersData.layer1.shift})</div>
-                        <div><strong>คะแนน:</strong> <span className="text-sky-700 font-bold">{priorLayersData.layer1.score_percent}%</span> (ผ่าน {priorLayersData.layer1.total_ok} / พบปัญหา {priorLayersData.layer1.total_no})</div>
-                        {priorLayersData.layer1.comments && <div><strong>ความเห็น:</strong> {priorLayersData.layer1.comments}</div>}
-                      </div>
+                      <PriorLayerChecklistView
+                        inspection={priorLayersData.layer1}
+                        layerTitle="Layer 1 (Leader)"
+                        inspectionCode={inspectionCode}
+                        defaultExpanded={false}
+                      />
                     ) : (
-                      <div className="text-slate-400 italic text-[11px]">ยังไม่มีข้อมูล Layer 1 ในรอบนี้</div>
+                      <div className="py-4 text-center bg-white/70 rounded-2xl border border-dashed border-purple-200 text-slate-500 text-xs">
+                        ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 1 (Leader) ในรหัสนี้
+                      </div>
                     )}
                   </div>
 
-                  {/* Layer 2 Summary */}
-                  <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm space-y-2">
-                    <div className="flex items-center justify-between border-b pb-2">
-                      <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
-                        <span>ผลตรวจ Layer 2 (Supervisor)</span>
-                      </span>
-                      <span className="text-[10px] text-slate-400">{priorLayersData?.layer2?.audit_date || '-'}</span>
+                  {/* Layer 2 Inspection Results */}
+                  <div className="space-y-2 pt-2 border-t border-purple-100">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                        <span>2. ผลการตรวจของ Layer 2 (Supervisor)</span>
+                      </h4>
+                      {priorLayersData?.layer2 && (
+                        <span className="text-[11px] text-slate-500">
+                          ผู้ตรวจ: {priorLayersData.layer2.auditor_name} ({priorLayersData.layer2.audit_date})
+                        </span>
+                      )}
                     </div>
                     {priorLayersData?.layer2 ? (
-                      <div className="space-y-1.5 text-[11px] text-slate-600">
-                        <div><strong>ผู้ตรวจ:</strong> {priorLayersData.layer2.auditor_name} ({priorLayersData.layer2.shift})</div>
-                        <div><strong>คะแนน:</strong> <span className="text-sky-700 font-bold">{priorLayersData.layer2.score_percent}%</span> (ผ่าน {priorLayersData.layer2.total_ok} / พบปัญหา {priorLayersData.layer2.total_no})</div>
-                        {priorLayersData.layer2.comments && <div><strong>ความเห็น:</strong> {priorLayersData.layer2.comments}</div>}
-                      </div>
+                      <PriorLayerChecklistView
+                        inspection={priorLayersData.layer2}
+                        layerTitle="Layer 2 (Supervisor)"
+                        inspectionCode={inspectionCode}
+                        defaultExpanded={true}
+                      />
                     ) : (
-                      <div className="text-slate-400 italic text-[11px]">ยังไม่มีข้อมูล Layer 2 ในรอบนี้</div>
+                      <div className="py-4 text-center bg-white/70 rounded-2xl border border-dashed border-purple-200 text-slate-500 text-xs">
+                        ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 2 (Supervisor) ในรหัสนี้
+                      </div>
                     )}
                   </div>
                 </div>

@@ -11,6 +11,7 @@ import checklistRouter from './routes/checklist.js';
 import inspectionsRouter from './routes/inspections.js';
 import uploadRouter from './routes/upload.js';
 import emailRouter from './routes/email.js';
+import dashboardRouter from './routes/dashboard.js';
 
 dotenv.config();
 
@@ -56,6 +57,7 @@ app.use('/api/checklist', checklistRouter);
 app.use('/api/inspections', inspectionsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/email', emailRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 // Start Server
 app.listen(PORT, () => {

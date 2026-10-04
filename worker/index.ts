@@ -505,11 +505,17 @@ export default {
         if (layer && layer !== 'all') { sql += ' AND i.layer = ?'; params.push(layer); }
         if (code && code !== 'all') { sql += ' AND i.inspection_code = ?'; params.push(code); }
 
+        // Non-admin users only see their own inspection history; Admins see all
+        if (currentUser.role !== 'admin') {
+          sql += ' AND i.auditor_id = ?';
+          params.push(currentUser.id);
+        }
+
         sql += ' ORDER BY i.audit_date DESC, i.id DESC';
 
         const { results } = await env.DB.prepare(sql).bind(...params).all();
 
-        const stats = await env.DB.prepare(`
+        let statsSql = `
           SELECT 
             COUNT(*) as total_inspections,
             SUM(total_ok) as grand_total_ok,
@@ -517,7 +523,14 @@ export default {
             SUM(total_na) as grand_total_na,
             ROUND(AVG(score_percent), 2) as average_score
           FROM inspections
-        `).first();
+        `;
+        const statsParams: any[] = [];
+        if (currentUser.role !== 'admin') {
+          statsSql += ' WHERE auditor_id = ?';
+          statsParams.push(currentUser.id);
+        }
+
+        const stats = await env.DB.prepare(statsSql).bind(...statsParams).first();
 
         return jsonResponse({ inspections: results, stats });
       }
@@ -663,6 +676,98 @@ export default {
         await env.DB.prepare('DELETE FROM inspections WHERE id = ?').bind(id).run();
         return jsonResponse({ message: 'Inspection deleted successfully' });
       }
+    }
+
+    // Admin Dashboard Statistics
+    if (url.pathname === '/api/dashboard/stats' && request.method === 'GET') {
+      if (!currentUser || currentUser.role !== 'admin') {
+        return jsonResponse({ error: 'Forbidden: Admin access required' }, 403);
+      }
+
+      const year = url.searchParams.get('year');
+      const month = url.searchParams.get('month');
+      const dept = url.searchParams.get('department');
+
+      let filterSql = ' WHERE 1=1';
+      const filterParams: any[] = [];
+      if (year && year !== 'all') { filterSql += ' AND year = ?'; filterParams.push(parseInt(year, 10)); }
+      if (month && month !== 'all') { filterSql += ' AND month = ?'; filterParams.push(parseInt(month, 10)); }
+      if (dept && dept !== 'all') { filterSql += ' AND department_code = ?'; filterParams.push(dept); }
+
+      // 1. Overall stats
+      const overall = await env.DB.prepare(`
+        SELECT 
+          COUNT(*) as total_inspections,
+          COALESCE(ROUND(AVG(score_percent), 1), 100.0) as average_score,
+          COALESCE(SUM(total_ok), 0) as total_ok,
+          COALESCE(SUM(total_no), 0) as total_no,
+          COALESCE(SUM(total_na), 0) as total_na,
+          COUNT(DISTINCT auditor_id) as active_auditors,
+          COUNT(DISTINCT department_code) as active_departments
+        FROM inspections ${filterSql}
+      `).bind(...filterParams).first();
+
+      // 2. Department Breakdown
+      const { results: deptStats } = await env.DB.prepare(`
+        SELECT 
+          d.code,
+          d.name_th,
+          d.name_en,
+          COUNT(i.id) as inspections_count,
+          COALESCE(ROUND(AVG(i.score_percent), 1), 0) as average_score,
+          COALESCE(SUM(i.total_ok), 0) as total_ok,
+          COALESCE(SUM(i.total_no), 0) as total_no,
+          COUNT(DISTINCT i.auditor_id) as auditor_count
+        FROM departments d
+        LEFT JOIN inspections i ON d.code = i.department_code ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''}
+        GROUP BY d.code, d.name_th, d.name_en
+        ORDER BY d.code ASC
+      `).all();
+
+      // 3. Layer Breakdown
+      const { results: layerStats } = await env.DB.prepare(`
+        SELECT 
+          layer,
+          COUNT(*) as count,
+          COALESCE(ROUND(AVG(score_percent), 1), 0) as average_score,
+          COALESCE(SUM(total_no), 0) as defects_count
+        FROM inspections ${filterSql}
+        GROUP BY layer
+        ORDER BY layer ASC
+      `).bind(...filterParams).all();
+
+      // 4. Recent Defects (with images)
+      const { results: recentDefects } = await env.DB.prepare(`
+        SELECT 
+          ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
+          ii.action_plan, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
+          i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
+        FROM inspection_items ii
+        JOIN inspections i ON ii.inspection_id = i.id
+        WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''}
+        ORDER BY ii.id DESC
+        LIMIT 10
+      `).all();
+
+      // 5. Total system users count
+      const userCounts = await env.DB.prepare(`
+        SELECT 
+          COUNT(*) as total,
+          SUM(CASE WHEN role = 'layer1' OR role = 'leader' OR role = 'inspector' THEN 1 ELSE 0 END) as layer1_users,
+          SUM(CASE WHEN role = 'layer2' OR role = 'supervisor' THEN 1 ELSE 0 END) as layer2_users,
+          SUM(CASE WHEN role = 'layer3' OR role = 'manager' THEN 1 ELSE 0 END) as layer3_users,
+          SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admin_users,
+          SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_users
+        FROM users
+      `).first();
+
+      return jsonResponse({
+        overall,
+        deptStats,
+        layerStats,
+        recentDefects,
+        userCounts,
+      });
     }
 
     // Photo Upload directly to Cloudflare R2 bucket: r2sbop

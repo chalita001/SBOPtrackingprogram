@@ -13,7 +13,8 @@ import {
   AlertTriangle, 
   Mail,
   Database,
-  Cloud
+  Cloud,
+  BarChart3
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -121,19 +122,33 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>{t.tabDefects}</span>
             </button>
 
-            {/* Admin only Account Manager tab */}
+            {/* Admin only Tabs: Dashboard & Account Manager */}
             {user?.role === 'admin' && (
-              <button
-                onClick={() => setActiveTab('accounts')}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
-                  activeTab === 'accounts'
-                    ? 'bg-sky-600 text-white shadow-sm'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                }`}
-              >
-                <Users className="w-4 h-4 text-indigo-400" />
-                <span>{t.tabAccountManager}</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab('dashboard')}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    activeTab === 'dashboard'
+                      ? 'bg-sky-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <BarChart3 className="w-4 h-4 text-emerald-400" />
+                  <span>แดชบอร์ด</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('accounts')}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    activeTab === 'accounts'
+                      ? 'bg-sky-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  }`}
+                >
+                  <Users className="w-4 h-4 text-indigo-400" />
+                  <span>{t.tabAccountManager}</span>
+                </button>
+              </>
             )}
 
             <button
@@ -228,15 +243,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>สิ่งผิดปกติ</span>
           </button>
           {user?.role === 'admin' && (
-            <button
-              onClick={() => setActiveTab('accounts')}
-              className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
-                activeTab === 'accounts' ? 'text-sky-400 font-semibold' : 'text-slate-400'
-              }`}
-            >
-              <Users className="w-4 h-4 text-indigo-400" />
-              <span>สมาชิก</span>
-            </button>
+            <>
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
+                  activeTab === 'dashboard' ? 'text-sky-400 font-semibold' : 'text-slate-400'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4 text-emerald-400" />
+                <span>แดชบอร์ด</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('accounts')}
+                className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
+                  activeTab === 'accounts' ? 'text-sky-400 font-semibold' : 'text-slate-400'
+                }`}
+              >
+                <Users className="w-4 h-4 text-indigo-400" />
+                <span>สมาชิก</span>
+              </button>
+            </>
           )}
         </div>
       </div>

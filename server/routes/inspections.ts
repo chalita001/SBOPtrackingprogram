@@ -107,12 +107,18 @@ router.get('/', (req: AuthRequest, res: Response) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
+    // Non-admin users only see their own inspection history; Admins see all
+    if (req.user!.role !== 'admin') {
+      sql += ' AND i.auditor_id = ?';
+      params.push(req.user!.id);
+    }
+
     sql += ' ORDER BY i.audit_date DESC, i.id DESC';
 
     const inspections = db.prepare(sql).all(...params);
 
-    // Summary statistics
-    const stats = db.prepare(`
+    // Summary statistics (filtered for non-admin)
+    let statsSql = `
       SELECT 
         COUNT(*) as total_inspections,
         SUM(total_ok) as grand_total_ok,
@@ -120,7 +126,14 @@ router.get('/', (req: AuthRequest, res: Response) => {
         SUM(total_na) as grand_total_na,
         ROUND(AVG(score_percent), 2) as average_score
       FROM inspections
-    `).get();
+    `;
+    const statsParams: any[] = [];
+    if (req.user!.role !== 'admin') {
+      statsSql += ' WHERE auditor_id = ?';
+      statsParams.push(req.user!.id);
+    }
+
+    const stats = db.prepare(statsSql).get(...statsParams);
 
     return res.json({ inspections, stats });
   } catch (err: any) {
