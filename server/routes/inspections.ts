@@ -10,8 +10,8 @@ const router = Router();
 // Protect all inspection endpoints
 router.use(authenticate);
 
-// Get prior layers inspection data (Layer 1 for Layer 2 verification; Layer 1 & 2 for Layer 3 verification)
-router.get('/prior-layers', (req: AuthRequest, res: Response) => {
+// Get distinct inspection batch codes for a department and month
+router.get('/codes', (req: AuthRequest, res: Response) => {
   try {
     const { department, year, month } = req.query;
     if (!department) return res.status(400).json({ error: 'Department required' });
@@ -19,17 +19,58 @@ router.get('/prior-layers', (req: AuthRequest, res: Response) => {
     const curYear = year ? parseInt(year as string, 10) : new Date().getFullYear();
     const curMonth = month ? parseInt(month as string, 10) : new Date().getMonth() + 1;
 
-    const data = getRecentLayerInspections(department as string, curYear, curMonth);
+    const sql = `
+      SELECT 
+        inspection_code,
+        mc_and_products,
+        shift,
+        MAX(audit_date) as latest_audit_date,
+        MAX(CASE WHEN layer = 'Layer 1' THEN 1 ELSE 0 END) as has_layer1,
+        MAX(CASE WHEN layer = 'Layer 1' THEN auditor_name ELSE NULL END) as layer1_auditor,
+        MAX(CASE WHEN layer = 'Layer 1' THEN score_percent ELSE NULL END) as layer1_score,
+        MAX(CASE WHEN layer = 'Layer 1' THEN total_no ELSE NULL END) as layer1_defects,
+        MAX(CASE WHEN layer = 'Layer 2' THEN 1 ELSE 0 END) as has_layer2,
+        MAX(CASE WHEN layer = 'Layer 2' THEN auditor_name ELSE NULL END) as layer2_auditor,
+        MAX(CASE WHEN layer = 'Layer 2' THEN score_percent ELSE NULL END) as layer2_score,
+        MAX(CASE WHEN layer = 'Layer 2' THEN total_no ELSE NULL END) as layer2_defects,
+        MAX(CASE WHEN layer = 'Layer 3' THEN 1 ELSE 0 END) as has_layer3,
+        MAX(CASE WHEN layer = 'Layer 3' THEN auditor_name ELSE NULL END) as layer3_auditor,
+        MAX(CASE WHEN layer = 'Layer 3' THEN score_percent ELSE NULL END) as layer3_score,
+        COUNT(*) as total_rounds
+      FROM inspections
+      WHERE department_code = ? AND year = ? AND month = ? AND inspection_code IS NOT NULL
+      GROUP BY inspection_code
+      ORDER BY inspection_code ASC
+    `;
+
+    const codes = db.prepare(sql).all(department as string, curYear, curMonth);
+    return res.json(codes);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Get prior layers inspection data (Layer 1 for Layer 2 verification; Layer 1 & 2 for Layer 3 verification)
+router.get('/prior-layers', (req: AuthRequest, res: Response) => {
+  try {
+    const { department, year, month, code, inspection_code } = req.query;
+    if (!department) return res.status(400).json({ error: 'Department required' });
+
+    const curYear = year ? parseInt(year as string, 10) : new Date().getFullYear();
+    const curMonth = month ? parseInt(month as string, 10) : new Date().getMonth() + 1;
+    const inspectCode = (code || inspection_code) as string | undefined;
+
+    const data = getRecentLayerInspections(department as string, curYear, curMonth, inspectCode);
     return res.json(data);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// 1. List inspections with filters (department, year, month, layer)
+// 1. List inspections with filters (department, year, month, layer, code)
 router.get('/', (req: AuthRequest, res: Response) => {
   try {
-    const { department, year, month, layer, search } = req.query;
+    const { department, year, month, layer, code, inspection_code, search } = req.query;
 
     let sql = `
       SELECT i.*, d.name_th as department_name_th, d.name_en as department_name_en,
@@ -55,6 +96,11 @@ router.get('/', (req: AuthRequest, res: Response) => {
     if (layer) {
       sql += ' AND i.layer = ?';
       params.push(layer);
+    }
+    const filterCode = code || inspection_code;
+    if (filterCode) {
+      sql += ' AND i.inspection_code = ?';
+      params.push(filterCode);
     }
     if (search) {
       sql += ' AND (i.mc_and_products LIKE ? OR i.auditor_name LIKE ?)';
@@ -116,6 +162,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
       departmentCode,
       year,
       month,
+      inspectionCode = '001',
       layer = 'Layer 1',
       shift,
       mcAndProducts,
@@ -149,16 +196,17 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 
     const insertInspection = db.prepare(`
       INSERT INTO inspections (
-        department_code, year, month, layer, shift, mc_and_products,
+        department_code, year, month, inspection_code, layer, shift, mc_and_products,
         auditor_id, auditor_name, audit_date, total_ok, total_no, total_na,
         score_percent, status, comments, previous_findings, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
     `);
 
     const insResult = insertInspection.run(
       departmentCode.toUpperCase(),
       parseInt(year, 10),
       parseInt(month, 10),
+      (inspectionCode || '001').trim(),
       layer,
       shift,
       mcAndProducts.trim(),

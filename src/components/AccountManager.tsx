@@ -307,18 +307,29 @@ export const AccountManager: React.FC = () => {
                       </td>
 
                       {/* Role */}
+                      {/* Role */}
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase ${
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                             u.role === 'admin'
                               ? 'bg-purple-100 text-purple-800 border border-purple-200'
-                              : u.role === 'supervisor'
-                              ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                              : u.role === 'layer3' || u.role === 'manager'
+                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                              : u.role === 'layer2' || u.role === 'supervisor'
+                              ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
                               : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                           }`}
                         >
                           <Shield className="w-3 h-3" />
-                          <span>{u.role}</span>
+                          <span>
+                            {u.role === 'admin'
+                              ? 'Admin'
+                              : u.role === 'layer3' || u.role === 'manager'
+                              ? 'Layer 3 (Manager)'
+                              : u.role === 'layer2' || u.role === 'supervisor'
+                              ? 'Layer 2 (Supervisor)'
+                              : 'Layer 1 (Leader)'}
+                          </span>
                         </span>
                       </td>
 
@@ -415,12 +426,12 @@ export const AccountManager: React.FC = () => {
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-sky-500"
                 >
+                  <option value="layer1">1. Layer 1 (Leader — หัวหน้างานระดับต้น)</option>
+                  <option value="layer2">2. Layer 2 (Supervisor — หัวหน้างานระดับกุม)</option>
+                  <option value="layer3">3. Layer 3 (Manager — ผู้จัดการแผนก)</option>
                   <option value="admin">ผู้ดูแลระบบ (Admin)</option>
-                  <option value="supervisor">หัวหน้างาน / ผู้อนุมัติ (Supervisor)</option>
-                  <option value="inspector">ผู้ตรวจความปลอดภัย (Inspector)</option>
-                  <option value="staff">พนักงานทั่วไป (Staff)</option>
                 </select>
               </div>
 

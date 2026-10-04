@@ -23,7 +23,9 @@ import {
   ShieldAlert,
   UserCheck,
   ChevronRight,
-  Eye
+  Eye,
+  Hash,
+  Tag
 } from 'lucide-react';
 
 interface ChecklistItemState {
@@ -51,23 +53,32 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const currentMonth = new Date().getMonth() + 1;
   const currentDateStr = new Date().toISOString().split('T')[0];
 
-  // Determine initial layer based on user role
-  const getInitialLayer = () => {
-    if (user?.role === 'manager') return 'Layer 3';
-    if (user?.role === 'supervisor') return 'Layer 2';
-    return 'Layer 1';
-  };
+  // Determine user role layer: Layer 1, Layer 2, Layer 3, or null for admin (Admin can select any)
+  const userRoleLayer = React.useMemo<'Layer 1' | 'Layer 2' | 'Layer 3' | null>(() => {
+    if (!user) return null;
+    const r = (user.role || '').toLowerCase();
+    if (r === 'admin') return null; // Admin can inspect any layer
+    if (r === 'layer3' || r === 'manager') return 'Layer 3';
+    if (r === 'layer2' || r === 'supervisor') return 'Layer 2';
+    return 'Layer 1'; // layer1, leader, inspector, staff, default
+  }, [user]);
 
   // Header State
   const [departmentCode, setDepartmentCode] = useState<string>(user?.department || 'MOLD');
   const [year] = useState<number>(currentYear); // Locked to current year
   const [month] = useState<number>(currentMonth); // Locked to current month
   const [auditDate] = useState<string>(currentDateStr); // Locked to current date
-  const [layer, setLayer] = useState<string>(getInitialLayer());
+  const [layer, setLayer] = useState<string>(userRoleLayer || 'Layer 1');
   const [shift, setShift] = useState<string>('กะ A (เช้า)');
   const [mcAndProducts, setMcAndProducts] = useState<string>('');
   const [comments, setComments] = useState<string>('');
   const [previousFindings, setPreviousFindings] = useState<string>('');
+
+  // Inspection Code (รหัสรายการ e.g. 001, 002)
+  const [inspectionCode, setInspectionCode] = useState<string>('001');
+  const [availableCodes, setAvailableCodes] = useState<any[]>([]);
+  const [isCustomCode, setIsCustomCode] = useState<boolean>(false);
+  const [customCodeInput, setCustomCodeInput] = useState<string>('');
 
   // Items State
   const [items, setItems] = useState<ChecklistItemState[]>([]);
@@ -82,6 +93,13 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
   // Is department locked? (Locked if user has a department and is not admin)
   const isDeptLocked = Boolean(user?.department && user.role !== 'admin');
+
+  // Enforce layer lock when userRoleLayer is set
+  useEffect(() => {
+    if (userRoleLayer) {
+      setLayer(userRoleLayer);
+    }
+  }, [userRoleLayer]);
 
   // Quick fill all OK
   const handleQuickFillAllOk = () => {
@@ -103,13 +121,51 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     }).catch(console.error);
   }, [user]);
 
-  // Load prior layers data when layer is Layer 2 or Layer 3
+  // Load inspection batch codes for department & month
+  const fetchCodes = async () => {
+    try {
+      const data = await api.getInspectionCodes(departmentCode, year, month);
+      setAvailableCodes(data || []);
+      return data || [];
+    } catch (err) {
+      console.warn('Failed to load inspection codes:', err);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    fetchCodes().then((codes) => {
+      if (codes && codes.length > 0) {
+        // If current inspectionCode is not in codes, select first code
+        const exists = codes.some((c: any) => c.inspection_code === inspectionCode);
+        if (!exists) {
+          const first = codes[0];
+          setInspectionCode(first.inspection_code);
+          if (first.mc_and_products && !mcAndProducts) {
+            setMcAndProducts(first.mc_and_products);
+          }
+          if (first.shift) {
+            setShift(first.shift);
+          }
+        }
+      }
+    });
+  }, [departmentCode, year, month]);
+
+  // Load prior layers data when layer is Layer 2 or Layer 3, filtered by inspectionCode
   useEffect(() => {
     if (layer === 'Layer 2' || layer === 'Layer 3') {
       setLoadingPrior(true);
-      api.getPriorLayers(departmentCode, year, month)
+      api.getPriorLayers(departmentCode, year, month, inspectionCode)
         .then((data) => {
           setPriorLayersData(data);
+          // If machine name is empty and prior layer has it, prefill it!
+          if (data?.layer1?.mc_and_products && !mcAndProducts) {
+            setMcAndProducts(data.layer1.mc_and_products);
+          }
+          if (data?.layer1?.shift) {
+            setShift(data.layer1.shift);
+          }
         })
         .catch((err) => {
           console.warn('Failed to load prior layers data:', err);
@@ -120,7 +176,31 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     } else {
       setPriorLayersData(null);
     }
-  }, [departmentCode, layer, year, month]);
+  }, [departmentCode, layer, year, month, inspectionCode]);
+
+  // Handle switching or selecting inspection code
+  const handleSelectCode = (codeVal: string) => {
+    if (codeVal === '__NEW__') {
+      setIsCustomCode(true);
+      const nextNum = availableCodes.length + 1;
+      const formatted = String(nextNum).padStart(3, '0');
+      setCustomCodeInput(formatted);
+      setInspectionCode(formatted);
+    } else {
+      setIsCustomCode(false);
+      setInspectionCode(codeVal);
+      const item = availableCodes.find((c: any) => c.inspection_code === codeVal);
+      if (item) {
+        if (item.mc_and_products) setMcAndProducts(item.mc_and_products);
+        if (item.shift) setShift(item.shift);
+      }
+    }
+  };
+
+  const handleCustomCodeChange = (val: string) => {
+    setCustomCodeInput(val);
+    setInspectionCode(val.trim() || '001');
+  };
 
   // Load Checklist questions when Department or Layer changes
   useEffect(() => {
@@ -243,6 +323,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         departmentCode,
         year,
         month,
+        inspectionCode: (inspectionCode || '001').trim(),
         layer,
         shift,
         mcAndProducts,
@@ -267,15 +348,16 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       };
 
       const res = await api.createInspection(payload);
+      await fetchCodes();
 
       if (res.defectsFound > 0) {
         setFeedback({
-          text: `บันทึกข้อมูลการตรวจสำเร็จ! ตรวจพบข้อบกพร่อง ${res.defectsFound} จุด ระบบได้ส่งอีเมลแจ้งเตือนไปยังผู้รับผิดชอบและแอดมินเรียบร้อยแล้ว`,
+          text: `บันทึกข้อมูลการตรวจสำเร็จ! (รหัสรายการ: ${inspectionCode}) ตรวจพบข้อบกพร่อง ${res.defectsFound} จุด ระบบได้ส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว`,
           type: 'warning',
         });
       } else {
         setFeedback({
-          text: `บันทึกการตรวจเช็คระดับ ${layer} สำเร็จครบถ้วน 100% (Safety Score: ${scorePercent}%)`,
+          text: `บันทึกการตรวจเช็คระดับ ${layer} (รหัสรายการ: ${inspectionCode}) สำเร็จครบถ้วน 100% (Safety Score: ${scorePercent}%)`,
           type: 'success',
         });
       }
@@ -432,21 +514,50 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               </div>
             </div>
 
-            {/* 3. Layer Level Selection (Layer 1 Leader, Layer 2 Supervisor, Layer 3 Manager) */}
+            {/* 3. Layer Level Selection (Locked to user role, Admin can choose) */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                <span>ระดับการตรวจ (Inspection Layer) *</span>
-              </label>
-              <select
-                value={layer}
-                onChange={(e) => setLayer(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-sky-50 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
-              >
-                <option value="Layer 1">Layer 1 — Leader (ตรวจรายกะ/รายวัน)</option>
-                <option value="Layer 2">Layer 2 — Supervisor (ตรวจรายสัปดาห์ & ตรวจทาน Layer 1)</option>
-                <option value="Layer 3">Layer 3 — Manager (ตรวจรายเดือน & ตรวจทาน Layer 1-2)</option>
-              </select>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>ระดับการตรวจ (Inspection Layer)</span>
+                </label>
+                {userRoleLayer ? (
+                  <span className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded font-semibold flex items-center gap-1 border border-amber-200">
+                    <Lock className="w-2.5 h-2.5" />
+                    <span>ล็อคตามสิทธิ์ {userRoleLayer}</span>
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-purple-700 bg-purple-50 px-2 py-0.5 rounded font-semibold border border-purple-200">
+                    Admin: เลือกได้ทุกระดับ
+                  </span>
+                )}
+              </div>
+
+              {userRoleLayer ? (
+                <div className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 flex items-center justify-between cursor-not-allowed">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${
+                      layer === 'Layer 1' ? 'bg-emerald-500' :
+                      layer === 'Layer 2' ? 'bg-indigo-600' : 'bg-purple-600'
+                    }`} />
+                    <span>
+                      {layer === 'Layer 1' && 'Layer 1 — Leader (หัวหน้างานระดับต้น)'}
+                      {layer === 'Layer 2' && 'Layer 2 — Supervisor (หัวหน้างานระดับกุม)'}
+                      {layer === 'Layer 3' && 'Layer 3 — Manager (ผู้จัดการแผนก)'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <select
+                  value={layer}
+                  onChange={(e) => setLayer(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-sky-50 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
+                >
+                  <option value="Layer 1">Layer 1 — Leader (ตรวจรายกะ/รายวัน)</option>
+                  <option value="Layer 2">Layer 2 — Supervisor (ตรวจรายสัปดาห์ & ตรวจทาน Layer 1)</option>
+                  <option value="Layer 3">Layer 3 — Manager (ตรวจรายเดือน & ตรวจทาน Layer 1-2)</option>
+                </select>
+              )}
             </div>
 
             {/* 4. Shift */}
@@ -468,9 +579,77 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             </div>
           </div>
 
-          {/* Machine & Products and Locked Current Date */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
-            <div className="sm:col-span-2">
+          {/* Row 2: Inspection Code, Machine/Products, Current Date */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-1">
+            {/* รหัสรายการ (Inspection Code) */}
+            <div className="sm:col-span-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-sky-600" />
+                  <span>รหัสรายการ (Inspection Code) *</span>
+                </label>
+                <span className="text-[10px] text-slate-500">
+                  {availableCodes.length > 0 ? `พบ ${availableCodes.length} รหัสในรอบนี้` : 'รหัสใหม่'}
+                </span>
+              </div>
+
+              {!isCustomCode && availableCodes.length > 0 ? (
+                <div className="flex gap-2">
+                  <select
+                    value={inspectionCode}
+                    onChange={(e) => handleSelectCode(e.target.value)}
+                    className="w-full px-3 py-2 bg-sky-50/70 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-950 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
+                  >
+                    {availableCodes.map((c) => (
+                      <option key={c.inspection_code} value={c.inspection_code}>
+                        รหัส {c.inspection_code} — {c.mc_and_products} ({c.shift}) 
+                        {c.has_layer1 ? ' [L1 ✅]' : ' [L1 ⏳]'}
+                        {c.has_layer2 ? ' [L2 ✅]' : ''}
+                        {c.has_layer3 ? ' [L3 ✅]' : ''}
+                      </option>
+                    ))}
+                    <option value="__NEW__">+ สร้างหรือระบุรหัสใหม่ (New Code)...</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectCode('__NEW__')}
+                    className="px-2.5 py-2 bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold rounded-xl text-xs whitespace-nowrap transition shadow-sm"
+                    title="สร้างรหัสรายการใหม่"
+                  >
+                    + รหัสใหม่
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Hash className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      required
+                      value={isCustomCode ? customCodeInput : inspectionCode}
+                      onChange={(e) => handleCustomCodeChange(e.target.value)}
+                      placeholder="เช่น 001, 002"
+                      className="w-full pl-8 pr-3 py-2 bg-white border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-950 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
+                    />
+                  </div>
+                  {availableCodes.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomCode(false);
+                        if (availableCodes[0]) handleSelectCode(availableCodes[0].inspection_code);
+                      }}
+                      className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs whitespace-nowrap transition"
+                    >
+                      เลือกรหัสเดิม
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Machine & Products */}
+            <div className="sm:col-span-5">
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {t.machineAndProduct} *
               </label>
@@ -484,7 +663,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               />
             </div>
 
-            <div>
+            {/* Locked Current Date */}
+            <div className="sm:col-span-3">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-slate-700">
                   {t.auditDate}
@@ -531,8 +711,26 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 </span>
               </div>
 
+              {/* Inspection Code Target Info */}
+              <div className="flex items-center justify-between bg-indigo-100/70 text-indigo-900 px-3.5 py-2 rounded-xl text-xs font-semibold">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>ตรวจสอบผลตรวจรหัสรายการ: <strong className="text-indigo-950 font-bold bg-white px-2 py-0.5 rounded border border-indigo-200">#{inspectionCode}</strong></span>
+                  {mcAndProducts && <span className="text-indigo-700">({mcAndProducts})</span>}
+                </div>
+                {priorLayersData?.layer1 ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    พบผลตรวจ Layer 1 เรียบร้อย ✅
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                    ยังไม่มีผลตรวจ Layer 1 ในรหัสนี้ ⏳
+                  </span>
+                )}
+              </div>
+
               {loadingPrior ? (
-                <div className="py-6 text-center text-xs text-indigo-600">กำลังดึงผลตรวจของ Layer 1...</div>
+                <div className="py-6 text-center text-xs text-indigo-600">กำลังดึงผลตรวจของ Layer 1 (รหัส {inspectionCode})...</div>
               ) : priorLayersData?.layer1 ? (
                 <div className="space-y-3 text-xs">
                   {/* Layer 1 Summary */}
@@ -632,8 +830,29 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 </span>
               </div>
 
+              {/* Inspection Code Target Info */}
+              <div className="flex items-center justify-between bg-purple-100/70 text-purple-900 px-3.5 py-2 rounded-xl text-xs font-semibold">
+                <div className="flex items-center gap-2">
+                  <Tag className="w-3.5 h-3.5 text-purple-600" />
+                  <span>ทบทวนผลตรวจรหัสรายการ: <strong className="text-purple-950 font-bold bg-white px-2 py-0.5 rounded border border-purple-200">#{inspectionCode}</strong></span>
+                  {mcAndProducts && <span className="text-purple-700">({mcAndProducts})</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    priorLayersData?.layer1 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    Layer 1: {priorLayersData?.layer1 ? 'ตรวจแล้ว ✅' : 'ไม่มี ⏳'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    priorLayersData?.layer2 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    Layer 2: {priorLayersData?.layer2 ? 'ตรวจแล้ว ✅' : 'ไม่มี ⏳'}
+                  </span>
+                </div>
+              </div>
+
               {loadingPrior ? (
-                <div className="py-6 text-center text-xs text-purple-600">กำลังดึงผลตรวจของ Layer 1 & 2...</div>
+                <div className="py-6 text-center text-xs text-purple-600">กำลังดึงผลตรวจของ Layer 1 & 2 (รหัส {inspectionCode})...</div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   {/* Layer 1 Summary */}

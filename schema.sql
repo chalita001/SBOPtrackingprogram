@@ -62,6 +62,7 @@ CREATE TABLE inspections (
     department_code TEXT NOT NULL,
     year INTEGER NOT NULL,
     month INTEGER NOT NULL,
+    inspection_code TEXT DEFAULT '001', -- รหัสรายการ เช่น 001, 002
     layer TEXT NOT NULL, -- 'Layer 1', 'Layer 2', 'Layer 3'
     shift TEXT NOT NULL, -- 'A', 'B', 'C', 'Day', 'Night'
     mc_and_products TEXT NOT NULL, -- เครื่องจักรและผลิตภัณฑ์

@@ -387,22 +387,64 @@ export default {
       });
     }
 
+    // List inspection batch codes for a department and month
+    if (url.pathname === '/api/inspections/codes' && request.method === 'GET') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const dept = url.searchParams.get('department') || '';
+      const year = parseInt(url.searchParams.get('year') || String(new Date().getFullYear()), 10);
+      const month = parseInt(url.searchParams.get('month') || String(new Date().getMonth() + 1), 10);
+
+      const sql = `
+        SELECT 
+          inspection_code,
+          mc_and_products,
+          shift,
+          MAX(audit_date) as latest_audit_date,
+          MAX(CASE WHEN layer = 'Layer 1' THEN 1 ELSE 0 END) as has_layer1,
+          MAX(CASE WHEN layer = 'Layer 1' THEN auditor_name ELSE NULL END) as layer1_auditor,
+          MAX(CASE WHEN layer = 'Layer 1' THEN score_percent ELSE NULL END) as layer1_score,
+          MAX(CASE WHEN layer = 'Layer 1' THEN total_no ELSE NULL END) as layer1_defects,
+          MAX(CASE WHEN layer = 'Layer 2' THEN 1 ELSE 0 END) as has_layer2,
+          MAX(CASE WHEN layer = 'Layer 2' THEN auditor_name ELSE NULL END) as layer2_auditor,
+          MAX(CASE WHEN layer = 'Layer 2' THEN score_percent ELSE NULL END) as layer2_score,
+          MAX(CASE WHEN layer = 'Layer 2' THEN total_no ELSE NULL END) as layer2_defects,
+          MAX(CASE WHEN layer = 'Layer 3' THEN 1 ELSE 0 END) as has_layer3,
+          MAX(CASE WHEN layer = 'Layer 3' THEN auditor_name ELSE NULL END) as layer3_auditor,
+          MAX(CASE WHEN layer = 'Layer 3' THEN score_percent ELSE NULL END) as layer3_score,
+          COUNT(*) as total_rounds
+        FROM inspections
+        WHERE department_code = ? AND year = ? AND month = ? AND inspection_code IS NOT NULL
+        GROUP BY inspection_code
+        ORDER BY inspection_code ASC
+      `;
+
+      const { results } = await env.DB.prepare(sql).bind(dept, year, month).all();
+      return jsonResponse(results || []);
+    }
+
     // Prior layers inspection data for Layer 2 & 3 verification
     if (url.pathname === '/api/inspections/prior-layers' && request.method === 'GET') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const dept = url.searchParams.get('department') || '';
       const year = parseInt(url.searchParams.get('year') || String(new Date().getFullYear()), 10);
       const month = parseInt(url.searchParams.get('month') || String(new Date().getMonth() + 1), 10);
+      const code = url.searchParams.get('code') || url.searchParams.get('inspection_code');
 
       // Layer 1
-      const layer1: any = await env.DB.prepare(`
+      let layer1Sql = `
         SELECT i.*, 
           (SELECT COUNT(*) FROM inspection_items WHERE inspection_id = i.id AND result = 'NO') as defects_count
         FROM inspections i
         WHERE department_code = ? AND year = ? AND month = ? AND layer = 'Layer 1'
-        ORDER BY audit_date DESC, id DESC
-        LIMIT 1
-      `).bind(dept, year, month).first();
+      `;
+      const layer1Params: any[] = [dept, year, month];
+      if (code && code.trim()) {
+        layer1Sql += ' AND inspection_code = ?';
+        layer1Params.push(code.trim());
+      }
+      layer1Sql += ' ORDER BY audit_date DESC, id DESC LIMIT 1';
+
+      const layer1: any = await env.DB.prepare(layer1Sql).bind(...layer1Params).first();
 
       let layer1Items: any[] = [];
       if (layer1) {
@@ -411,14 +453,20 @@ export default {
       }
 
       // Layer 2
-      const layer2: any = await env.DB.prepare(`
+      let layer2Sql = `
         SELECT i.*, 
           (SELECT COUNT(*) FROM inspection_items WHERE inspection_id = i.id AND result = 'NO') as defects_count
         FROM inspections i
         WHERE department_code = ? AND year = ? AND month = ? AND layer = 'Layer 2'
-        ORDER BY audit_date DESC, id DESC
-        LIMIT 1
-      `).bind(dept, year, month).first();
+      `;
+      const layer2Params: any[] = [dept, year, month];
+      if (code && code.trim()) {
+        layer2Sql += ' AND inspection_code = ?';
+        layer2Params.push(code.trim());
+      }
+      layer2Sql += ' ORDER BY audit_date DESC, id DESC LIMIT 1';
+
+      const layer2: any = await env.DB.prepare(layer2Sql).bind(...layer2Params).first();
 
       let layer2Items: any[] = [];
       if (layer2) {
@@ -441,6 +489,7 @@ export default {
         const year = url.searchParams.get('year');
         const month = url.searchParams.get('month');
         const layer = url.searchParams.get('layer');
+        const code = url.searchParams.get('code') || url.searchParams.get('inspection_code');
 
         let sql = `
           SELECT i.*, d.name_th as department_name_th, d.name_en as department_name_en,
@@ -454,6 +503,7 @@ export default {
         if (year && year !== 'all') { sql += ' AND i.year = ?'; params.push(parseInt(year, 10)); }
         if (month && month !== 'all') { sql += ' AND i.month = ?'; params.push(parseInt(month, 10)); }
         if (layer && layer !== 'all') { sql += ' AND i.layer = ?'; params.push(layer); }
+        if (code && code !== 'all') { sql += ' AND i.inspection_code = ?'; params.push(code); }
 
         sql += ' ORDER BY i.audit_date DESC, i.id DESC';
 
@@ -478,6 +528,7 @@ export default {
           departmentCode,
           year,
           month,
+          inspectionCode = '001',
           layer = 'Layer 1',
           shift,
           mcAndProducts,
@@ -499,14 +550,15 @@ export default {
 
         const insResult = await env.DB.prepare(`
           INSERT INTO inspections (
-            department_code, year, month, layer, shift, mc_and_products,
+            department_code, year, month, inspection_code, layer, shift, mc_and_products,
             auditor_id, auditor_name, audit_date, total_ok, total_no, total_na,
             score_percent, status, comments, previous_findings, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         `).bind(
           departmentCode.toUpperCase(),
           parseInt(year, 10),
           parseInt(month, 10),
+          (inspectionCode || '001').trim(),
           layer,
           shift,
           mcAndProducts.trim(),
@@ -566,8 +618,8 @@ export default {
           `).bind(
             'admin@sbop.com',
             'Safety Admin',
-            `[SBOP Defect Alert] Defects found in ${departmentCode} on ${auditDate}`,
-            `Inspection ID: ${inspectionId}, Found ${defectItems.length} issues in ${mcAndProducts}`,
+            `[SBOP Defect Alert] Defects found in ${departmentCode} (รหัสรายการ: ${inspectionCode || '001'}) on ${auditDate}`,
+            `Inspection ID: ${inspectionId}, Code: ${inspectionCode || '001'}, Found ${defectItems.length} issues in ${mcAndProducts}`,
             inspectionId
           ).run();
         }

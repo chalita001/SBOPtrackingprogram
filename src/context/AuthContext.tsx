@@ -11,7 +11,7 @@ export interface User {
   department: string;
   position: string;
   responsibleArea: string;
-  role: 'admin' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
+  role: 'admin' | 'layer1' | 'layer2' | 'layer3' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
   status: 'pending' | 'approved' | 'rejected';
 }
 

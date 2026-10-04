@@ -70,8 +70,13 @@ export const api = {
     return request(`/inspections${query ? `?${query}` : ''}`);
   },
   getInspection: (id: number) => request(`/inspections/${id}`),
-  getPriorLayers: (deptCode: string, year: number, month: number) =>
-    request(`/inspections/prior-layers?department=${encodeURIComponent(deptCode)}&year=${year}&month=${month}`),
+  getInspectionCodes: (deptCode: string, year: number, month: number) =>
+    request(`/inspections/codes?department=${encodeURIComponent(deptCode)}&year=${year}&month=${month}`),
+  getPriorLayers: (deptCode: string, year: number, month: number, code?: string) => {
+    let url = `/inspections/prior-layers?department=${encodeURIComponent(deptCode)}&year=${year}&month=${month}`;
+    if (code) url += `&code=${encodeURIComponent(code)}`;
+    return request(url);
+  },
   createInspection: (data: any) => request('/inspections', { method: 'POST', body: JSON.stringify(data) }),
   deleteInspection: (id: number) => request(`/inspections/${id}`, { method: 'DELETE' }),
 

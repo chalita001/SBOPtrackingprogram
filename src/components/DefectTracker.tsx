@@ -48,6 +48,7 @@ export const DefectTracker: React.FC = () => {
               auditDate: ins.audit_date,
               shift: ins.shift,
               mcAndProducts: ins.mc_and_products,
+              inspectionCode: ins.inspection_code,
               auditorName: ins.auditor_name,
             });
           });
@@ -220,6 +221,9 @@ export const DefectTracker: React.FC = () => {
                       <span className="font-bold text-xs text-slate-900 flex items-center gap-1">
                         <Building2 className="w-3.5 h-3.5 text-sky-600" />
                         <span>แผนก: {d.departmentCode}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-bold">
+                          #{d.inspectionCode || '001'}
+                        </span>
                       </span>
                       <span
                         className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${

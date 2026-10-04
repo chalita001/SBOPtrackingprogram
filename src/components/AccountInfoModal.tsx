@@ -94,7 +94,15 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
               <div className="flex items-center gap-2 text-xs text-sky-200">
                 <span>{user.email}</span>
                 <span>•</span>
-                <span className="capitalize font-semibold text-emerald-300">{user.role}</span>
+                <span className="font-semibold text-emerald-300">
+                  {user.role === 'admin'
+                    ? 'Admin'
+                    : user.role === 'layer3' || user.role === 'manager'
+                    ? 'Layer 3 (Manager)'
+                    : user.role === 'layer2' || user.role === 'supervisor'
+                    ? 'Layer 2 (Supervisor)'
+                    : 'Layer 1 (Leader)'}
+                </span>
               </div>
             </div>
           </div>

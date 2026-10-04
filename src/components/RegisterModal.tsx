@@ -22,7 +22,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     department: 'MOLD',
     position: '',
     responsibleArea: '',
-    role: 'inspector',
+    role: 'layer1',
     password: '',
     confirmPassword: '',
   });
@@ -267,11 +267,11 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition font-medium"
                     >
-                      <option value="inspector">{t.roleInspector}</option>
-                      <option value="supervisor">{t.roleSupervisor}</option>
-                      <option value="staff">{t.roleStaff}</option>
+                      <option value="layer1">1. {t.roleLayer1}</option>
+                      <option value="layer2">2. {t.roleLayer2}</option>
+                      <option value="layer3">3. {t.roleLayer3}</option>
                     </select>
                   </div>
                 </div>

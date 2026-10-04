@@ -213,7 +213,12 @@ export const InspectionHistory: React.FC = () => {
                 inspections.map((ins) => (
                   <tr key={ins.id} className="hover:bg-slate-50/80 transition">
                     <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900">{ins.audit_date}</div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-slate-900">{ins.audit_date}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-bold">
+                          #{ins.inspection_code || '001'}
+                        </span>
+                      </div>
                       <div className="text-[11px] text-slate-500">{ins.shift}</div>
                     </td>
 
