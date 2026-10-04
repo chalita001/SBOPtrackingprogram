@@ -26,7 +26,7 @@ const MainContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
         <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <div className="font-bold text-lg">กำลังโหลดระบบ SBOP Safety Tracking...</div>
+        <div className="font-bold text-lg">{t.systemLoading}</div>
         <div className="text-xs text-slate-400 mt-1">Cloudflare D1 & R2 Ready</div>
       </div>
     );
@@ -52,14 +52,14 @@ const MainContent: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
               <span>
-                บัญชีของคุณ (<strong>{user.email}</strong>) อยู่ระหว่างรอการอนุมัติสิทธิ์จากผู้ดูแลระบบ คุณสามารถทดลองดูข้อมูลทั่วไปได้
+                {t.pendingApprovalNotice.replace('{0}', user.email)}
               </span>
             </div>
             <button
               onClick={() => setShowAccountInfo(true)}
               className="px-3 py-1 bg-amber-200/70 hover:bg-amber-200 rounded-lg font-bold transition text-amber-900"
             >
-              ดูข้อมูลโปรไฟล์
+              {t.viewProfileBtn}
             </button>
           </div>
         )}

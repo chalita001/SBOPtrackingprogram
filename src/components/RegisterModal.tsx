@@ -13,7 +13,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   onClose,
   onSwitchToLogin,
 }) => {
-  const { register, t } = useAuth();
+  const { register, t, language } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -46,12 +46,12 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     setSuccess(null);
 
     if (formData.password !== formData.confirmPassword) {
-      setError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+      setError(language === 'en' ? 'Password and confirm password do not match' : 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
       return;
     }
 
     if (formData.password.length < 6) {
-      setError('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+      setError(language === 'en' ? 'Password must be at least 6 characters' : 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
       return;
     }
 
@@ -70,9 +70,13 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
         password: formData.password,
       });
 
-      setSuccess('ลงทะเบียนสำเร็จ! ระบบได้บันทึกข้อมูลและส่งอีเมลแจ้งเตือนไปยังผู้ดูแลระบบเพื่อทำการอนุมัติสิทธิ์การใช้งานแล้ว');
+      setSuccess(
+        language === 'en'
+          ? 'Registration submitted! Your request has been sent for admin approval.'
+          : 'ลงทะเบียนสำเร็จ! ระบบได้บันทึกข้อมูลและส่งอีเมลแจ้งเตือนไปยังผู้ดูแลระบบเพื่อทำการอนุมัติสิทธิ์การใช้งานแล้ว'
+      );
     } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      setError(err.message || (language === 'en' ? 'Registration failed' : 'การลงทะเบียนไม่สำเร็จ'));
     } finally {
       setLoading(false);
     }
@@ -89,7 +93,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold">{t.register}</h2>
-              <p className="text-xs text-sky-200">ลงทะเบียนสมาชิกใหม่สำหรับระบบตรวจเช็ค SBOP</p>
+              <p className="text-xs text-sky-200">{t.registerSubtitle}</p>
             </div>
           </div>
           <button
@@ -114,7 +118,9 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
-              <h3 className="text-lg font-bold text-slate-800">ลงทะเบียนสำเร็จ!</h3>
+              <h3 className="text-lg font-bold text-slate-800">
+                {language === 'en' ? 'Registration Successful!' : 'ลงทะเบียนสำเร็จ!'}
+              </h3>
               <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
                 {success}
               </p>
@@ -124,7 +130,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                   onClick={onSwitchToLogin}
                   className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-sm transition shadow"
                 >
-                  ไปที่หน้าเข้าสู่ระบบ (Sign In)
+                  {t.backToLogin}
                 </button>
               </div>
             </div>
@@ -141,7 +147,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    placeholder="เช่น สมศักดิ์"
+                    placeholder={language === 'en' ? 'e.g. John' : 'เช่น สมศักดิ์'}
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
                   />
                 </div>
@@ -155,7 +161,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    placeholder="เช่น มั่นคง"
+                    placeholder={language === 'en' ? 'e.g. Doe' : 'เช่น มั่นคง'}
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
                   />
                 </div>
@@ -210,13 +216,13 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       onChange={handleChange}
                       className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition font-medium"
                     >
-                      <option value="MOLD">Molding / MM (แผนกฉีด)</option>
-                      <option value="FACILITY">Facility (สาธารณูปโภค)</option>
-                      <option value="ASSY">Assembly (แผนกประกอบ)</option>
-                      <option value="WH">Warehouse (คลังสินค้า)</option>
-                      <option value="QC">QC (ควบคุมคุณภาพ)</option>
-                      <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
-                      <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                      <option value="MOLD">{language === 'en' ? 'Molding / MM' : 'Molding / MM (แผนกฉีด)'}</option>
+                      <option value="FACILITY">{language === 'en' ? 'Facility' : 'Facility (สาธารณูปโภค)'}</option>
+                      <option value="ASSY">{language === 'en' ? 'Assembly' : 'Assembly (แผนกประกอบ)'}</option>
+                      <option value="WH">{language === 'en' ? 'Warehouse' : 'Warehouse (คลังสินค้า)'}</option>
+                      <option value="QC">{language === 'en' ? 'QC (Quality Control)' : 'QC (ควบคุมคุณภาพ)'}</option>
+                      <option value="STAMPING">{language === 'en' ? 'Stamping' : 'Stamping (ปั๊มขึ้นรูป)'}</option>
+                      <option value="TOOL">{language === 'en' ? 'Tooling' : 'Tooling (แม่พิมพ์/เครื่องมือ)'}</option>
                     </select>
                   </div>
                 </div>
@@ -232,7 +238,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       name="position"
                       value={formData.position}
                       onChange={handleChange}
-                      placeholder="เช่น Safety Officer, Supervisor"
+                      placeholder={language === 'en' ? 'e.g. Safety Officer, Supervisor' : 'เช่น Safety Officer, Supervisor'}
                       className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
                     />
                   </div>
@@ -252,7 +258,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       name="responsibleArea"
                       value={formData.responsibleArea}
                       onChange={handleChange}
-                      placeholder="เช่น Zone A (M/C 01-10)"
+                      placeholder={language === 'en' ? 'e.g. Zone A (M/C 01-10)' : 'เช่น Zone A (M/C 01-10)'}
                       className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
                     />
                   </div>
@@ -280,7 +286,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    รหัสผ่าน (อย่างน้อย 6 ตัวอักษร) *
+                    {t.regPasswordMin}
                   </label>
                   <div className="relative">
                     <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
@@ -317,7 +323,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <span>
-                  หมายเหตุ: บัญชีที่ลงทะเบียนใหม่จะอยู่ในสถานะ <strong>รอการอนุมัติ (Pending)</strong> จนกว่าผู้ดูแลระบบจะตรวจสอบและอนุมัติการใช้งาน โดยระบบจะส่งอีเมลแจ้งเตือนผลการอนุมัติไปยังอีเมลของคุณ
+                  {t.regPendingNote}
                 </span>
               </div>
 
@@ -326,11 +332,11 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-md shadow-sky-600/20 text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
               >
-                {loading ? 'กำลังส่งข้อมูล...' : t.register}
+                {loading ? t.submitting : t.register}
               </button>
 
               <div className="text-center text-xs text-slate-600 pt-2">
-                มีบัญชีผู้ใช้งานอยู่แล้ว?{' '}
+                {t.alreadyHaveAccount}{' '}
                 <button
                   type="button"
                   onClick={onSwitchToLogin}

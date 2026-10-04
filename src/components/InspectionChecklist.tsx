@@ -28,6 +28,7 @@ import {
   Tag
 } from 'lucide-react';
 import { PriorLayerChecklistView } from './PriorLayerChecklistView';
+import { localizeQuestion, localizeCategory, localizeSubcategory, localizeMethod } from '../i18n/translations';
 
 interface ChecklistItemState {
   templateItemId: number;
@@ -48,7 +49,7 @@ interface ChecklistItemState {
 }
 
 export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ onSuccessSave }) => {
-  const { user, t } = useAuth();
+  const { user, language, t } = useAuth();
 
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
@@ -203,7 +204,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     setInspectionCode(val.trim() || '001');
   };
 
-  // Load Checklist questions when Department or Layer changes
+  // Load Checklist questions when Department, Layer, or Language changes
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -214,10 +215,12 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         if (!isMounted) return;
         const initialItems: ChecklistItemState[] = (data.items || []).map((tmpl: any) => ({
           templateItemId: tmpl.id,
-          question: tmpl.question_th,
-          category: tmpl.category || 'General',
-          subcategory: tmpl.subcategory || '',
-          method: tmpl.method || 'สังเกตและตรวจสอบ',
+          question: language === 'en'
+            ? (tmpl.question_en || localizeQuestion(tmpl.question_th, 'en'))
+            : (tmpl.question_th || tmpl.question_en),
+          category: localizeCategory(tmpl.category || 'General', language),
+          subcategory: localizeSubcategory(tmpl.subcategory || '', language),
+          method: localizeMethod(tmpl.method || (language === 'th' ? 'สังเกตและตรวจสอบ' : 'Observe & Audit'), language),
           layer: tmpl.layer || layer,
           result: 'OK', // Default to OK
           findingTopic: '',
@@ -232,7 +235,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         setItems(initialItems);
       })
       .catch((err) => {
-        if (isMounted) setFeedback({ text: 'ไม่สามารถโหลดรายการตรวจเช็คได้: ' + err.message, type: 'error' });
+        if (isMounted) setFeedback({ text: (language === 'th' ? 'ไม่สามารถโหลดรายการตรวจเช็คได้: ' : 'Failed to load checklist: ') + err.message, type: 'error' });
       })
       .finally(() => {
         if (isMounted) setLoading(false);
@@ -241,7 +244,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     return () => {
       isMounted = false;
     };
-  }, [departmentCode, layer]);
+  }, [departmentCode, layer, language]);
 
   // Handle Result change (OK, NO, N/A)
   const handleResultChange = (index: number, result: 'OK' | 'NO' | 'N/A') => {
@@ -277,7 +280,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         return next;
       });
     } catch (err: any) {
-      alert('อัปโหลดรูปภาพไปยัง Cloudflare R2 ล้มเหลว: ' + err.message);
+      alert((language === 'en' ? 'Upload photo to Cloudflare R2 failed: ' : 'อัปโหลดรูปภาพไปยัง Cloudflare R2 ล้มเหลว: ') + err.message);
       handleItemFieldChange(index, 'uploadingImage', false);
     }
   };
@@ -305,14 +308,22 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!mcAndProducts.trim()) {
-      setFeedback({ text: 'กรุณากรอกข้อมูลเครื่องจักรและผลิตภัณฑ์ (M/C and Products)', type: 'error' });
+      setFeedback({
+        text: language === 'en' ? 'Please specify machine and product details (M/C and Products)' : 'กรุณากรอกข้อมูลเครื่องจักรและผลิตภัณฑ์ (M/C and Products)',
+        type: 'error'
+      });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
     const invalidDefect = items.find((i) => i.result === 'NO' && !i.findingTopic.trim());
     if (invalidDefect) {
-      setFeedback({ text: `กรุณากรอกรายละเอียดปัญหาที่พบสำหรับข้อ: "${invalidDefect.question.substring(0, 40)}..."`, type: 'error' });
+      setFeedback({
+        text: language === 'en'
+          ? `Please describe the finding topic for defect item: "${invalidDefect.question.substring(0, 40)}..."`
+          : `กรุณากรอกรายละเอียดปัญหาที่พบสำหรับข้อ: "${invalidDefect.question.substring(0, 40)}..."`,
+        type: 'error'
+      });
       return;
     }
 
@@ -353,12 +364,16 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
       if (res.defectsFound > 0) {
         setFeedback({
-          text: `บันทึกข้อมูลการตรวจสำเร็จ! (รหัสรายการ: ${inspectionCode}) ตรวจพบข้อบกพร่อง ${res.defectsFound} จุด ระบบได้ส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว`,
+          text: language === 'en'
+            ? `Inspection saved! (Inspection Code: ${inspectionCode}) Found ${res.defectsFound} defect(s). Email alerts dispatched.`
+            : `บันทึกข้อมูลการตรวจสำเร็จ! (รหัสรายการ: ${inspectionCode}) ตรวจพบข้อบกพร่อง ${res.defectsFound} จุด ระบบได้ส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว`,
           type: 'warning',
         });
       } else {
         setFeedback({
-          text: `บันทึกการตรวจเช็คระดับ ${layer} (รหัสรายการ: ${inspectionCode}) สำเร็จครบถ้วน 100% (Safety Score: ${scorePercent}%)`,
+          text: language === 'en'
+            ? `Saved ${layer} inspection (Inspection Code: ${inspectionCode}) successfully 100% (Safety Score: ${scorePercent}%)`
+            : `บันทึกการตรวจเช็คระดับ ${layer} (รหัสรายการ: ${inspectionCode}) สำเร็จครบถ้วน 100% (Safety Score: ${scorePercent}%)`,
           type: 'success',
         });
       }
@@ -377,7 +392,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   // Group items by Category
   const categorizedItems: Record<string, ChecklistItemState[]> = {};
   items.forEach((item) => {
-    const cat = item.category || 'ข้อกำหนดทั่วไป';
+    const cat = item.category || (language === 'en' ? 'General Requirement' : 'ข้อกำหนดทั่วไป');
     if (!categorizedItems[cat]) categorizedItems[cat] = [];
     categorizedItems[cat].push(item);
   });
@@ -402,7 +417,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                ระบบสังเกตและตรวจประเมินพฤติกรรมความปลอดภัยหน้างาน (SBOP) แยกระดับ Leader / Supervisor / Manager
+                {language === 'en'
+                  ? 'On-site safety observation and verification form (SBOP) with Leader / Supervisor / Manager 3-layer audit'
+                  : 'ระบบสังเกตและตรวจประเมินพฤติกรรมความปลอดภัยหน้างาน (SBOP) แยกระดับ Leader / Supervisor / Manager'}
               </p>
             </div>
           </div>
@@ -413,10 +430,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               type="button"
               onClick={handleQuickFillAllOk}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold transition"
-              title="ตั้งค่าทุกข้อเป็น OK ทั้งหมด"
+              title={language === 'en' ? 'Set all items to OK' : 'ตั้งค่าทุกข้อเป็น OK ทั้งหมด'}
             >
               <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>ผ่านทั้งหมด (All OK)</span>
+              <span>{language === 'en' ? 'All OK' : 'ผ่านทั้งหมด (All OK)'}</span>
             </button>
           </div>
         </div>
@@ -441,7 +458,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             )}
             <div className="flex-1 font-medium">{feedback.text}</div>
             <button onClick={() => setFeedback(null)} className="text-xs underline font-semibold">
-              ปิด
+              {t.close}
             </button>
           </div>
         )}
@@ -460,7 +477,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 {isDeptLocked && (
                   <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5 border border-amber-200">
                     <Lock className="w-2.5 h-2.5" />
-                    <span>ล็อคตามแผนกของคุณ</span>
+                    <span>{t.lockedDepartmentNotice}</span>
                   </span>
                 )}
               </div>
@@ -476,7 +493,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               >
                 {departments.map((d) => (
                   <option key={d.code} value={d.code}>
-                    {d.name_th} ({d.total_questions || 0} ข้อ)
+                    {language === 'en' ? (d.name_en || d.code) : d.name_th} ({d.total_questions || 0} {t.itemsCountUnit})
                   </option>
                 ))}
               </select>
@@ -495,7 +512,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 <input
                   type="text"
                   disabled
-                  value={`${year} (ปัจจุบัน)`}
+                  value={`${year} (${language === 'en' ? 'Current' : 'ปัจจุบัน'})`}
                   className="w-full px-3 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 cursor-not-allowed"
                 />
               </div>
@@ -509,7 +526,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 <input
                   type="text"
                   disabled
-                  value={`เดือน ${month} (ปัจจุบัน)`}
+                  value={language === 'th' ? `เดือน ${month} (ปัจจุบัน)` : `Month ${month} (Current)`}
                   className="w-full px-3 py-2.5 bg-slate-100 border border-slate-300 rounded-xl text-xs font-bold text-slate-600 cursor-not-allowed"
                 />
               </div>
@@ -520,16 +537,16 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>ระดับการตรวจ (Inspection Layer)</span>
+                  <span>{t.layer}</span>
                 </label>
                 {userRoleLayer ? (
                   <span className="text-[10px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded font-semibold flex items-center gap-1 border border-amber-200">
                     <Lock className="w-2.5 h-2.5" />
-                    <span>ล็อคตามสิทธิ์ {userRoleLayer}</span>
+                    <span>{language === 'th' ? `ล็อคตามสิทธิ์ ${userRoleLayer}` : `Locked to ${userRoleLayer}`}</span>
                   </span>
                 ) : (
                   <span className="text-[10px] text-purple-700 bg-purple-50 px-2 py-0.5 rounded font-semibold border border-purple-200">
-                    Admin: เลือกได้ทุกระดับ
+                    {language === 'th' ? 'Admin: เลือกได้ทุกระดับ' : 'Admin: Select Any Layer'}
                   </span>
                 )}
               </div>
@@ -542,9 +559,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       layer === 'Layer 2' ? 'bg-indigo-600' : 'bg-purple-600'
                     }`} />
                     <span>
-                      {layer === 'Layer 1' && 'Layer 1 — Leader (หัวหน้างานระดับต้น)'}
-                      {layer === 'Layer 2' && 'Layer 2 — Supervisor (หัวหน้างานระดับกุม)'}
-                      {layer === 'Layer 3' && 'Layer 3 — Manager (ผู้จัดการแผนก)'}
+                      {layer === 'Layer 1' && (language === 'th' ? 'Layer 1 — Leader (หัวหน้างานระดับต้น)' : 'Layer 1 — Leader (Daily / Shift Audit)')}
+                      {layer === 'Layer 2' && (language === 'th' ? 'Layer 2 — Supervisor (หัวหน้างานระดับกุม)' : 'Layer 2 — Supervisor (Weekly Audit)')}
+                      {layer === 'Layer 3' && (language === 'th' ? 'Layer 3 — Manager (ผู้จัดการแผนก)' : 'Layer 3 — Manager (Monthly Audit)')}
                     </span>
                   </div>
                 </div>
@@ -554,9 +571,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   onChange={(e) => setLayer(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-sky-50 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
                 >
-                  <option value="Layer 1">Layer 1 — Leader (ตรวจรายกะ/รายวัน)</option>
-                  <option value="Layer 2">Layer 2 — Supervisor (ตรวจรายสัปดาห์ & ตรวจทาน Layer 1)</option>
-                  <option value="Layer 3">Layer 3 — Manager (ตรวจรายเดือน & ตรวจทาน Layer 1-2)</option>
+                  <option value="Layer 1">{t.layer1}</option>
+                  <option value="Layer 2">{t.layer2}</option>
+                  <option value="Layer 3">{t.layer3}</option>
                 </select>
               )}
             </div>
@@ -587,10 +604,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <Tag className="w-3.5 h-3.5 text-sky-600" />
-                  <span>รหัสรายการ (Inspection Code) *</span>
+                  <span>{t.inspectionCode} *</span>
                 </label>
                 <span className="text-[10px] text-slate-500">
-                  {availableCodes.length > 0 ? `พบ ${availableCodes.length} รหัสในรอบนี้` : 'รหัสใหม่'}
+                  {availableCodes.length > 0 ? (language === 'th' ? `พบ ${availableCodes.length} รหัสในรอบนี้` : `Found ${availableCodes.length} codes`) : (language === 'th' ? 'รหัสใหม่' : 'New Code')}
                 </span>
               </div>
 
@@ -603,21 +620,21 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   >
                     {availableCodes.map((c) => (
                       <option key={c.inspection_code} value={c.inspection_code}>
-                        รหัส {c.inspection_code} — {c.mc_and_products} ({c.shift}) 
+                        {language === 'th' ? 'รหัส' : 'Code'} {c.inspection_code} — {c.mc_and_products} ({c.shift}) 
                         {c.has_layer1 ? ' [L1 ✅]' : ' [L1 ⏳]'}
                         {c.has_layer2 ? ' [L2 ✅]' : ''}
                         {c.has_layer3 ? ' [L3 ✅]' : ''}
                       </option>
                     ))}
-                    <option value="__NEW__">+ สร้างหรือระบุรหัสใหม่ (New Code)...</option>
+                    <option value="__NEW__">{t.newInspectionCode}...</option>
                   </select>
                   <button
                     type="button"
                     onClick={() => handleSelectCode('__NEW__')}
                     className="px-2.5 py-2 bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold rounded-xl text-xs whitespace-nowrap transition shadow-sm"
-                    title="สร้างรหัสรายการใหม่"
+                    title={t.newInspectionCode}
                   >
-                    + รหัสใหม่
+                    {t.newInspectionCode}
                   </button>
                 </div>
               ) : (
@@ -629,7 +646,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       required
                       value={isCustomCode ? customCodeInput : inspectionCode}
                       onChange={(e) => handleCustomCodeChange(e.target.value)}
-                      placeholder="เช่น 001, 002"
+                      placeholder={t.inspectionCodePlaceholder}
                       className="w-full pl-8 pr-3 py-2 bg-white border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-950 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
                     />
                   </div>
@@ -642,7 +659,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       }}
                       className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs whitespace-nowrap transition"
                     >
-                      เลือกรหัสเดิม
+                      {language === 'th' ? 'เลือกรหัสเดิม' : 'Existing Code'}
                     </button>
                   )}
                 </div>
@@ -659,7 +676,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 required
                 value={mcAndProducts}
                 onChange={(e) => setMcAndProducts(e.target.value)}
-                placeholder="เช่น เครื่องฉีด M/C 08 (Connector Type-C) หรือ โซนประกอบ Line 3"
+                placeholder={t.machinePlaceholder}
                 className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white font-medium"
               />
             </div>
@@ -672,7 +689,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 </label>
                 <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
                   <Lock className="w-2.5 h-2.5" />
-                  <span>วันปัจจุบัน</span>
+                  <span>{language === 'th' ? 'วันปัจจุบัน' : 'Current Date'}</span>
                 </span>
               </div>
               <input
@@ -700,10 +717,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-indigo-950">
-                      การตรวจสอบคำตอบและผลการตรวจของ Layer 1 (Leader Verification)
+                      {t.supervisorVerificationTitle}
                     </h3>
                     <p className="text-xs text-indigo-700">
-                      Supervisor ตรวจสอบผลการตรวจเช็คหน้างานของ Leader รายการต่อรายการตามแบบฟอร์ม เพื่อยืนยันว่าปัญหาได้รับการแก้ไขและนำขึ้นบอร์ด SBOP แล้ว
+                      {t.supervisorVerificationDesc}
                     </p>
                   </div>
                 </div>
@@ -716,23 +733,23 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <div className="flex flex-wrap items-center justify-between bg-indigo-100/70 text-indigo-900 px-4 py-2.5 rounded-2xl text-xs font-semibold gap-2">
                 <div className="flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>ตรวจสอบผลตรวจรหัสรายการ: <strong className="text-indigo-950 font-bold bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200">#{inspectionCode}</strong></span>
+                  <span>{t.verifyingInspectionCode} <strong className="text-indigo-950 font-bold bg-white px-2.5 py-0.5 rounded-lg border border-indigo-200">#{inspectionCode}</strong></span>
                   {mcAndProducts && <span className="text-indigo-700 font-normal">({mcAndProducts})</span>}
                 </div>
                 {priorLayersData?.layer1 ? (
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    พบผลตรวจ Layer 1 เรียบร้อย ✅
+                    {t.layer1AuditFound}
                   </span>
                 ) : (
                   <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                    ยังไม่มีผลตรวจ Layer 1 ในรหัสนี้ ⏳
+                    {t.layer1AuditNotFound}
                   </span>
                 )}
               </div>
 
               {loadingPrior ? (
                 <div className="py-8 text-center text-xs text-indigo-600 font-medium">
-                  กำลังดึงผลตรวจของ Layer 1 (รหัส {inspectionCode})...
+                  {t.fetchingPriorLayerData}
                 </div>
               ) : priorLayersData?.layer1 ? (
                 <PriorLayerChecklistView
@@ -743,7 +760,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 />
               ) : (
                 <div className="py-6 text-center bg-white/70 rounded-2xl border border-dashed border-indigo-200 text-slate-500 text-xs">
-                  ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 1 (Leader) ในรอบและรหัสนี้ สามารถตอบแบบประเมิน Layer 2 ได้ตามปกติ
+                  ℹ️ {t.noPriorLayerNotice}
                 </div>
               )}
             </div>
@@ -759,10 +776,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-purple-950">
-                      การทบทวนผลของ Layer 1 (Leader) และ Layer 2 (Supervisor) Systems Verification
+                      {t.managerVerificationTitle}
                     </h3>
                     <p className="text-xs text-purple-700">
-                      Manager ทบทวนคำตอบและการดำเนินงานด้านความปลอดภัยของทั้งสองระดับ เพื่อนำประเด็นเข้าที่ประชุม GO-Meeting หรือขยายผลสู่ Plant VSM
+                      {t.managerVerificationDesc}
                     </p>
                   </div>
                 </div>
@@ -775,26 +792,26 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <div className="flex flex-wrap items-center justify-between bg-purple-100/70 text-purple-900 px-4 py-2.5 rounded-2xl text-xs font-semibold gap-2">
                 <div className="flex items-center gap-2">
                   <Tag className="w-3.5 h-3.5 text-purple-600" />
-                  <span>ทบทวนผลตรวจรหัสรายการ: <strong className="text-purple-950 font-bold bg-white px-2.5 py-0.5 rounded-lg border border-purple-200">#{inspectionCode}</strong></span>
+                  <span>{t.reviewingInspectionCode} <strong className="text-purple-950 font-bold bg-white px-2.5 py-0.5 rounded-lg border border-purple-200">#{inspectionCode}</strong></span>
                   {mcAndProducts && <span className="text-purple-700 font-normal">({mcAndProducts})</span>}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                     priorLayersData?.layer1 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500'
                   }`}>
-                    Layer 1: {priorLayersData?.layer1 ? 'ตรวจแล้ว ✅' : 'ไม่มี ⏳'}
+                    Layer 1: {priorLayersData?.layer1 ? (language === 'en' ? 'Audited ✅' : 'ตรวจแล้ว ✅') : (language === 'en' ? 'Pending ⏳' : 'ไม่มี ⏳')}
                   </span>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
                     priorLayersData?.layer2 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-slate-100 text-slate-500'
                   }`}>
-                    Layer 2: {priorLayersData?.layer2 ? 'ตรวจแล้ว ✅' : 'ไม่มี ⏳'}
+                    Layer 2: {priorLayersData?.layer2 ? (language === 'en' ? 'Audited ✅' : 'ตรวจแล้ว ✅') : (language === 'en' ? 'Pending ⏳' : 'ไม่มี ⏳')}
                   </span>
                 </div>
               </div>
 
               {loadingPrior ? (
                 <div className="py-8 text-center text-xs text-purple-600 font-medium">
-                  กำลังดึงผลตรวจของ Layer 1 & 2 (รหัส {inspectionCode})...
+                  {t.fetchingPriorLayerData}
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -803,11 +820,11 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
-                        <span>1. ผลการตรวจของ Layer 1 (Leader)</span>
+                        <span>{t.layer1LeaderResults}</span>
                       </h4>
                       {priorLayersData?.layer1 && (
                         <span className="text-[11px] text-slate-500">
-                          ผู้ตรวจ: {priorLayersData.layer1.auditor_name} ({priorLayersData.layer1.audit_date})
+                          {t.auditorBy}: {priorLayersData.layer1.auditor_name} ({priorLayersData.layer1.audit_date})
                         </span>
                       )}
                     </div>
@@ -820,7 +837,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       />
                     ) : (
                       <div className="py-4 text-center bg-white/70 rounded-2xl border border-dashed border-purple-200 text-slate-500 text-xs">
-                        ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 1 (Leader) ในรหัสนี้
+                        ℹ️ {t.noPriorLayerNotice}
                       </div>
                     )}
                   </div>
@@ -830,11 +847,11 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                        <span>2. ผลการตรวจของ Layer 2 (Supervisor)</span>
+                        <span>{t.layer2SupervisorResults}</span>
                       </h4>
                       {priorLayersData?.layer2 && (
                         <span className="text-[11px] text-slate-500">
-                          ผู้ตรวจ: {priorLayersData.layer2.auditor_name} ({priorLayersData.layer2.audit_date})
+                          {t.auditorBy}: {priorLayersData.layer2.auditor_name} ({priorLayersData.layer2.audit_date})
                         </span>
                       )}
                     </div>
@@ -847,7 +864,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       />
                     ) : (
                       <div className="py-4 text-center bg-white/70 rounded-2xl border border-dashed border-purple-200 text-slate-500 text-xs">
-                        ℹ️ ยังไม่พบบันทึกการตรวจของ Layer 2 (Supervisor) ในรหัสนี้
+                        ℹ️ {t.noPriorLayerNotice}
                       </div>
                     )}
                   </div>
@@ -860,19 +877,21 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           <div className="bg-gradient-to-r from-slate-900 to-sky-950 p-4 rounded-xl text-white flex flex-wrap items-center justify-between gap-4 shadow-sm border border-slate-800">
             <div className="flex items-center gap-6">
               <div>
-                <span className="text-[11px] text-slate-400 font-medium block">รายการตรวจระดับ {layer}</span>
-                <span className="text-xl font-bold text-white">{items.length} ข้อ</span>
+                <span className="text-[11px] text-slate-400 font-medium block">
+                  {language === 'en' ? `${layer} Checklist Items` : `รายการตรวจระดับ ${layer}`}
+                </span>
+                <span className="text-xl font-bold text-white">{items.length} {t.itemsCountUnit}</span>
               </div>
               <div className="border-l border-slate-800 pl-6">
-                <span className="text-[11px] text-emerald-400 font-medium block">ผ่าน (OK)</span>
+                <span className="text-[11px] text-emerald-400 font-medium block">{t.totalOk}</span>
                 <span className="text-xl font-bold text-emerald-400">{totalOk}</span>
               </div>
               <div className="border-l border-slate-800 pl-6">
-                <span className="text-[11px] text-red-400 font-medium block">ไม่ผ่าน (NO)</span>
+                <span className="text-[11px] text-red-400 font-medium block">{t.totalNo}</span>
                 <span className="text-xl font-bold text-red-400">{totalNo}</span>
               </div>
               <div className="border-l border-slate-800 pl-6">
-                <span className="text-[11px] text-slate-400 font-medium block">N/A</span>
+                <span className="text-[11px] text-slate-400 font-medium block">{t.totalNa}</span>
                 <span className="text-xl font-bold text-slate-300">{totalNa}</span>
               </div>
             </div>
@@ -903,11 +922,13 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             {loading ? (
               <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200">
                 <div className="w-8 h-8 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-                <p className="text-xs text-slate-500">กำลังโหลดหัวข้อการตรวจประเมินของแผนก {departmentCode} ({layer})...</p>
+                <p className="text-xs text-slate-500">
+                  {t.loadingDeptQuestions.replace('{0}', departmentCode).replace('{1}', layer)}
+                </p>
               </div>
             ) : items.length === 0 ? (
               <div className="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-xs">
-                ไม่พบคำถามการตรวจเช็คในระดับนี้
+                {t.noQuestionsInLayer}
               </div>
             ) : (
               Object.entries(categorizedItems).map(([categoryName, catItems]) => (
@@ -919,7 +940,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       <span>{categoryName}</span>
                     </div>
                     <span className="text-[11px] font-medium text-slate-500">
-                      {catItems.length} ข้อ
+                      {catItems.length} {t.itemsCountUnit}
                     </span>
                   </div>
 
@@ -949,7 +970,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                               </p>
                               {item.method && (
                                 <p className="text-[11px] text-slate-400 italic">
-                                  วิธีตรวจ: {item.method}
+                                  {t.method}: {item.method}
                                 </p>
                               )}
                             </div>
@@ -1005,7 +1026,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                   <span>{t.defectDetails}</span>
                                 </span>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-slate-600 font-normal">ความรุนแรง:</span>
+                                  <span className="text-[11px] text-slate-600 font-normal">{t.severity}:</span>
                                   <select
                                     value={item.severity}
                                     onChange={(e) => handleItemFieldChange(itemIndex, 'severity', e.target.value)}
@@ -1087,7 +1108,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                       <div className="flex-1 truncate">
                                         <div className="text-[11px] font-bold text-emerald-700 flex items-center gap-1">
                                           <Check className="w-3 h-3" />
-                                          <span>อัปโหลดเข้า R2 สำเร็จ</span>
+                                          <span>{t.photoUploaded}</span>
                                         </div>
                                         <a
                                           href={item.imageUrl}
@@ -1111,7 +1132,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                     <label className="flex items-center justify-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer shadow-sm transition">
                                       <Camera className="w-4 h-4 text-sky-600" />
                                       <span>
-                                        {item.uploadingImage ? 'กำลังอัปโหลดไปยัง Cloudflare R2...' : t.takePhoto}
+                                        {item.uploadingImage
+                                          ? (language === 'en' ? 'Uploading to Cloudflare R2...' : 'กำลังอัปโหลดไปยัง Cloudflare R2...')
+                                          : t.takePhoto}
                                       </span>
                                       <input
                                         type="file"
@@ -1142,7 +1165,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           {/* Footer Comments and Previous Findings */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
             <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
-              ส่วนสรุปความคิดเห็นและติดตามผล (Comments & Action Tracking)
+              {t.commentsSectionTitle}
             </h3>
 
             <div>
@@ -1175,9 +1198,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <div className="text-xs text-slate-500 flex items-center gap-1.5">
                 <Info className="w-4 h-4 text-sky-600" />
                 <span>
-                  {layer === 'Layer 1' && 'Leader: บันทึกการตรวจความปลอดภัยหน้างานประจำวัน/กะ'}
-                  {layer === 'Layer 2' && 'Supervisor: ทบทวนและติดตามผลของ Layer 1 พร้อมรายงานประจำสัปดาห์'}
-                  {layer === 'Layer 3' && 'Manager: ตรวจประเมินระดับระบบและติดตามผลเพื่อนำเข้าที่ประชุม GO-Meeting'}
+                  {layer === 'Layer 1' && t.l1Guidance}
+                  {layer === 'Layer 2' && t.l2Guidance}
+                  {layer === 'Layer 3' && t.l3Guidance}
                 </span>
               </div>
 

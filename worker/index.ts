@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import { questionTranslationsEn, categoryTranslationsEn, subcategoryTranslationsEn, methodTranslationsEn } from '../src/i18n/translations';
 
 export interface Env {
   DB: D1Database;
@@ -373,6 +374,13 @@ export default {
 
       const grouped: Record<string, Record<string, any[]>> = {};
       for (const item of (results || []) as any[]) {
+        if (!item.question_en && item.question_th) {
+          item.question_en = questionTranslationsEn[item.question_th.trim()] || item.question_th;
+        }
+        item.category_en = categoryTranslationsEn[item.category?.trim()] || item.category;
+        item.subcategory_en = subcategoryTranslationsEn[item.subcategory?.trim()] || item.subcategory;
+        item.method_en = methodTranslationsEn[item.method?.trim()] || item.method;
+
         if (!grouped[item.layer]) grouped[item.layer] = {};
         const cat = item.category || 'General';
         if (!grouped[item.layer][cat]) grouped[item.layer][cat] = [];

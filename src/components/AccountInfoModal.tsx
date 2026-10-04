@@ -9,7 +9,7 @@ interface AccountInfoModalProps {
 }
 
 export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onClose }) => {
-  const { user, reloadUser, t } = useAuth();
+  const { user, reloadUser, t, language } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile');
 
   // Profile Edit State
@@ -43,7 +43,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
         responsibleArea,
       });
       await reloadUser();
-      setMessage({ text: 'อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว', type: 'success' });
+      setMessage({ text: language === 'en' ? 'Profile updated successfully' : 'อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว', type: 'success' });
     } catch (err: any) {
       setMessage({ text: err.message || 'Update failed', type: 'error' });
     } finally {
@@ -56,12 +56,12 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
     setMessage(null);
 
     if (newPassword !== confirmPassword) {
-      setMessage({ text: 'รหัสผ่านใหม่และการยืนยันไม่ตรงกัน', type: 'error' });
+      setMessage({ text: language === 'en' ? 'New password and confirmation do not match' : 'รหัสผ่านใหม่และการยืนยันไม่ตรงกัน', type: 'error' });
       return;
     }
 
     if (newPassword.length < 6) {
-      setMessage({ text: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร', type: 'error' });
+      setMessage({ text: language === 'en' ? 'New password must be at least 6 characters' : 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร', type: 'error' });
       return;
     }
 
@@ -69,7 +69,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
 
     try {
       await api.changePassword({ currentPassword, newPassword });
-      setMessage({ text: 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว', type: 'success' });
+      setMessage({ text: language === 'en' ? 'Password changed successfully' : 'เปลี่ยนรหัสผ่านเรียบร้อยแล้ว', type: 'success' });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -163,14 +163,14 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
               {/* Account Status Badge */}
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <div>
-                  <div className="text-xs text-slate-500 font-medium">สถานะบัญชี (Account Status)</div>
+                  <div className="text-xs text-slate-500 font-medium">{t.accountStatus}</div>
                   <div className="text-sm font-bold text-slate-800 flex items-center gap-1.5 mt-0.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                     <span className="capitalize">{user.status}</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-500 font-medium">สิทธิ์ในระบบ (Role)</div>
+                  <div className="text-xs text-slate-500 font-medium">{t.systemRole}</div>
                   <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 uppercase">
                     {user.role}
                   </span>
@@ -218,7 +218,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.email} (แก้ไขไม่ได้)
+                    {t.email} ({language === 'en' ? 'Read-only' : 'แก้ไขไม่ได้'})
                   </label>
                   <input
                     type="email"
@@ -271,7 +271,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-sm transition shadow mt-2 disabled:opacity-50"
               >
-                {loading ? 'กำลังบันทึก...' : t.saveChanges}
+                {loading ? (language === 'en' ? 'Saving...' : 'กำลังบันทึก...') : t.saveChanges}
               </button>
             </form>
           ) : (
@@ -323,7 +323,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                 disabled={loading}
                 className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-sm transition shadow mt-2 disabled:opacity-50"
               >
-                {loading ? 'กำลังเปลี่ยนรหัสผ่าน...' : t.changePassword}
+                {loading ? (language === 'en' ? 'Changing Password...' : 'กำลังเปลี่ยนรหัสผ่าน...') : t.changePassword}
               </button>
             </form>
           )}

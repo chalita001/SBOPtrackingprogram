@@ -134,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }`}
                 >
                   <BarChart3 className="w-4 h-4 text-emerald-400" />
-                  <span>แดชบอร์ด</span>
+                  <span>{t.tabDashboard}</span>
                 </button>
 
                 <button
@@ -222,7 +222,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <ClipboardCheck className="w-4 h-4" />
-            <span>ตรวจเช็ค</span>
+            <span>{language === 'th' ? 'ตรวจเช็ค' : 'Checklist'}</span>
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -231,7 +231,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <History className="w-4 h-4" />
-            <span>ประวัติ</span>
+            <span>{language === 'th' ? 'ประวัติ' : 'History'}</span>
           </button>
           <button
             onClick={() => setActiveTab('defects')}
@@ -240,7 +240,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <span>สิ่งผิดปกติ</span>
+            <span>{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
           </button>
           {user?.role === 'admin' && (
             <>
@@ -251,7 +251,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <BarChart3 className="w-4 h-4 text-emerald-400" />
-                <span>แดชบอร์ด</span>
+                <span>{t.tabDashboard}</span>
               </button>
               <button
                 onClick={() => setActiveTab('accounts')}
@@ -260,7 +260,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <Users className="w-4 h-4 text-indigo-400" />
-                <span>สมาชิก</span>
+                <span>{language === 'th' ? 'สมาชิก' : 'Members'}</span>
               </button>
             </>
           )}

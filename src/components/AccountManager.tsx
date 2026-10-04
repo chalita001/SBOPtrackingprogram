@@ -16,13 +16,11 @@ import {
   Phone, 
   Mail, 
   MapPin, 
-  Briefcase,
-  AlertTriangle,
   RefreshCw
 } from 'lucide-react';
 
 export const AccountManager: React.FC = () => {
-  const { user, t } = useAuth();
+  const { user, language, t } = useAuth();
   const [usersList, setUsersList] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const [loading, setLoading] = useState(true);
@@ -66,10 +64,17 @@ export const AccountManager: React.FC = () => {
   };
 
   const handleApprove = async (id: number, name: string) => {
-    if (!confirm(`คุณต้องการอนุมัติการสมัครสมาชิกของ ${name} ใช่หรือไม่? ระบบจะส่งอีเมลแจ้งเตือนไปยังผู้ใช้ทันที`)) return;
+    const confirmMsg = language === 'th'
+      ? `คุณต้องการอนุมัติการสมัครสมาชิกของ ${name} ใช่หรือไม่? ระบบจะส่งอีเมลแจ้งเตือนไปยังผู้ใช้ทันที`
+      : `Are you sure you want to approve registration for ${name}? An email alert will be sent immediately.`;
+    if (!confirm(confirmMsg)) return;
+
     try {
       await api.approveUser(id);
-      setActionMessage({ text: `อนุมัติการสมัครของ ${name} สำเร็จและส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว`, type: 'success' });
+      const successMsg = language === 'th'
+        ? `อนุมัติการสมัครของ ${name} สำเร็จและส่งอีเมลแจ้งเตือนเรียบร้อยแล้ว`
+        : `Approved registration for ${name} successfully and email sent.`;
+      setActionMessage({ text: successMsg, type: 'success' });
       loadUsers();
     } catch (err: any) {
       setActionMessage({ text: err.message || 'Approve failed', type: 'error' });
@@ -77,10 +82,17 @@ export const AccountManager: React.FC = () => {
   };
 
   const handleReject = async (id: number, name: string) => {
-    if (!confirm(`คุณต้องการปฏิเสธการสมัครสมาชิกของ ${name} ใช่หรือไม่?`)) return;
+    const confirmMsg = language === 'th'
+      ? `คุณต้องการปฏิเสธการสมัครสมาชิกของ ${name} ใช่หรือไม่?`
+      : `Are you sure you want to reject registration for ${name}?`;
+    if (!confirm(confirmMsg)) return;
+
     try {
       await api.rejectUser(id);
-      setActionMessage({ text: `ปฏิเสธการสมัครของ ${name} เรียบร้อยแล้ว`, type: 'success' });
+      const successMsg = language === 'th'
+        ? `ปฏิเสธการสมัครของ ${name} เรียบร้อยแล้ว`
+        : `Rejected registration for ${name}.`;
+      setActionMessage({ text: successMsg, type: 'success' });
       loadUsers();
     } catch (err: any) {
       setActionMessage({ text: err.message || 'Reject failed', type: 'error' });
@@ -88,10 +100,17 @@ export const AccountManager: React.FC = () => {
   };
 
   const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลสมาชิก ${name} ออกจากระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้`)) return;
+    const confirmMsg = language === 'th'
+      ? `คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูลสมาชิก ${name} ออกจากระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้`
+      : `Are you sure you want to permanently delete user ${name}? This action cannot be undone.`;
+    if (!confirm(confirmMsg)) return;
+
     try {
       await api.deleteUser(id);
-      setActionMessage({ text: `ลบสมาชิก ${name} ออกจากระบบแล้ว`, type: 'success' });
+      const successMsg = language === 'th'
+        ? `ลบสมาชิก ${name} ออกจากระบบแล้ว`
+        : `User ${name} has been deleted.`;
+      setActionMessage({ text: successMsg, type: 'success' });
       loadUsers();
     } catch (err: any) {
       setActionMessage({ text: err.message || 'Delete failed', type: 'error' });
@@ -105,7 +124,7 @@ export const AccountManager: React.FC = () => {
         role: newRole,
         department: newDept,
       });
-      setActionMessage({ text: `อัปเดตสิทธิ์ของ ${editingUser.first_name} เรียบร้อยแล้ว`, type: 'success' });
+      setActionMessage({ text: t.saveRoleSuccess, type: 'success' });
       setEditingUser(null);
       loadUsers();
     } catch (err: any) {
@@ -114,7 +133,7 @@ export const AccountManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Title & Stats Header */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -125,7 +144,7 @@ export const AccountManager: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-slate-900">{t.accountManagerTitle}</h1>
-                <p className="text-xs text-slate-500">จัดการข้อมูลพนักงาน อนุมัติการสมัครสมาชิก ลบข้อมูล และกำหนดสิทธิ์การใช้งาน</p>
+                <p className="text-xs text-slate-500">{t.accountManagerSubtitle}</p>
               </div>
             </div>
           </div>
@@ -134,7 +153,7 @@ export const AccountManager: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition self-start md:self-center"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>รีเฟรชข้อมูล</span>
+            <span>{t.refresh}</span>
           </button>
         </div>
 
@@ -161,7 +180,7 @@ export const AccountManager: React.FC = () => {
           <div className="p-4 rounded-xl bg-red-50 border border-red-200">
             <div className="text-xs text-red-700 font-medium flex items-center gap-1">
               <XCircle className="w-3.5 h-3.5" />
-              <span>ปฏิเสธ (Rejected)</span>
+              <span>{t.rejectedMembers}</span>
             </div>
             <div className="text-2xl font-bold text-red-800 mt-1">{stats.rejected || 0}</div>
           </div>
@@ -178,7 +197,7 @@ export const AccountManager: React.FC = () => {
         >
           <span>{actionMessage.text}</span>
           <button onClick={() => setActionMessage(null)} className="text-xs underline font-semibold ml-4">
-            ปิด
+            {t.close}
           </button>
         </div>
       )}
@@ -205,10 +224,10 @@ export const AccountManager: React.FC = () => {
             onChange={(e) => setSelectedStatus(e.target.value)}
             className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-500"
           >
-            <option value="all">สถานะทั้งหมด (All Status)</option>
-            <option value="pending">รอการอนุมัติ (Pending)</option>
-            <option value="approved">อนุมัติแล้ว (Approved)</option>
-            <option value="rejected">ปฏิเสธ (Rejected)</option>
+            <option value="all">{t.allStatus}</option>
+            <option value="pending">{t.statusPending}</option>
+            <option value="approved">{t.statusApproved}</option>
+            <option value="rejected">{t.statusRejected}</option>
           </select>
 
           {/* Department Filter */}
@@ -217,7 +236,7 @@ export const AccountManager: React.FC = () => {
             onChange={(e) => setSelectedDept(e.target.value)}
             className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-500"
           >
-            <option value="all">แผนกทั้งหมด (All Depts)</option>
+            <option value="all">{t.allDepartments}</option>
             <option value="MOLD">Molding / MM</option>
             <option value="FACILITY">Facility</option>
             <option value="ASSY">Assembly</option>
@@ -235,31 +254,35 @@ export const AccountManager: React.FC = () => {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-900 text-white font-semibold border-b border-slate-800">
-                <th className="py-3.5 px-4">ชื่อ - นามสกุล</th>
-                <th className="py-3.5 px-4">อีเมล & เบอร์โทร</th>
-                <th className="py-3.5 px-4">แผนก & ตำแหน่ง</th>
-                <th className="py-3.5 px-4">พื้นที่รับผิดชอบ</th>
-                <th className="py-3.5 px-4">สิทธิ์ในระบบ</th>
-                <th className="py-3.5 px-4">สถานะ</th>
-                <th className="py-3.5 px-4 text-center">การจัดการ</th>
+                <th className="py-3.5 px-4">{t.nameSurname}</th>
+                <th className="py-3.5 px-4">{t.emailAndPhone}</th>
+                <th className="py-3.5 px-4">{t.deptAndPosition}</th>
+                <th className="py-3.5 px-4">{t.responsibleArea}</th>
+                <th className="py-3.5 px-4">{t.systemRole}</th>
+                <th className="py-3.5 px-4">{t.accountStatus}</th>
+                <th className="py-3.5 px-4 text-center">{t.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-slate-400">
-                    กำลังโหลดข้อมูลสมาชิก...
+                    {t.loading}
                   </td>
                 </tr>
               ) : usersList.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="text-center py-12 text-slate-400">
-                    ไม่พบข้อมูลสมาชิกตามเงื่อนไขที่เลือก
+                    {t.noDataFound}
                   </td>
                 </tr>
               ) : (
                 usersList.map((u) => {
                   const isCurrentUser = u.id === user?.id;
+                  const dateFormatted = u.created_at
+                    ? new Date(u.created_at).toLocaleDateString(language === 'th' ? 'th-TH' : 'en-US')
+                    : '-';
+
                   return (
                     <tr key={u.id} className="hover:bg-slate-50/80 transition">
                       {/* Name */}
@@ -268,12 +291,12 @@ export const AccountManager: React.FC = () => {
                           {u.first_name} {u.last_name}
                           {isCurrentUser && (
                             <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold">
-                              คุณ (You)
+                              {t.you}
                             </span>
                           )}
                         </div>
                         <div className="text-[11px] text-slate-400">
-                          สมัครเมื่อ: {u.created_at ? new Date(u.created_at).toLocaleDateString('th-TH') : '-'}
+                          {t.registeredDate} {dateFormatted}
                         </div>
                       </td>
 
@@ -307,7 +330,6 @@ export const AccountManager: React.FC = () => {
                       </td>
 
                       {/* Role */}
-                      {/* Role */}
                       <td className="py-3 px-4">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
@@ -323,12 +345,12 @@ export const AccountManager: React.FC = () => {
                           <Shield className="w-3 h-3" />
                           <span>
                             {u.role === 'admin'
-                              ? 'Admin'
+                              ? (language === 'th' ? 'ผู้ดูแลระบบ (Admin)' : 'Admin')
                               : u.role === 'layer3' || u.role === 'manager'
-                              ? 'Layer 3 (Manager)'
+                              ? (language === 'th' ? 'Layer 3 (Manager)' : 'Layer 3 (Manager)')
                               : u.role === 'layer2' || u.role === 'supervisor'
-                              ? 'Layer 2 (Supervisor)'
-                              : 'Layer 1 (Leader)'}
+                              ? (language === 'th' ? 'Layer 2 (Supervisor)' : 'Layer 2 (Supervisor)')
+                              : (language === 'th' ? 'Layer 1 (Leader)' : 'Layer 1 (Leader)')}
                           </span>
                         </span>
                       </td>
@@ -338,19 +360,19 @@ export const AccountManager: React.FC = () => {
                         {u.status === 'pending' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 animate-pulse">
                             <Clock className="w-3 h-3" />
-                            <span>รออนุมัติ</span>
+                            <span>{language === 'th' ? 'รออนุมัติ' : 'Pending'}</span>
                           </span>
                         )}
                         {u.status === 'approved' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                             <CheckCircle className="w-3 h-3" />
-                            <span>อนุมัติแล้ว</span>
+                            <span>{language === 'th' ? 'อนุมัติแล้ว' : 'Approved'}</span>
                           </span>
                         )}
                         {u.status === 'rejected' && (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-800 border border-red-200">
                             <XCircle className="w-3 h-3" />
-                            <span>ปฏิเสธ</span>
+                            <span>{language === 'th' ? 'ปฏิเสธ' : 'Rejected'}</span>
                           </span>
                         )}
                       </td>
@@ -363,14 +385,14 @@ export const AccountManager: React.FC = () => {
                               <button
                                 onClick={() => handleApprove(u.id, `${u.first_name} ${u.last_name}`)}
                                 className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition"
-                                title="อนุมัติสมาชิก (Approve)"
+                                title={t.approve}
                               >
                                 <UserCheck className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handleReject(u.id, `${u.first_name} ${u.last_name}`)}
                                 className="p-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white shadow-sm transition"
-                                title="ปฏิเสธการสมัคร (Reject)"
+                                title={t.reject}
                               >
                                 <UserX className="w-4 h-4" />
                               </button>
@@ -384,7 +406,7 @@ export const AccountManager: React.FC = () => {
                               setNewDept(u.department);
                             }}
                             className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
-                            title="เปลี่ยนสิทธิ์หรือแผนก (Edit Role)"
+                            title={t.editRoleAndDept}
                           >
                             <Shield className="w-4 h-4" />
                           </button>
@@ -393,7 +415,7 @@ export const AccountManager: React.FC = () => {
                             <button
                               onClick={() => handleDelete(u.id, `${u.first_name} ${u.last_name}`)}
                               className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition"
-                              title="ลบสมาชิก (Delete)"
+                              title={t.deleteUser}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -414,30 +436,30 @@ export const AccountManager: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6">
             <h3 className="text-base font-bold text-slate-900 mb-1">
-              กำหนดสิทธิ์และแผนก: {editingUser.first_name} {editingUser.last_name}
+              {t.editRoleAndDept}: {editingUser.first_name} {editingUser.last_name}
             </h3>
             <p className="text-xs text-slate-500 mb-4">{editingUser.email}</p>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  สิทธิ์ในระบบ (System Role)
+                  {t.systemRole}
                 </label>
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-sky-500"
                 >
-                  <option value="layer1">1. Layer 1 (Leader — หัวหน้างานระดับต้น)</option>
-                  <option value="layer2">2. Layer 2 (Supervisor — หัวหน้างานระดับกุม)</option>
-                  <option value="layer3">3. Layer 3 (Manager — ผู้จัดการแผนก)</option>
-                  <option value="admin">ผู้ดูแลระบบ (Admin)</option>
+                  <option value="layer1">1. {t.roleLayer1}</option>
+                  <option value="layer2">2. {t.roleLayer2}</option>
+                  <option value="layer3">3. {t.roleLayer3}</option>
+                  <option value="admin">{t.roleAdmin}</option>
                 </select>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  แผนก (Department)
+                  {t.department}
                 </label>
                 <select
                   value={newDept}
@@ -460,14 +482,14 @@ export const AccountManager: React.FC = () => {
                   onClick={() => setEditingUser(null)}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition"
                 >
-                  ยกเลิก
+                  {t.cancel}
                 </button>
                 <button
                   type="button"
                   onClick={handleSaveRole}
                   className="px-4 py-2 rounded-xl text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white transition shadow"
                 >
-                  บันทึกการเปลี่ยนแปลง
+                  {t.saveChanges}
                 </button>
               </div>
             </div>

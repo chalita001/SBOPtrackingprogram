@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { localizeQuestion, localizeCategory, localizeSubcategory, localizeMethod } from '../i18n/translations';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -51,6 +53,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
   inspectionCode,
   defaultExpanded = true,
 }) => {
+  const { language, t } = useAuth();
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -67,7 +70,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
   }, {} as Record<string, PriorItem[]>);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fadeIn">
       {/* 1. Header Banner styled exactly like image (Dark Navy Score Board) */}
       <div className="bg-slate-950 text-white rounded-2xl p-5 shadow-lg border border-slate-800">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -75,16 +78,16 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
           <div className="flex flex-wrap items-center gap-6 sm:gap-8">
             <div>
               <span className="text-xs text-slate-400 font-medium block">
-                รายการตรวจระดับ {layerTitle}
+                {language === 'th' ? `รายการตรวจระดับ ${layerTitle}` : `${layerTitle} Questions`}
               </span>
               <span className="text-2xl font-bold text-white tracking-tight">
-                {totalCount} ข้อ
+                {totalCount} {t.itemsCountUnit}
               </span>
             </div>
 
             <div className="border-l border-slate-800 pl-6">
               <span className="text-xs text-slate-400 font-medium block">
-                ผ่าน (OK)
+                {t.totalOk}
               </span>
               <span className="text-2xl font-bold text-emerald-400 tracking-tight">
                 {inspection.total_ok || 0}
@@ -93,7 +96,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
 
             <div className="border-l border-slate-800 pl-6">
               <span className="text-xs text-slate-400 font-medium block">
-                ไม่ผ่าน (NO)
+                {t.totalNo}
               </span>
               <span className="text-2xl font-bold text-red-400 tracking-tight">
                 {inspection.total_no || 0}
@@ -102,7 +105,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
 
             <div className="border-l border-slate-800 pl-6">
               <span className="text-xs text-slate-400 font-medium block">
-                N/A
+                {t.totalNa}
               </span>
               <span className="text-2xl font-bold text-slate-300 tracking-tight">
                 {inspection.total_na || 0}
@@ -114,7 +117,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
           <div className="flex items-center gap-4 self-end lg:self-center border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
             <div className="text-right">
               <span className="text-xs text-slate-400 font-medium block">
-                คะแนนความปลอดภัย (Safety Score)
+                {t.safetyScore}
               </span>
               <span className="text-3xl font-extrabold text-white tracking-tight">
                 {Number(inspection.score_percent || 0).toFixed(1)}%
@@ -136,7 +139,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition ml-2"
-              title={isExpanded ? 'ย่อแบบฟอร์ม' : 'ขยายดูแบบฟอร์มทั้งหมด'}
+              title={isExpanded ? t.collapseForm : t.expandForm}
             >
               {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </button>
@@ -146,13 +149,13 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
         {/* Auditor details bar */}
         <div className="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between text-xs text-slate-400 gap-2">
           <div className="flex items-center gap-3">
-            <span>ผู้ตรวจ: <strong className="text-slate-200">{inspection.auditor_name}</strong></span>
+            <span>{language === 'th' ? 'ผู้ตรวจ:' : 'Auditor:'} <strong className="text-slate-200">{inspection.auditor_name}</strong></span>
             <span>•</span>
-            <span>วันที่ตรวจ: <strong className="text-slate-200">{inspection.audit_date} ({inspection.shift})</strong></span>
+            <span>{language === 'th' ? 'วันที่ตรวจ:' : 'Audit Date:'} <strong className="text-slate-200">{inspection.audit_date} ({inspection.shift})</strong></span>
             {inspectionCode && (
               <>
                 <span>•</span>
-                <span>รหัสรายการ: <strong className="text-sky-300">#{inspectionCode}</strong></span>
+                <span>{language === 'th' ? 'รหัสรายการ:' : 'Code:'} <strong className="text-sky-300">#{inspectionCode}</strong></span>
               </>
             )}
           </div>
@@ -161,12 +164,12 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
             onClick={() => setIsExpanded(!isExpanded)}
             className="text-sky-400 hover:text-sky-300 text-xs font-semibold underline flex items-center gap-1"
           >
-            {isExpanded ? 'ย่อรายการตรวจ' : `คลิกเพื่อดูคำตอบทั้งหมด (${totalCount} ข้อ)`}
+            {isExpanded ? t.collapseChecklist : `${t.viewAllAnswers} (${totalCount} ${t.itemsCountUnit})`}
           </button>
         </div>
       </div>
 
-      {/* 2. Questions list grouped by Category (Styled matching image 1) */}
+      {/* 2. Questions list grouped by Category */}
       {isExpanded && (
         <div className="space-y-4 animate-fadeIn">
           {Object.entries(groupedByCategory).map(([category, catItems], catIdx) => (
@@ -179,11 +182,11 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-sky-600 inline-block"></span>
                   <h4 className="text-xs font-bold text-slate-800 tracking-wide">
-                    {category}
+                    {localizeCategory(category, language)}
                   </h4>
                 </div>
                 <span className="text-[11px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
-                  {catItems.length} ข้อ
+                  {catItems.length} {t.itemsCountUnit}
                 </span>
               </div>
 
@@ -204,15 +207,15 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                         <div className="space-y-1 flex-1 pr-2">
                           {item.subcategory && (
                             <span className="inline-block text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded">
-                              {item.subcategory}
+                              {localizeSubcategory(item.subcategory, language)}
                             </span>
                           )}
                           <div className="text-xs font-bold text-slate-900 leading-snug">
-                            {item.question}
+                            {localizeQuestion(item.question, language)}
                           </div>
                           {item.method && (
                             <div className="text-[11px] text-slate-400 italic">
-                              วิธีตรวจ: {item.method}
+                              {language === 'th' ? `วิธีตรวจ: ${item.method}` : `Method: ${localizeMethod(item.method, 'en')}`}
                             </div>
                           )}
                         </div>
@@ -263,7 +266,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-1.5 font-bold text-red-800">
                               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                              <span>ประเด็นความเสี่ยง: {item.finding_topic || 'พบข้อผิดปกติ'}</span>
+                              <span>{language === 'th' ? 'ประเด็นความเสี่ยง:' : 'Safety Finding:'} {item.finding_topic || (language === 'th' ? 'พบข้อผิดปกติ' : 'Defect Anomaly')}</span>
                             </div>
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-200 text-red-900 border border-red-300">
                               {item.severity || 'Major'}
@@ -272,16 +275,16 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
 
                           {item.action_plan && (
                             <div className="text-[11px] text-slate-700">
-                              <strong>แผนแก้ไข:</strong> {item.action_plan}
+                              <strong>{language === 'th' ? 'แผนแก้ไข:' : 'Action Plan:'}</strong> {item.action_plan}
                             </div>
                           )}
 
                           <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
                             {item.responsible_person && (
-                              <span>ผู้รับผิดชอบ: <strong>{item.responsible_person}</strong></span>
+                              <span>{language === 'th' ? 'ผู้รับผิดชอบ:' : 'Responsible:'} <strong>{item.responsible_person}</strong></span>
                             )}
                             {item.due_date && (
-                              <span>กำหนดเสร็จ: <strong>{item.due_date}</strong></span>
+                              <span>{language === 'th' ? 'กำหนดเสร็จ:' : 'Target Due:'} <strong>{item.due_date}</strong></span>
                             )}
                           </div>
 
@@ -307,7 +310,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-1 text-[11px] text-sky-600 hover:text-sky-700 font-semibold underline"
                               >
-                                <span>ดูรูปภาพขนาดเต็ม (Cloudflare R2)</span>
+                                <span>{t.viewFullProofPhoto}</span>
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </a>
                             </div>
@@ -325,7 +328,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
           {inspection.comments && (
             <div className="p-4 bg-white rounded-xl border border-slate-200 text-xs text-slate-700 shadow-sm">
               <span className="font-bold text-slate-900 block mb-1">
-                💬 ข้อคิดเห็น / ข้อเสนอแนะจาก {inspection.auditor_name}:
+                💬 {t.auditorCommentsTitle} {inspection.auditor_name}:
               </span>
               <p className="leading-relaxed">{inspection.comments}</p>
             </div>
@@ -353,7 +356,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                 className="text-xs text-sky-600 hover:underline font-semibold inline-flex items-center gap-1"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span>เปิดในแท็บใหม่ (Cloudflare R2)</span>
+                <span>{t.openInNewTab}</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>

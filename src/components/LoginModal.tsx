@@ -52,7 +52,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold">{t.login}</h2>
-              <p className="text-xs text-sky-200">เข้าสู่ระบบติดตามความปลอดภัย SBOP</p>
+              <p className="text-xs text-sky-200">{t.loginSubtitle}</p>
             </div>
           </div>
           <button
@@ -92,7 +92,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">
-                รหัสผ่าน
+                {t.password}
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
@@ -112,14 +112,14 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               disabled={loading}
               className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-md shadow-sky-600/20 text-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'กำลังเข้าสู่ระบบ...' : t.login}
+              {loading ? t.signingIn : t.login}
             </button>
           </form>
 
           {/* Quick Demo Logins for test */}
           <div className="mt-6 pt-5 border-t border-slate-100">
             <p className="text-xs font-medium text-slate-500 mb-2.5 text-center">
-              บัญชีทดสอบระบบ (Quick Login):
+              {t.quickLoginTitle}
             </p>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
@@ -150,7 +150,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </div>
 
           <div className="mt-5 text-center text-xs text-slate-600">
-            ยังไม่มีบัญชีผู้ใช้งาน?{' '}
+            {t.noAccountYet}{' '}
             <button
               type="button"
               onClick={onSwitchToRegister}

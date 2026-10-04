@@ -14,10 +14,8 @@ import {
   ExternalLink,
   Image as ImageIcon,
   Clock,
-  Tag,
   ChevronRight,
   TrendingUp,
-  Activity,
   AlertCircle
 } from 'lucide-react';
 
@@ -78,14 +76,13 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
   onNavigateToAccounts,
   onNavigateToDefects,
 }) => {
-  const { user } = useAuth();
+  const { user, language, t } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   // Filters
   const currentYear = new Date().getFullYear().toString();
-  const currentMonth = (new Date().getMonth() + 1).toString();
   const [selectedYear, setSelectedYear] = useState<string>(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
   const [selectedDept, setSelectedDept] = useState<string>('all');
@@ -106,7 +103,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
       setStats(data);
     } catch (err: any) {
       console.error('Failed to load dashboard statistics:', err);
-      setError(err.message || 'ไม่สามารถโหลดข้อมูลแดชบอร์ดได้');
+      setError(err.message || (language === 'th' ? 'ไม่สามารถโหลดข้อมูลแดชบอร์ดได้' : 'Failed to load dashboard statistics'));
     } finally {
       setLoading(false);
     }
@@ -120,11 +117,11 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
   if (user?.role !== 'admin') {
     return (
-      <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center max-w-xl mx-auto my-12 shadow-sm">
+      <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center max-w-xl mx-auto my-12 shadow-sm animate-fadeIn">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-        <h2 className="text-lg font-bold text-red-900">การเข้าถึงถูกจำกัด (Access Denied)</h2>
+        <h2 className="text-lg font-bold text-red-900">{t.accessDeniedTitle}</h2>
         <p className="text-xs text-red-700 mt-2">
-          หน้านี้สงวนไว้สำหรับผู้ดูแลระบบ (Admin) เท่านั้น บัญชีของคุณไม่มีสิทธิ์ในการดูข้อมูลแดชบอร์ดบริหารนี้
+          {t.accessDeniedDesc}
         </p>
       </div>
     );
@@ -143,30 +140,30 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <div className="flex items-center gap-2.5">
               <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Admin Executive Dashboard
+                {t.dashboardExecutiveBadge}
               </span>
               <span className="text-xs text-slate-400">Cloudflare D1 & R2 Connected</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3 text-white">
               <BarChart3 className="w-8 h-8 text-sky-400" />
-              <span>แดชบอร์ดบริหารความปลอดภัย SBOP</span>
+              <span>{t.dashboardTitle}</span>
             </h1>
             <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
-              ภาพรวมการตรวจสอบความปลอดภัยของทุกแผนก การทบทวนผล 3 ระดับ (Layer 1-3) การติดตามประเด็นความเสี่ยง และสถานะสมาชิกในระบบ
+              {t.dashboardSubtitle}
             </p>
           </div>
 
           {/* Quick Stats Pill */}
           <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/10 self-start lg:self-center">
             <div className="text-center px-2">
-              <span className="text-[10px] text-slate-300 font-semibold block uppercase">สถานะรวม</span>
+              <span className="text-[10px] text-slate-300 font-semibold block uppercase">{t.overallStatus}</span>
               <span className={`text-base font-extrabold ${isHealthy ? 'text-emerald-400' : 'text-red-400'}`}>
-                {isHealthy ? 'ผ่านเกณฑ์ (PASS)' : 'เฝ้าระวัง (ATTN)'}
+                {isHealthy ? t.statusPass : t.statusAttn}
               </span>
             </div>
             <div className="h-8 w-px bg-white/20"></div>
             <div className="text-center px-2">
-              <span className="text-[10px] text-slate-300 font-semibold block uppercase">คะแนนเฉลี่ย</span>
+              <span className="text-[10px] text-slate-300 font-semibold block uppercase">{t.avgSafetyScoreKpi}</span>
               <span className="text-xl font-black text-white">{avgScore}%</span>
             </div>
           </div>
@@ -178,13 +175,13 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             {/* Year Filter */}
             <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
               <Calendar className="w-3.5 h-3.5 text-sky-400" />
-              <label className="text-slate-400 font-medium">ปี:</label>
+              <label className="text-slate-400 font-medium">{t.filterYear}</label>
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
                 className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
               >
-                <option value="all" className="bg-slate-900 text-white">ทุกปี (All Years)</option>
+                <option value="all" className="bg-slate-900 text-white">{t.allYears}</option>
                 <option value="2026" className="bg-slate-900 text-white">2026</option>
                 <option value="2025" className="bg-slate-900 text-white">2025</option>
               </select>
@@ -193,16 +190,16 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             {/* Month Filter */}
             <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
               <Clock className="w-3.5 h-3.5 text-indigo-400" />
-              <label className="text-slate-400 font-medium">รอบเดือน:</label>
+              <label className="text-slate-400 font-medium">{t.filterMonth}</label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
               >
-                <option value="all" className="bg-slate-900 text-white">ทุกเดือน (All Months)</option>
+                <option value="all" className="bg-slate-900 text-white">{t.allMonths}</option>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m.toString()} className="bg-slate-900 text-white">
-                    เดือน {m}
+                    {language === 'th' ? `เดือน ${m}` : `Month ${m}`}
                   </option>
                 ))}
               </select>
@@ -211,13 +208,13 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             {/* Department Filter */}
             <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
               <Building2 className="w-3.5 h-3.5 text-amber-400" />
-              <label className="text-slate-400 font-medium">แผนก:</label>
+              <label className="text-slate-400 font-medium">{t.filterDept}</label>
               <select
                 value={selectedDept}
                 onChange={(e) => setSelectedDept(e.target.value)}
                 className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
               >
-                <option value="all" className="bg-slate-900 text-white">ทุกแผนก (All)</option>
+                <option value="all" className="bg-slate-900 text-white">{t.allDepartments}</option>
                 <option value="MOLD" className="bg-slate-900 text-white">Molding / MM</option>
                 <option value="FACILITY" className="bg-slate-900 text-white">Facility</option>
                 <option value="ASSY" className="bg-slate-900 text-white">Assembly</option>
@@ -236,7 +233,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>อัปเดตข้อมูล</span>
+            <span>{t.updateData}</span>
           </button>
         </div>
       </div>
@@ -253,7 +250,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         {/* Card 1: Total Inspections */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">การตรวจประเมินทั้งหมด</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t.totalInspectionsKpi}</span>
             <div className="p-2.5 rounded-xl bg-sky-50 text-sky-600">
               <ShieldCheck className="w-5 h-5" />
             </div>
@@ -262,19 +259,21 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <span className="text-3xl font-black text-slate-900">
               {overall?.total_inspections ?? 0}
             </span>
-            <span className="text-xs font-semibold text-slate-500">ครั้ง</span>
+            <span className="text-xs font-semibold text-slate-500">{t.timesUnit}</span>
           </div>
           <div className="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
-            <span>ครอบคลุม {overall?.active_departments ?? 0} แผนก</span>
-            <span>•</span>
-            <span>ผู้ตรวจ {overall?.active_auditors ?? 0} ท่าน</span>
+            <span>
+              {language === 'th'
+                ? `ครอบคลุม ${overall?.active_departments ?? 0} แผนก • ผู้ตรวจ ${overall?.active_auditors ?? 0} ท่าน`
+                : `Covering ${overall?.active_departments ?? 0} depts • ${overall?.active_auditors ?? 0} auditors`}
+            </span>
           </div>
         </div>
 
         {/* Card 2: Average Safety Score */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">คะแนนความปลอดภัยเฉลี่ย</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t.avgSafetyScoreKpi}</span>
             <div className={`p-2.5 rounded-xl ${isHealthy ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
               <TrendingUp className="w-5 h-5" />
             </div>
@@ -284,18 +283,18 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               {avgScore}%
             </span>
             <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${isHealthy ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>
-              {isHealthy ? 'เกณฑ์มาตรฐาน' : 'ต่ำกว่าเกณฑ์ 85%'}
+              {isHealthy ? t.standardCriteria : t.belowCriteria}
             </span>
           </div>
           <div className="mt-2 text-[11px] text-slate-500">
-            เกณฑ์ผ่านของโรงงานคือ 85.0% ขึ้นไป
+            {t.criteriaNotice}
           </div>
         </div>
 
         {/* Card 3: Defect Count (NO) */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">ข้อบกพร่องที่พบ (NO)</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t.defectsFoundKpi}</span>
             <div className="p-2.5 rounded-xl bg-red-50 text-red-600">
               <AlertTriangle className="w-5 h-5" />
             </div>
@@ -304,17 +303,17 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <span className="text-3xl font-black text-red-600">
               {overall?.total_no ?? 0}
             </span>
-            <span className="text-xs font-semibold text-slate-500">รายการ</span>
+            <span className="text-xs font-semibold text-slate-500">{t.itemsUnit}</span>
           </div>
           <div className="mt-2 text-[11px] text-slate-500 flex items-center justify-between">
-            <span>ผ่านการตรวจ (OK): <strong className="text-emerald-700">{overall?.total_ok ?? 0}</strong></span>
+            <span>{t.passedCountLabel} <strong className="text-emerald-700">{overall?.total_ok ?? 0}</strong></span>
             {onNavigateToDefects && (
               <button
                 type="button"
                 onClick={onNavigateToDefects}
                 className="text-sky-600 font-bold hover:underline"
               >
-                ดูทั้งหมด →
+                {t.viewAllLink}
               </button>
             )}
           </div>
@@ -323,7 +322,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         {/* Card 4: System Users Summary */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">สมาชิกในระบบ</span>
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t.systemUsersKpi}</span>
             <div className="p-2.5 rounded-xl bg-indigo-50 text-indigo-600">
               <Users className="w-5 h-5" />
             </div>
@@ -332,15 +331,17 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <span className="text-3xl font-black text-indigo-900">
               {stats?.userCounts?.total ?? 0}
             </span>
-            <span className="text-xs font-semibold text-slate-500">บัญชี</span>
+            <span className="text-xs font-semibold text-slate-500">{t.accountsUnit}</span>
           </div>
           <div className="mt-2 text-[11px] flex items-center justify-between">
             {(stats?.userCounts?.pending_users ?? 0) > 0 ? (
               <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                รออนุมัติ {stats?.userCounts?.pending_users} บัญชี ⏳
+                {language === 'th'
+                  ? `รออนุมัติ ${stats?.userCounts?.pending_users} บัญชี ⏳`
+                  : `${stats?.userCounts?.pending_users} pending approval ⏳`}
               </span>
             ) : (
-              <span className="text-emerald-700 font-medium">ทุกบัญชีได้รับการอนุมัติแล้ว</span>
+              <span className="text-emerald-700 font-medium">{t.allUsersApproved}</span>
             )}
             {onNavigateToAccounts && (
               <button
@@ -348,7 +349,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 onClick={onNavigateToAccounts}
                 className="text-indigo-600 font-bold hover:underline"
               >
-                จัดการ →
+                {t.manageLink}
               </button>
             )}
           </div>
@@ -364,15 +365,15 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               <Building2 className="w-5 h-5 text-sky-600" />
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
-                  ผลการดำเนินงานความปลอดภัยแยกตามแผนก (Department Matrix)
+                  {t.deptMatrixTitle}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  สถิติการตรวจเช็ค คะแนนเฉลี่ย และข้อบกพร่องตาม 7 แผนกหลัก
+                  {t.deptMatrixSubtitle}
                 </p>
               </div>
             </div>
             <span className="text-xs text-slate-400 font-semibold bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-              7 แผนก
+              {language === 'th' ? '7 แผนก' : '7 Departments'}
             </span>
           </div>
 
@@ -380,23 +381,24 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
-                  <th className="py-3 px-3">แผนก (Department)</th>
-                  <th className="py-3 px-3 text-center">จำนวนครั้งที่ตรวจ</th>
-                  <th className="py-3 px-3 text-center">คะแนนเฉลี่ย</th>
-                  <th className="py-3 px-3 text-center">ผ่าน (OK)</th>
-                  <th className="py-3 px-3 text-center">พบปัญหา (NO)</th>
-                  <th className="py-3 px-3 text-center">ผู้ตรวจ</th>
+                  <th className="py-3 px-3">{t.deptCol}</th>
+                  <th className="py-3 px-3 text-center">{t.inspectionsCountCol}</th>
+                  <th className="py-3 px-3 text-center">{t.avgScoreCol}</th>
+                  <th className="py-3 px-3 text-center">{t.okCol}</th>
+                  <th className="py-3 px-3 text-center">{t.noCol}</th>
+                  <th className="py-3 px-3 text-center">{t.auditorCountCol}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {stats?.deptStats?.map((dept) => {
                   const score = Number(dept.average_score || 0);
                   const isDeptHealthy = dept.inspections_count > 0 ? score >= 85 : true;
+                  const deptDisplayName = language === 'th' ? dept.name_th : dept.name_en;
 
                   return (
                     <tr key={dept.code} className="hover:bg-slate-50/70 transition">
                       <td className="py-3 px-3">
-                        <div className="font-bold text-slate-900">{dept.name_th}</div>
+                        <div className="font-bold text-slate-900">{deptDisplayName}</div>
                         <div className="text-[10px] text-slate-400 font-mono">{dept.code} — {dept.name_en}</div>
                       </td>
 
@@ -421,7 +423,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                             </div>
                           </div>
                         ) : (
-                          <span className="text-slate-400 italic text-[11px]">- ยังไม่เริ่ม -</span>
+                          <span className="text-slate-400 italic text-[11px]">{t.notStartedYet}</span>
                         )}
                       </td>
 
@@ -440,7 +442,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                       </td>
 
                       <td className="py-3 px-3 text-center text-slate-600 font-medium">
-                        {dept.auditor_count} ท่าน
+                        {dept.auditor_count} {t.peopleUnit}
                       </td>
                     </tr>
                   );
@@ -458,10 +460,10 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               <Layers className="w-5 h-5 text-indigo-600" />
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
-                  การตรวจสอบ 3 ระดับ (Layers Audit)
+                  {t.layersAuditTitle}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  สถานะการตรวจตามสายการบังคับบัญชา
+                  {t.layersAuditSubtitle}
                 </p>
               </div>
             </div>
@@ -472,15 +474,15 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
-                    <strong className="text-xs text-sky-950 font-bold">Layer 1: Leader</strong>
+                    <strong className="text-xs text-sky-950 font-bold">{t.layer1Header}</strong>
                   </div>
                   <span className="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full">
-                    ตรวจรายกะ / รายวัน
+                    {t.layer1Subheader}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-                  <span>บันทึกแล้ว: <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('1'))?.count ?? 0} ครั้ง</strong></span>
-                  <span>ปัญหาที่พบ: <strong className="text-red-600">{stats?.layerStats?.find(l => l.layer.includes('1'))?.defects_count ?? 0} รายการ</strong></span>
+                  <span>{t.auditedCount} <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('1'))?.count ?? 0} {t.timesUnit}</strong></span>
+                  <span>{t.defectsCountLabel} <strong className="text-red-600">{stats?.layerStats?.find(l => l.layer.includes('1'))?.defects_count ?? 0} {t.itemsUnit}</strong></span>
                 </div>
               </div>
 
@@ -489,15 +491,15 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                    <strong className="text-xs text-indigo-950 font-bold">Layer 2: Supervisor</strong>
+                    <strong className="text-xs text-indigo-950 font-bold">{t.layer2Header}</strong>
                   </div>
                   <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
-                    ทบทวน & ตรวจสอบ L1
+                    {t.layer2Subheader}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-                  <span>บันทึกแล้ว: <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('2'))?.count ?? 0} ครั้ง</strong></span>
-                  <span>ปัญหาที่พบ: <strong className="text-red-600">{stats?.layerStats?.find(l => l.layer.includes('2'))?.defects_count ?? 0} รายการ</strong></span>
+                  <span>{t.auditedCount} <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('2'))?.count ?? 0} {t.timesUnit}</strong></span>
+                  <span>{t.defectsCountLabel} <strong className="text-red-600">{stats?.layerStats?.find(l => l.layer.includes('2'))?.defects_count ?? 0} {t.itemsUnit}</strong></span>
                 </div>
               </div>
 
@@ -506,15 +508,15 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
-                    <strong className="text-xs text-purple-950 font-bold">Layer 3: Manager</strong>
+                    <strong className="text-xs text-purple-950 font-bold">{t.layer3Header}</strong>
                   </div>
                   <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
-                    ภาพรวมระบบ & GO-Meeting
+                    {t.layer3Subheader}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-                  <span>บันทึกแล้ว: <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('3'))?.count ?? 0} ครั้ง</strong></span>
-                  <span>คะแนนเฉลี่ย: <strong className="text-purple-700">{stats?.layerStats?.find(l => l.layer.includes('3'))?.average_score ?? 0}%</strong></span>
+                  <span>{t.auditedCount} <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('3'))?.count ?? 0} {t.timesUnit}</strong></span>
+                  <span>{t.avgScoreCol}: <strong className="text-purple-700">{stats?.layerStats?.find(l => l.layer.includes('3'))?.average_score ?? 0}%</strong></span>
                 </div>
               </div>
             </div>
@@ -525,7 +527,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-indigo-600" />
-                <h3 className="text-sm font-bold text-slate-900">ผู้ใช้งานในระบบแยกตามระดับ</h3>
+                <h3 className="text-sm font-bold text-slate-900">{t.userDistributionTitle}</h3>
               </div>
               {onNavigateToAccounts && (
                 <button
@@ -533,26 +535,26 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                   onClick={onNavigateToAccounts}
                   className="text-xs font-bold text-indigo-600 hover:underline"
                 >
-                  จัดการสมาชิก →
+                  {t.manageMembersLink}
                 </button>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-500 block text-[11px]">Layer 1 (Leader)</span>
+                <span className="text-slate-500 block text-[11px]">{t.roleLayer1}</span>
                 <span className="text-lg font-bold text-slate-900">{stats?.userCounts?.layer1_users ?? 0}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-500 block text-[11px]">Layer 2 (Supervisor)</span>
+                <span className="text-slate-500 block text-[11px]">{t.roleLayer2}</span>
                 <span className="text-lg font-bold text-slate-900">{stats?.userCounts?.layer2_users ?? 0}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-                <span className="text-slate-500 block text-[11px]">Layer 3 (Manager)</span>
+                <span className="text-slate-500 block text-[11px]">{t.roleLayer3}</span>
                 <span className="text-lg font-bold text-slate-900">{stats?.userCounts?.layer3_users ?? 0}</span>
               </div>
               <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-200">
-                <span className="text-purple-700 block text-[11px]">ผู้ดูแลระบบ (Admin)</span>
+                <span className="text-purple-700 block text-[11px]">{t.roleAdmin}</span>
                 <span className="text-lg font-bold text-purple-900">{stats?.userCounts?.admin_users ?? 0}</span>
               </div>
             </div>
@@ -569,10 +571,10 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                ประเด็นความไม่ปลอดภัยล่าสุดที่ตรวจพบ (Recent Safety Defects)
+                {t.recentDefectsTitle}
               </h3>
               <p className="text-xs text-slate-500">
-                รายการข้อบกพร่องที่บันทึกพร้อมหลักฐานภาพถ่ายบน Cloudflare R2
+                {t.recentDefectsSubtitle}
               </p>
             </div>
           </div>
@@ -583,7 +585,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               onClick={onNavigateToDefects}
               className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 self-start sm:self-center"
             >
-              <span>ดูและอัปเดตสถานะแก้ไขทั้งหมด</span>
+              <span>{t.viewUpdateAllLink}</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
@@ -629,14 +631,14 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                   {/* Action Plan */}
                   {defect.action_plan && (
                     <div className="text-[11px] text-slate-600 bg-slate-50 p-2 rounded-xl">
-                      <strong>แผนแก้ไข:</strong> {defect.action_plan}
+                      <strong>{language === 'th' ? 'แผนแก้ไข:' : 'Action Plan:'}</strong> {defect.action_plan}
                     </div>
                   )}
 
                   {/* Responsible & Due date */}
                   <div className="text-[11px] text-slate-500 flex items-center justify-between">
-                    <span>ผู้รับผิดชอบ: <strong>{defect.responsible_person || '-'}</strong></span>
-                    <span>กำหนด: <strong>{defect.due_date || '-'}</strong></span>
+                    <span>{language === 'th' ? 'ผู้รับผิดชอบ:' : 'Responsible:'} <strong>{defect.responsible_person || '-'}</strong></span>
+                    <span>{language === 'th' ? 'กำหนด:' : 'Due:'} <strong>{defect.due_date || '-'}</strong></span>
                   </div>
                 </div>
 
@@ -649,21 +651,21 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                       className="flex items-center gap-1.5 text-[11px] text-sky-600 hover:text-sky-700 font-bold"
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
-                      <span>ดูรูปหลักฐาน (Cloudflare R2)</span>
+                      <span>{t.viewProofPhotoBtn}</span>
                     </button>
                     <a
                       href={defect.image_url}
                       target="_blank"
                       rel="noreferrer"
                       className="text-slate-400 hover:text-sky-600"
-                      title="เปิดในแท็บใหม่"
+                      title={t.openInNewTab}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
                 ) : (
                   <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 italic">
-                    ไม่มีรูปถ่ายแนบ
+                    {t.noPhotoAttached}
                   </div>
                 )}
               </div>
@@ -672,7 +674,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         ) : (
           <div className="py-12 text-center text-slate-400 text-xs">
             <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto mb-2" />
-            <span>ไม่พบประเด็นข้อบกพร่องตามตัวกรองที่เลือก (Zero Defects Found)</span>
+            <span>{t.zeroDefectsBanner}</span>
           </div>
         )}
       </div>
@@ -697,7 +699,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 className="text-xs text-sky-600 hover:underline font-semibold inline-flex items-center gap-1"
                 onClick={(e) => e.stopPropagation()}
               >
-                <span>เปิดในแท็บใหม่ (Cloudflare R2)</span>
+                <span>{t.openInNewTab}</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
