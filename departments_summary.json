@@ -1,0 +1,2260 @@
+{
+  "Rev H(Molding MM)  ": {
+    "total_rows": 75,
+    "question_count": 48,
+    "questions": [
+      {
+        "layer": "Layer 3",
+        "row": 12,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#3",
+        "method": "Check",
+        "question": "1) การตรวจสอบในเรื่อง SBOP ของ Layer 2 ได้มีการดำเนินการแก้ไขอย่างถูกต้องและปัญหาที่พบได้รับการแก้ไขบนบอร์ด SBOP หรือไม่?"
+      },
+      {
+        "layer": "Layer 3",
+        "row": 13,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2) Supervisor,หัวหน้ากะและหัวหน้าฝ่ายบริหารในทุกระดับได้นำเรื่อง SBOP เข้าประชุมใน GO-Meeting และเป็นไปตามแผนที่วางไว้ หรือไม่ ?"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 17,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#2",
+        "method": "Check",
+        "question": "1)"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 18,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 22,
+        "col": 2,
+        "category": "I. ความเสี่ยงด้านความปลอดภัย - การดำเนินการ",
+        "method": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที",
+        "question": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 23,
+        "col": 2,
+        "category": "",
+        "method": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน",
+        "question": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 24,
+        "col": 2,
+        "category": "",
+        "method": "3.  รับข้อเสนอแนะจากพนักงาน",
+        "question": "3.  รับข้อเสนอแนะจากพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 25,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ความสนใจกับงานที่กำลังปฏิบัติ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 26,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เทคนิคท่าทางการยกของเหมาะสม/ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 27,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. การก้ม/การบิด/การดึง/ตำแหน่งของร่างกาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 28,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การยศาสตร์ (เช่น ท่าทาง)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 29,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. ไม่เร่งรีบปฏิบัติงานจนเกินไป"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 31,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. มีความตระหนักถึงพื้นผิวร้อน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 32,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. มีความตระหนักถึงจุดเคลื่อนไหวและส่วนหมุน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 33,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. มีความตระหนักถึงจุดหนีบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 34,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. มีความตระหนักถึงวัตถุแหลมคมหรือบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 35,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. มีความตระหนักถึงอันตรายไฟฟ้า"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 36,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. มีความตระหนักถึงระบบ Interlock/ปุ่มฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 37,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. มีความตระหนักถึงการใช้อุปกรณ์ตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 38,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8. มีความตระหนักถึงขั้นตอนการขนย้ายโมลอย่างถูกต้องและปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 40,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. ใช้เครื่องมือถูกประเภทกับงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 41,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. เครื่องมืออยู่ในสภาพที่ยอมรับได้"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 42,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ใช้สวิตซ์มือหรือเท้าถูกต้องตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 43,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. การ์ดของเครื่องจักรหรืออุปกรณ์ต่างๆ ขณะทำงานอยู่ในตำแหน่งปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 44,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่มีการรั่วไหลของลม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 45,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6.สายไฟอยู่ในสภาพปลอดภัยไม่ชารุดหรือเสียหาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 46,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ใช้อุปกรณ์ล็อค และติดป้ายเตือน (LOTO)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 47,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8.ตรวจสอบความถูกต้องของท่อ TCU และ ข้อต่อก่อนทำงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 48,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9. Airgun ตรงตามมาตรฐาน และสภาพพร้อมใช้งานไม่ชำรุด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 49,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9.รถ  Electric Stacker หรือ Powered Hand Pallet มีการตรวจเช็ค สภาพพร้อมใช้งาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 50,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "10. เครื่องเย็บมีสภาพสมบูรณ์ พร้อมใช้งาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 51,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "11. รถเข็น มีสภาพสมบูรณ์ และจัดเก็บในพื้นที่ที่กำหนด ไม่วางพิงกับเรื่องจักร หรืออุปกรณ์อื่นๆ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 54,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. พื้นที่ปฏิบัติงานไม่มีของวางบนพื้น (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 55,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. การกำจัดของเสียคัดแยกถูกประเภท (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 56,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ทางเดินเปิดโล่งไม่สิ่งของกีดขวาง (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 57,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. ทางหนีไฟไม่มีสิ่งของวาง ขัดขวางการอพยพ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 58,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. อุปกรณ์ป้องกันอัคคีภัย ไม่มีสิ่งของวางสามารถเข้าถึงได้กรณีเกิดเหตุฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 59,
+        "col": 4,
+        "category": "III. PPE",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มาตรฐานที่กำหนด รองเท้า, แว่นตา,หมวกนิรภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 60,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. สวมถุงมือกันสารเคมี, ถุงมือกันความร้อน,ถุงมือกันบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 61,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3.สวมอุปกรณ์ป้องกันการหายใจ เช่นหน้ากากป้องกันฝุ่น  หรือไอสารเคมี"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 62,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. สวมอุปกรณ์ PPE สำหรับขั้นตอน การทำงานกับพลาสติกเหลวร้อน ทั้งหน้าแม่พิมพ์ และ บริเวณ Nozzle"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 64,
+        "col": 4,
+        "category": "IIII. \nHigh risk process",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มีการใช้ แคลมป์ล๊อค plate ขณะซ่อมแม่พิมพ์หรือไม่"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 65,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. ตะขอเกี่ยวแม่พิมพ์มี cover และอยู่ในสภาพพร้อมใช้งานหรือไม่"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 66,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. เป่าชิ้นงานภายในตู้หลังจากล้างที่เครื่อง ultrasonic หรือไม่"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 67,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เครื่องตรวจจับก๊าซอาร์กอนรั่ว ทำงานปกติหรือไม่"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 68,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่ใช้ Electric Stacker (Jumbo) ขนาด 1.2 ตัน ขนย้ายโมลเข้ามายังพื้นที่ในโซนเครื่องจักร"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 69,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การ์ดของเครื่องจักรอยู่ในสภาพพร้อมใช้งาน ไม่แตกหรือชำรุด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 70,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. สวมถุงมือ และ Ear Muff ขณะใช้ cold jet"
+      }
+    ]
+  },
+  "SBOP Rev H(Facility) ": {
+    "total_rows": 67,
+    "question_count": 39,
+    "questions": [
+      {
+        "layer": "Layer 3",
+        "row": 12,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#3",
+        "method": "Check",
+        "question": "1) การตรวจสอบในเรื่อง SBOP ของ Layer 2 ได้มีการดำเนินการแก้ไขอย่างถูกต้องและปัญหาที่พบได้รับการแก้ไขบนบอร์ด SBOP หรือไม่?"
+      },
+      {
+        "layer": "Layer 3",
+        "row": 13,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2) Supervisor,หัวหน้ากะและหัวหน้าฝ่ายบริหารในทุกระดับได้นำเรื่อง SBOP เข้าประชุมใน GO-Meeting และเป็นไปตามแผนที่วางไว้ หรือไม่ ?"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 17,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#2",
+        "method": "Check",
+        "question": "1)"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 18,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 22,
+        "col": 2,
+        "category": "I. ความเสี่ยงด้านความปลอดภัย - การดำเนินการ",
+        "method": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที",
+        "question": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 23,
+        "col": 2,
+        "category": "",
+        "method": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน",
+        "question": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 24,
+        "col": 2,
+        "category": "",
+        "method": "3.  รับข้อเสนอแนะจากพนักงาน",
+        "question": "3.  รับข้อเสนอแนะจากพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 25,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ความสนใจกับงานที่กำลังปฏิบัติ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 26,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เทคนิคท่าทางการยกของเหมาะสม/ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 27,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. การก้ม/การบิด/การดึง/ตำแหน่งของร่างกาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 28,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การยศาสตร์ (เช่น ท่าทาง)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 29,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. ไม่เร่งรีบปฏิบัติงานจนเกินไป"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 31,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. มีความตระหนักถึงพื้นผิวร้อน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 32,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. มีความตระหนักถึงจุดเคลื่อนไหวและส่วนหมุน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 33,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. มีความตระหนักถึงจุดหนีบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 34,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. มีความตระหนักถึงวัตถุแหลมคมหรือบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 35,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. มีความตระหนักถึงอันตรายไฟฟ้า"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 36,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. มีความตระหนักถึงระบบ Interlock/ปุ่มฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 37,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. มีความตระหนักถึงการใช้อุปกรณ์ตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 38,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8.มีความตระหนักถึงการคัดแยกขยะที่ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 40,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. ใช้เครื่องมือถูกประเภทกับงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 41,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. เครื่องมืออยู่ในสภาพที่ยอมรับได้"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 42,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ใช้สวิตซ์มือหรือเท้าถูกต้องตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 43,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. การ์ดของเครื่องจักรหรืออุปกรณ์ต่างๆ ขณะทำงานอยู่ในตำแหน่งปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 44,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่มีการรั่วไหลของลม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 45,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6.สายไฟอยู่ในสภาพปลอดภัยไม่ชารุดหรือเสียหาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 46,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ใช้อุปกรณ์ล็อค และติดป้ายเตือน (LOTO)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 47,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8.  ปิดการ์ดเครื่องจักรทุกครั้งที่มีการ Repair หรือ PM"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 48,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9.บันไดสภาพพร้อมใช้งาน และมีการตรวจเช็คก่อนใช้งาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 50,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. พื้นที่ปฏิบัติงานไม่มีของวางบนพื้น (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 51,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. การกำจัดของเสียคัดแยกถูกประเภท (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 52,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ทางเดินเปิดโล่งไม่สิ่งของกีดขวาง (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 53,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. ทางหนีไฟไม่มีสิ่งของวาง ขัดขวางการอพยพ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 54,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. อุปกรณ์ป้องกันอัคคีภัย ไม่มีสิ่งของกีดขวางสามารถเข้าถึงได้กรณีเกิดเหตุฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 55,
+        "col": 4,
+        "category": "III. PPE",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มาตรฐานที่กำหนด รองเท้า, แว่นตา,หมวกนิรภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 56,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. สวมถุงมือกันสารเคมี, ถุงมือกันความร้อน,ถุงมือกันบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 57,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3.สวมอุปกรณ์ป้องกันการหายใจ เช่นหน้ากากป้องกันฝุ่น  หรือไอสารเคมี"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 61,
+        "col": 4,
+        "category": "IIII. \nHigh risk process",
+        "method": "",
+        "question": "1.ผู้รับเหมาผ่านการอบรม พร้อมสำหรับทำงานบนที่สูง (กรณีมีผู้รับเหมาปฏิบัติงาน)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 62,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2.ใช้อุปกรณ์กันตกสำหรับงานที่สูง และสภาพพร้อมใช้งาน"
+      }
+    ]
+  },
+  "SBOP Checklist Rev H (Assy) ": {
+    "total_rows": 62,
+    "question_count": 35,
+    "questions": [
+      {
+        "layer": "Layer 3",
+        "row": 12,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#3",
+        "method": "Check",
+        "question": "1) การตรวจสอบในเรื่อง SBOP ของ Layer 2 ได้มีการดำเนินการแก้ไขอย่างถูกต้องและปัญหาที่พบได้รับการแก้ไขบนบอร์ด SBOP หรือไม่?"
+      },
+      {
+        "layer": "Layer 3",
+        "row": 13,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2) Supervisor,หัวหน้ากะและหัวหน้าฝ่ายบริหารในทุกระดับได้นำเรื่อง SBOP เข้าประชุมใน GO-Meeting และเป็นไปตามแผนที่วางไว้ หรือไม่ ?"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 17,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#2",
+        "method": "Check",
+        "question": "1)"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 18,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 22,
+        "col": 2,
+        "category": "I. ความเสี่ยงด้านความปลอดภัย - การดำเนินการ",
+        "method": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที",
+        "question": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 23,
+        "col": 2,
+        "category": "",
+        "method": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน",
+        "question": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 24,
+        "col": 2,
+        "category": "",
+        "method": "3.  รับข้อเสนอแนะจากพนักงาน",
+        "question": "3.  รับข้อเสนอแนะจากพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 25,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ความสนใจกับงานที่กำลังปฏิบัติ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 26,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เทคนิคท่าทางการยกของเหมาะสม/ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 27,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. การก้ม/การบิด/การดึง/ตำแหน่งของร่างกาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 28,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การยศาสตร์ (เช่น ท่าทาง)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 29,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. ไม่เร่งรีบปฏิบัติงานจนเกินไป"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 31,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. มีความตระหนักถึงพื้นผิวร้อน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 32,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. มีความตระหนักถึงจุดเคลื่อนไหวและส่วนหมุน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 33,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. มีความตระหนักถึงจุดหนีบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 34,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. มีความตระหนักถึงวัตถุแหลมคมหรือบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 35,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. มีความตระหนักถึงอันตรายไฟฟ้า"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 36,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. มีความตระหนักถึงระบบ Interlock/ปุ่มฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 37,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. มีความตระหนักถึงการใช้อุปกรณ์ตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 39,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. ใช้เครื่องมือถูกประเภทกับงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 40,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. เครื่องมืออยู่ในสภาพที่ยอมรับได้"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 41,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ใช้สวิตซ์มือหรือเท้าถูกต้องตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 42,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. การ์ดของเครื่องจักรหรืออุปกรณ์ต่างๆ ขณะทำงานอยู่ในตำแหน่งปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 43,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่มีการรั่วไหลของลม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 44,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6.สายไฟอยู่ในสภาพปลอดภัยไม่ชารุดหรือเสียหาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 45,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ใช้อุปกรณ์ล็อค และติดป้ายเตือน (LOTO)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 46,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8. Airgun ตรงตามมาตรฐาน และสภาพพร้อมใช้งานไม่ชำรุด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 48,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. พื้นที่ปฏิบัติงานไม่มีของวางบนพื้น (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 49,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. การกำจัดของเสียคัดแยกถูกประเภท (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 50,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ทางเดินเปิดโล่งไม่สิ่งของกีดขวาง (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 51,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. ทางหนีไฟไม่มีสิ่งของวาง ขัดขวางการอพยพ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 52,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. อุปกรณ์ป้องกันอัคคีภัยภายในพื้นที่ ไม่มีสิ่งของกีดขวาง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 53,
+        "col": 4,
+        "category": "III. PPE",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มาตรฐานที่กำหนด รองเท้า, แว่นตา"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 54,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. สวมถุงมือกันสารเคมี, ถุงมือกันความร้อน,ถุงมือกันบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 55,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3.สวมอุปกรณ์ป้องกันการหายใจ เช่นหน้ากากป้องกันฝุ่น  หรือไอสารเคมี"
+      }
+    ]
+  },
+  "Rev H (WH)": {
+    "total_rows": 74,
+    "question_count": 41,
+    "questions": [
+      {
+        "layer": "Layer 3",
+        "row": 12,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#3",
+        "method": "Check",
+        "question": "1) การตรวจสอบในเรื่อง SBOP ของ Layer 2 ได้มีการดำเนินการแก้ไขอย่างถูกต้องและปัญหาที่พบได้รับการแก้ไขบนบอร์ด SBOP หรือไม่?"
+      },
+      {
+        "layer": "Layer 3",
+        "row": 13,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2) Supervisor,หัวหน้ากะและหัวหน้าฝ่ายบริหารในทุกระดับได้นำเรื่อง SBOP เข้าประชุมใน GO-Meeting และเป็นไปตามแผนที่วางไว้ หรือไม่ ?"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 17,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#2",
+        "method": "Check",
+        "question": "1)"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 18,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 22,
+        "col": 2,
+        "category": "I. ความเสี่ยงด้านความปลอดภัย - การดำเนินการ",
+        "method": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที",
+        "question": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 23,
+        "col": 2,
+        "category": "",
+        "method": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน",
+        "question": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 24,
+        "col": 2,
+        "category": "",
+        "method": "3.  รับข้อเสนอแนะจากพนักงาน",
+        "question": "3.  รับข้อเสนอแนะจากพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 25,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ความสนใจกับงานที่กำลังปฏิบัติ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 26,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เทคนิคท่าทางการยกของเหมาะสม/ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 27,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. การก้ม/การบิด/การดึง/ตำแหน่งของร่างกาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 28,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การยศาสตร์ (เช่น ท่าทาง)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 29,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. ไม่เร่งรีบปฏิบัติงานจนเกินไป"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 31,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. มีความตระหนักถึงพื้นผิวร้อน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 32,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. มีความตระหนักถึงจุดเคลื่อนไหวและส่วนหมุน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 33,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. มีความตระหนักถึงจุดหนีบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 34,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. มีความตระหนักถึงวัตถุแหลมคมหรือบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 35,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. มีความตระหนักถึงอันตรายไฟฟ้า"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 36,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. มีความตระหนักถึงระบบ Interlock/ปุ่มฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 37,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. มีความตระหนักถึงการใช้อุปกรณ์ตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 38,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8. มีความตระหนักถึงอันตรายจากสิ่งของตกจากที่สูง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 39,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9.มีความตระหนักถึงความปลอดภัยในการขับขี่ Fork lift"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 41,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. ใช้เครื่องมือถูกประเภทกับงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 42,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. เครื่องมืออยู่ในสภาพที่ยอมรับได้"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 43,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ใช้สวิตซ์มือหรือเท้าถูกต้องตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 44,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. การ์ดของเครื่องจักรหรืออุปกรณ์ต่างๆ ขณะทำงานอยู่ในตำแหน่งปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 45,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่มีการรั่วไหลของลม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 46,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6.สายไฟอยู่ในสภาพปลอดภัยไม่ชารุดหรือเสียหาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 47,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ใช้อุปกรณ์ล็อค และติดป้ายเตือน (LOTO)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 48,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8.พาเลทสภาพพร้อมใช้งาน ไม่แตกชำรุด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 49,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9.Fork lift สภาพพร้อมใช้งาน มีการตรวจเช็คก่อนใช้งาน ถอดกุญแจทุกครั้งหลังจากการใช้งาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 51,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. พื้นที่ปฏิบัติงานไม่มีของวางบนพื้น (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 52,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. การกำจัดของเสียคัดแยกถูกประเภท (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 53,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ทางเดินเปิดโล่งไม่สิ่งของกีดขวาง (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 54,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. ทางหนีไฟไม่มีสิ่งของวาง ขัดขวางการอพยพ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 55,
+        "col": 4,
+        "category": "III. PPE",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มาตรฐานที่กำหนด รองเท้า, แว่นตา"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 56,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. สวมถุงมือกันสารเคมี, ถุงมือกันความร้อน,ถุงมือกันบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 57,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3.สวมอุปกรณ์ป้องกันการหายใจ เช่นหน้ากากป้องกันฝุ่น  หรือไอสารเคมี"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 58,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. สวมหมวกแข็งเมื่อปฏิบัติงานอยู่ในพื้นที่ในRack"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 59,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.สวมถุงมือผ้าทุกครั้งที่มีการตัดสายรัดสแตนเลส"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 67,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ไม่นำรถ Fork Lift เสากระโดงงาสูง Serial number MHB4279H เข้าไปยังพื้นที่ห้องควบคุม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 69,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8.Set limit max การยกงาของรถโฟรค์ลิฟ กำหนดมาตรฐานการตักงานจากที่สูง"
+      }
+    ]
+  },
+  "SBOP  Rev H(Qc)": {
+    "total_rows": 63,
+    "question_count": 37,
+    "questions": [
+      {
+        "layer": "Layer 3",
+        "row": 12,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#3",
+        "method": "Check",
+        "question": "1) การตรวจสอบในเรื่อง SBOP ของ Layer 2 ได้มีการดำเนินการแก้ไขอย่างถูกต้องและปัญหาที่พบได้รับการแก้ไขบนบอร์ด SBOP หรือไม่?"
+      },
+      {
+        "layer": "Layer 3",
+        "row": 13,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2) Supervisor,หัวหน้ากะและหัวหน้าฝ่ายบริหารในทุกระดับได้นำเรื่อง SBOP เข้าประชุมใน GO-Meeting และเป็นไปตามแผนที่วางไว้ หรือไม่ ?"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 17,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#2",
+        "method": "Check",
+        "question": "1)"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 18,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 22,
+        "col": 2,
+        "category": "I. ความเสี่ยงด้านความปลอดภัย - การดำเนินการ",
+        "method": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที",
+        "question": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 23,
+        "col": 2,
+        "category": "",
+        "method": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน",
+        "question": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 24,
+        "col": 2,
+        "category": "",
+        "method": "3.  รับข้อเสนอแนะจากพนักงาน",
+        "question": "3.  รับข้อเสนอแนะจากพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 25,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ความสนใจกับงานที่กำลังปฏิบัติ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 26,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เทคนิคท่าทางการยกของเหมาะสม/ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 27,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. การก้ม/การบิด/การดึง/ตำแหน่งของร่างกาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 28,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การยศาสตร์ (เช่น ท่าทาง)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 29,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. ไม่เร่งรีบปฏิบัติงานจนเกินไป"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 31,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. มีความตระหนักถึงพื้นผิวร้อน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 32,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. มีความตระหนักถึงจุดเคลื่อนไหวและส่วนหมุน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 33,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. มีความตระหนักถึงจุดหนีบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 34,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. มีความตระหนักถึงวัตถุแหลมคมหรือบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 35,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. มีความตระหนักถึงอันตรายไฟฟ้า"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 36,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. มีความตระหนักถึงระบบ Interlock/ปุ่มฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 37,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. มีความตระหนักถึงการใช้อุปกรณ์ตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 39,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. ใช้เครื่องมือถูกประเภทกับงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 40,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. เครื่องมืออยู่ในสภาพที่ยอมรับได้"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 41,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ใช้สวิตซ์มือหรือเท้าถูกต้องตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 42,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. การ์ดของเครื่องจักรหรืออุปกรณ์ต่างๆ ขณะทำงานอยู่ในตำแหน่งปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 43,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่มีการรั่วไหลของลม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 44,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6.สายไฟอยู่ในสภาพปลอดภัยไม่ชารุดหรือเสียหาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 45,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ใช้อุปกรณ์ล็อค และติดป้ายเตือน (LOTO)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 46,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8. ครื่องวัดแรงดึงมีการใช้การ์ดก่อนการทดสอบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 47,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9. มีการใช้การ์ดหรืออุปกรณ์ป้องกันในการตัด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 48,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "10. การ์ดของเครื่องจักรอยู่ในสภาพพร้อมใช้งาน ไม่แตกหรือชำรุด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 50,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. พื้นที่ปฏิบัติงานไม่มีของวางบนพื้น (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 51,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. การกำจัดของเสียคัดแยกถูกประเภท (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 52,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ทางเดินเปิดโล่งไม่สิ่งของกีดขวาง (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 53,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. ทางหนีไฟไม่มีสิ่งของวาง ขัดขวางการอพยพ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 54,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. อุปกรณ์ป้องกันอัคคีภัย ไม่มีสิ่งของกีดขวางสามารถเข้าถึงได้กรณีเกิดเหตุฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 55,
+        "col": 4,
+        "category": "III. PPE",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มาตรฐานที่กำหนด รองเท้า, แว่นตา"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 56,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. สวมถุงมือกันสารเคมี, ถุงมือกันความร้อน,ถุงมือกันบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 57,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3.สวมอุปกรณ์ป้องกันการหายใจ เช่นหน้ากากป้องกันฝุ่น  หรือไอสารเคมี"
+      }
+    ]
+  },
+  "Rev H(Stamping) ": {
+    "total_rows": 66,
+    "question_count": 40,
+    "questions": [
+      {
+        "layer": "Layer 3",
+        "row": 12,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#3",
+        "method": "Check",
+        "question": "1) การตรวจสอบในเรื่อง SBOP ของ Layer 2 ได้มีการดำเนินการแก้ไขอย่างถูกต้องและปัญหาที่พบได้รับการแก้ไขบนบอร์ด SBOP หรือไม่?"
+      },
+      {
+        "layer": "Layer 3",
+        "row": 13,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2) Supervisor,หัวหน้ากะและหัวหน้าฝ่ายบริหารในทุกระดับได้นำเรื่อง SBOP เข้าประชุมใน GO-Meeting และเป็นไปตามแผนที่วางไว้ หรือไม่ ?"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 17,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#2",
+        "method": "Check",
+        "question": "1)"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 18,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 22,
+        "col": 2,
+        "category": "I. ความเสี่ยงด้านความปลอดภัย - การดำเนินการ",
+        "method": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที",
+        "question": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 23,
+        "col": 2,
+        "category": "",
+        "method": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน",
+        "question": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 24,
+        "col": 2,
+        "category": "",
+        "method": "3.  รับข้อเสนอแนะจากพนักงาน",
+        "question": "3.  รับข้อเสนอแนะจากพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 25,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ความสนใจกับงานที่กำลังปฏิบัติ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 26,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เทคนิคท่าทางการยกของเหมาะสม/ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 27,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. การก้ม/การบิด/การดึง/ตำแหน่งของร่างกาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 28,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การยศาสตร์ (เช่น ท่าทาง)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 30,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. มีความตระหนักถึงพื้นผิวร้อน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 31,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. มีความตระหนักถึงจุดเคลื่อนไหวและส่วนหมุน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 32,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. มีความตระหนักถึงจุดหนีบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 33,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. มีความตระหนักถึงวัตถุแหลมคมหรือบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 34,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. มีความตระหนักถึงอันตรายไฟฟ้า"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 35,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. มีความตระหนักถึงระบบ Interlock/ปุ่มฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 36,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. มีความตระหนักถึงการใช้อุปกรณ์ตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 37,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8.มีความตระหนักถึงการใช้ Hand lift,Lifter"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 39,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. ใช้เครื่องมือถูกประเภทกับงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 40,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. เครื่องมืออยู่ในสภาพที่ยอมรับได้"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 41,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ใช้สวิตซ์มือหรือเท้าถูกต้องตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 42,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. การ์ดของเครื่องจักรหรืออุปกรณ์ต่างๆ ขณะทำงานอยู่ในตำแหน่งปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 43,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่มีการรั่วไหลของลม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 44,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6.สายไฟอยู่ในสภาพปลอดภัยไม่ชารุดหรือเสียหาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 45,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ใช้อุปกรณ์ล็อค และติดป้ายเตือน (LOTO)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 46,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8. เครื่องมือสำหรับตัด,กรรไกร สภาพพร้อมใช้งาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 47,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9. Hand lift,Lifter ไม่ชำรุดพร้อมใช้งานอยู่เสมอ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 48,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "10. Electric Stacker สภาพพร้อมใช้งาน ถอดกุญแจทุกครั้งหลังจากการใช้งาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 50,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. พื้นที่ปฏิบัติงานไม่มีของวางบนพื้น (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 51,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. การกำจัดของเสียคัดแยกถูกประเภท (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 52,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ทางเดินเปิดโล่งไม่สิ่งของกีดขวาง (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 53,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. ทางหนีไฟไม่มีสิ่งของวาง ขัดขวางการอพยพ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 54,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. อุปกรณ์ป้องกันอัคคีภัย ไม่มีสิ่งของกีดขวางสามารถเข้าถึงได้กรณีเกิดเหตุฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 55,
+        "col": 4,
+        "category": "III. PPE",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มาตรฐานที่กำหนด รองเท้า, แว่นตา,หมวกนิรภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 56,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. สวมถุงมือกันสารเคมี, ถุงมือกันความร้อน,ถุงมือกันบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 57,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3.สวมอุปกรณ์ป้องกันการหายใจ เช่นหน้ากากป้องกันฝุ่น  หรือไอสารเคมี"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 58,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. สวมถุงมือยางเมื่อทำการล้างชิ้นส่วน,Material"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 59,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. สวมถุงมือผ้าเมื่อทำการ Set up Die,Material"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 60,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. สวม Ear Plug หรือ Ear Muff ทุกครั้งเมื่อเครื่องจักรทำงานเสียงดัง"
+      }
+    ]
+  },
+  "SBOP  Rev H(Tool)": {
+    "total_rows": 67,
+    "question_count": 37,
+    "questions": [
+      {
+        "layer": "Layer 3",
+        "row": 12,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#3",
+        "method": "Check",
+        "question": "1) การตรวจสอบในเรื่อง SBOP ของ Layer 2 ได้มีการดำเนินการแก้ไขอย่างถูกต้องและปัญหาที่พบได้รับการแก้ไขบนบอร์ด SBOP หรือไม่?"
+      },
+      {
+        "layer": "Layer 3",
+        "row": 13,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2) Supervisor,หัวหน้ากะและหัวหน้าฝ่ายบริหารในทุกระดับได้นำเรื่อง SBOP เข้าประชุมใน GO-Meeting และเป็นไปตามแผนที่วางไว้ หรือไม่ ?"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 17,
+        "col": 3,
+        "category": "SBOP (Systems Audit) Layer#2",
+        "method": "Check",
+        "question": "1)"
+      },
+      {
+        "layer": "Layer 2",
+        "row": 18,
+        "col": 3,
+        "category": "",
+        "method": "Check",
+        "question": "2)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 22,
+        "col": 2,
+        "category": "I. ความเสี่ยงด้านความปลอดภัย - การดำเนินการ",
+        "method": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที",
+        "question": "1.  สังเกตพนักงานเป็นเวลา 60 วินาที"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 23,
+        "col": 2,
+        "category": "",
+        "method": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน",
+        "question": "2.  พูดคุยความเสี่ยงที่พบกับพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 24,
+        "col": 2,
+        "category": "",
+        "method": "3.  รับข้อเสนอแนะจากพนักงาน",
+        "question": "3.  รับข้อเสนอแนะจากพนักงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 25,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ความสนใจกับงานที่กำลังปฏิบัติ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 26,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. เทคนิคท่าทางการยกของเหมาะสม/ถูกต้อง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 27,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. การก้ม/การบิด/การดึง/ตำแหน่งของร่างกาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 28,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. การยศาสตร์ (เช่น ท่าทาง)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 29,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. ไม่เร่งรีบปฏิบัติงานจนเกินไป"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 31,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. มีความตระหนักถึงพื้นผิวร้อน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 32,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. มีความตระหนักถึงจุดเคลื่อนไหวและส่วนหมุน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 33,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. มีความตระหนักถึงจุดหนีบ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 34,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. มีความตระหนักถึงวัตถุแหลมคมหรือบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 35,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5. มีความตระหนักถึงอันตรายไฟฟ้า"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 36,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6. มีความตระหนักถึงระบบ Interlock/ปุ่มฉุกเฉิน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 37,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7. มีความตระหนักถึงการใช้อุปกรณ์ตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 39,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. ใช้เครื่องมือถูกประเภทกับงาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 40,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. เครื่องมืออยู่ในสภาพที่ยอมรับได้"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 41,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ใช้สวิตซ์มือหรือเท้าถูกต้องตามมาตรฐาน"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 42,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. การ์ดของเครื่องจักรหรืออุปกรณ์ต่างๆ ขณะทำงานอยู่ในตำแหน่งปลอดภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 43,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "5.ไม่มีการรั่วไหลของลม"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 44,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "6.สายไฟอยู่ในสภาพปลอดภัยไม่ชารุดหรือเสียหาย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 45,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "7.ใช้อุปกรณ์ล็อค และติดป้ายเตือน (LOTO)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 46,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "8. ปิดการ์ดเครื่องจักรทุกครั้งที่ใช้เครื่องจักร"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 47,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "9. Airgun ตรงตามมาตรฐาน และสภาพพร้อมใช้งานไม่ชำรุด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 49,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "1. พื้นที่ปฏิบัติงานไม่มีของวางบนพื้น (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 50,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. การกำจัดของเสียคัดแยกถูกประเภท (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 51,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3. ทางเดินเปิดโล่งไม่สิ่งของกีดขวาง (5S+1)"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 52,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. ทางหนีไฟไม่มีสิ่งของวาง ขัดขวางการอพยพ"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 53,
+        "col": 4,
+        "category": "III. PPE",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. มาตรฐานที่กำหนด รองเท้า, แว่นตา,หมวกนิรภัย"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 54,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "2. สวมถุงมือกันสารเคมี, ถุงมือกันความร้อน,ถุงมือกันบาด"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 55,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "3.สวมอุปกรณ์ป้องกันการหายใจ เช่นหน้ากากป้องกันฝุ่น  หรือไอสารเคมี"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 56,
+        "col": 4,
+        "category": "",
+        "method": "",
+        "question": "4. สวมใส่อุปกรณ์ป้องกันเสียงดัง"
+      },
+      {
+        "layer": "Layer 1",
+        "row": 58,
+        "col": 4,
+        "category": "IIII. \nHigh risk process",
+        "method": "สังเกตและตรวจสอบ",
+        "question": "1. ระบบ interlock ทำงานได้ปกติ และหินเจียรหยุดก่อนเปิดการ์ดหรือไม่"
+      }
+    ]
+  }
+}

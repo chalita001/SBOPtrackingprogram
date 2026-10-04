@@ -1,0 +1,103 @@
+const API_BASE = '/api';
+
+export function getAuthToken(): string | null {
+  return localStorage.getItem('sbop_token');
+}
+
+export function setAuthToken(token: string) {
+  localStorage.setItem('sbop_token', token);
+}
+
+export function removeAuthToken() {
+  localStorage.removeItem('sbop_token');
+}
+
+async function request(endpoint: string, options: RequestInit = {}) {
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || 'An error occurred during request');
+  }
+
+  return data;
+}
+
+export const api = {
+  // Auth
+  login: (credentials: any) => request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
+  register: (userData: any) => request('/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
+  getMe: () => request('/auth/me'),
+  updateProfile: (profile: any) => request('/auth/profile', { method: 'PUT', body: JSON.stringify(profile) }),
+  changePassword: (passwords: any) => request('/auth/change-password', { method: 'PUT', body: JSON.stringify(passwords) }),
+
+  // Users / Admin
+  getUsers: (params?: Record<string, string>) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/users${query ? `?${query}` : ''}`);
+  },
+  approveUser: (id: number) => request(`/users/${id}/approve`, { method: 'PUT' }),
+  rejectUser: (id: number) => request(`/users/${id}/reject`, { method: 'PUT' }),
+  updateUserRole: (id: number, data: any) => request(`/users/${id}/role`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteUser: (id: number) => request(`/users/${id}`, { method: 'DELETE' }),
+
+  // Departments
+  getDepartments: () => request('/departments'),
+
+  // Checklist Templates
+  getChecklistTemplates: (deptCode: string, layer?: string) => {
+    const query = layer ? `?layer=${encodeURIComponent(layer)}` : '';
+    return request(`/checklist/templates/${deptCode}${query}`);
+  },
+
+  // Inspections
+  getInspections: (params?: Record<string, string>) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/inspections${query ? `?${query}` : ''}`);
+  },
+  getInspection: (id: number) => request(`/inspections/${id}`),
+  createInspection: (data: any) => request('/inspections', { method: 'POST', body: JSON.stringify(data) }),
+  deleteInspection: (id: number) => request(`/inspections/${id}`, { method: 'DELETE' }),
+
+  // Upload Photo to Cloudflare R2
+  uploadImage: async (file: File) => {
+    const token = getAuthToken();
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE}/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to upload photo');
+    }
+    return data as { imageUrl: string; imageKey: string; storage: string };
+  },
+
+  // Email Notification Logs
+  getEmailLogs: () => request('/email/logs'),
+  sendCustomEmail: (emailData: any) => request('/email/send-alert', { method: 'POST', body: JSON.stringify(emailData) }),
+};

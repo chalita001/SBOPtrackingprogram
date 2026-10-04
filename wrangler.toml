@@ -1,0 +1,18 @@
+name = "sbop-tracking-program"
+compatibility_date = "2024-04-01"
+pages_build_output_dir = "dist"
+
+# Cloudflare D1 Database Binding
+[[d1_databases]]
+binding = "DB"
+database_name = "d1sbop"
+database_id = "413b2fe9-b280-4a1b-81ac-cb20f9e41935"
+
+# Cloudflare R2 Bucket Binding
+[[r2_buckets]]
+binding = "R2_BUCKET"
+bucket_name = "r2sbop"
+
+[vars]
+R2_PUBLIC_URL = "https://bfdba11ba88cafd6f064809c2fe29b99.r2.cloudflarestorage.com/r2sbop"
+JWT_SECRET = "sbop_super_secret_jwt_key_2026"
