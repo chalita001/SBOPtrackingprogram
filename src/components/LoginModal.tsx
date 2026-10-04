@@ -124,7 +124,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 type="button"
-                onClick={() => handleQuickLogin('admin@sbop.com', 'admin1234')}
+                onClick={() => handleQuickLogin('admin@sbop.com', 'ehsadmin1234')}
                 className="p-2 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-medium text-left transition"
               >
                 <div className="font-bold flex items-center gap-1">
@@ -132,17 +132,19 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   Admin
                 </div>
                 <div className="text-[11px] text-sky-600 truncate">admin@sbop.com</div>
+                <div className="text-[10px] text-slate-400">Pass: ehsadmin1234</div>
               </button>
               <button
                 type="button"
-                onClick={() => handleQuickLogin('julalak.s@sbop.com', 'password123')}
-                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-medium text-left transition"
+                onClick={() => handleQuickLogin('usertester@sbop.com', 'test1234')}
+                className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-medium text-left transition"
               >
                 <div className="font-bold flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  Inspector
+                  User Tester
                 </div>
-                <div className="text-[11px] text-slate-600 truncate">julalak.s@sbop.com</div>
+                <div className="text-[11px] text-emerald-700 truncate">usertester@sbop.com</div>
+                <div className="text-[10px] text-slate-400">Pass: test1234</div>
               </button>
             </div>
           </div>

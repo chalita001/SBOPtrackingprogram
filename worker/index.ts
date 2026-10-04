@@ -126,7 +126,8 @@ export default {
     if (url.pathname === '/api/auth/login' && request.method === 'POST') {
       try {
         const body: any = await request.json();
-        const email = (body.email || '').trim().toLowerCase();
+        const rawInput = (body.email || '').trim().toLowerCase();
+        const email = rawInput.includes('@') ? rawInput : `${rawInput}@sbop.com`;
         const password = body.password || '';
 
         const user: any = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();

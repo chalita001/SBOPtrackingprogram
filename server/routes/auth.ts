@@ -86,11 +86,14 @@ router.post('/register', async (req, res: Response) => {
 // Login
 router.post('/login', (req, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const { email: rawEmail, password } = req.body;
 
-    if (!email || !password) {
+    if (!rawEmail || !password) {
       return res.status(400).json({ error: 'Please provide email and password' });
     }
+
+    const trimmed = rawEmail.trim().toLowerCase();
+    const email = trimmed.includes('@') ? trimmed : `${trimmed}@sbop.com`;
 
     const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email.trim().toLowerCase()) as any;
     if (!user) {
