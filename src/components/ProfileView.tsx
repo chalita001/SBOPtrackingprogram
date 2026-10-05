@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { 
-  User as UserIcon, 
   Shield, 
   Building2, 
   Briefcase, 
@@ -15,9 +14,13 @@ import {
   FileText, 
   Check, 
   ExternalLink,
-  Lock,
-  Layers,
-  Award
+  Award,
+  Target,
+  TrendingUp,
+  Calendar,
+  CheckCircle,
+  BarChart2,
+  Sparkles
 } from 'lucide-react';
 
 interface ProfileViewProps {
@@ -27,25 +30,80 @@ interface ProfileViewProps {
   onNavigateToDefects: () => void;
 }
 
+interface MonthlyCountItem {
+  month: number;
+  count: number;
+  avg_score: number;
+  defects?: number;
+}
+
+interface ProfileStats {
+  totalInspections: number;
+  averageScore: number;
+  defectsFound: number;
+  currentYear: number;
+  currentMonth: number;
+  targetMonthly: number;
+  thisMonthCount: number;
+  thisMonthAvgScore: number;
+  thisMonthOk: number;
+  thisMonthNo: number;
+  monthlyCounts: MonthlyCountItem[];
+  recentInspections: any[];
+}
+
+const THAI_MONTHS = [
+  'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+  'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+];
+
+const SHORT_MONTHS_TH = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+const SHORT_MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 export const ProfileView: React.FC<ProfileViewProps> = ({
   onGoToChecklist,
   onOpenAccountInfo,
   onNavigateToHistory,
   onNavigateToDefects,
 }) => {
-  const { user, t, language } = useAuth();
-  const [stats, setStats] = useState({ totalInspections: 0, averageScore: 100.0, defectsFound: 0 });
+  const { user, language } = useAuth();
+  const [stats, setStats] = useState<ProfileStats>({
+    totalInspections: 0,
+    averageScore: 100.0,
+    defectsFound: 0,
+    currentYear: new Date().getFullYear(),
+    currentMonth: new Date().getMonth() + 1,
+    targetMonthly: 40,
+    thisMonthCount: 0,
+    thisMonthAvgScore: 100.0,
+    thisMonthOk: 0,
+    thisMonthNo: 0,
+    monthlyCounts: [],
+    recentInspections: [],
+  });
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Compute default target monthly based on user role
+  const getDefaultTarget = (role?: string) => {
+    const r = (role || '').toLowerCase();
+    if (r === 'layer1' || r === 'leader') return 40;
+    if (r === 'layer2' || r === 'supervisor') return 4;
+    if (r === 'layer3' || r === 'manager') return 1;
+    return 40;
+  };
+
   const fetchProfileData = async () => {
     setLoading(true);
     try {
-      // 1. Get Me & Stats
+      // 1. Get Me & Dashboard Stats
       const meData = await api.getMe();
       if (meData.stats) {
-        setStats(meData.stats);
+        setStats({
+          ...meData.stats,
+          targetMonthly: meData.stats.targetMonthly || getDefaultTarget(user?.role),
+        });
       }
 
       // 2. Get In-App Notifications
@@ -61,7 +119,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   useEffect(() => {
     fetchProfileData();
-  }, []);
+  }, [user?.id]);
 
   const handleMarkAsRead = async (id: number) => {
     try {
@@ -91,16 +149,31 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     user.role === 'admin'
       ? (language === 'en' ? 'System Administrator' : 'ผู้ดูแลระบบสูงสุด (Admin)')
       : user.role === 'layer3' || user.role === 'manager'
-      ? (language === 'en' ? 'Layer 3 — Department Manager' : 'Layer 3 — ผู้จัดการแผนก (Manager)')
+      ? (language === 'en' ? 'Layer 3 — Department Manager (1 time/month)' : 'Layer 3 — ผู้จัดการแผนก (เป้าหมาย 1 ครั้ง/เดือน)')
       : user.role === 'layer2' || user.role === 'supervisor'
-      ? (language === 'en' ? 'Layer 2 — Supervisor' : 'Layer 2 — หัวหน้างานระดับกุม (Supervisor)')
-      : (language === 'en' ? 'Layer 1 — Shift Leader' : 'Layer 1 — หัวหน้างานระดับต้น (Leader)');
+      ? (language === 'en' ? 'Layer 2 — Supervisor (4 times/month)' : 'Layer 2 — หัวหน้างานระดับกุม (เป้าหมาย 4 ครั้ง/เดือน)')
+      : (language === 'en' ? 'Layer 1 — Shift Leader (40 times/month)' : 'Layer 1 — หัวหน้างานระดับต้น (เป้าหมาย 40 ครั้ง/เดือน)');
+
+  const targetQuota = stats.targetMonthly || getDefaultTarget(user.role);
+  const thisMonthDone = stats.thisMonthCount || 0;
+  const progressPercent = Math.min(100, Math.round((thisMonthDone / targetQuota) * 100));
+  const remainingCount = Math.max(0, targetQuota - thisMonthDone);
+  const isTargetAchieved = thisMonthDone >= targetQuota;
+
+  const currentMonthName = language === 'th' 
+    ? `${THAI_MONTHS[stats.currentMonth - 1]} ${stats.currentYear + 543}`
+    : `${SHORT_MONTHS_EN[stats.currentMonth - 1]} ${stats.currentYear}`;
+
+  // Build 12-month series for the chart
+  const monthlyDataMap: Record<number, MonthlyCountItem> = {};
+  for (const item of stats.monthlyCounts || []) {
+    monthlyDataMap[item.month] = item;
+  }
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-8">
+    <div className="space-y-6 animate-fadeIn pb-10">
       {/* 1. Profile Welcome Hero Card */}
       <div className="bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800 relative overflow-hidden">
-        {/* Subtle background glow */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -117,7 +190,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   @{user.username || user.email?.split('@')[0]}
                 </span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
-                  {user.status === 'approved' ? (language === 'en' ? 'Active' : 'อนุมัติแล้ว') : user.status}
+                  {user.status === 'approved' ? (language === 'en' ? 'Approved' : 'อนุมัติแล้ว') : user.status}
                 </span>
               </div>
               <p className="text-sm font-medium text-sky-200 flex items-center gap-2">
@@ -159,67 +232,322 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
         </div>
       </div>
 
-      {/* 2. Quick Auditing Stats & Checklist Launcher Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Inspections Done Card */}
-        <div 
-          onClick={onNavigateToHistory}
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-            <span>{language === 'en' ? 'Your Total Inspections' : 'บันทึกการตรวจของคุณ'}</span>
-            <div className="p-2 rounded-xl bg-sky-50 text-sky-600 group-hover:scale-110 transition">
-              <FileText className="w-4 h-4" />
+      {/* 2. Personal Monthly Dashboard (แดชบอร์ดส่วนบุคคลประจำเดือน) */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-7 space-y-6">
+        {/* Header with Month indicator */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-sky-50 border border-sky-100 text-sky-600">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <span>{language === 'en' ? 'My Monthly Inspection Dashboard' : 'แดชบอร์ดการตรวจเช็คส่วนบุคคล'}</span>
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-sky-100 text-sky-800">
+                  {currentMonthName}
+                </span>
+              </h2>
+              <p className="text-xs text-slate-500">
+                {language === 'en'
+                  ? 'Track your monthly audit target and progress in real-time'
+                  : 'ติดตามจำนวนครั้งการตรวจเช็คของคุณในรอบเดือนปัจจุบันเทียบกับเป้าหมาย'}
+              </p>
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-slate-900 mt-2">
-            {stats.totalInspections}
+
+          <div className="flex items-center gap-2 self-start sm:self-center">
+            <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-indigo-600" />
+              <span>
+                {language === 'en' 
+                  ? `Target: ${targetQuota} audits/month`
+                  : `เป้าหมาย: ${targetQuota} ครั้ง/เดือน`}
+              </span>
+            </span>
           </div>
-          <p className="text-[11px] text-sky-600 mt-1 flex items-center gap-1 font-medium">
-            <span>{language === 'en' ? 'View your inspection history' : 'ดูประวัติการตรวจของคุณ'}</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition" />
-          </p>
         </div>
 
-        {/* Average Score Card */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-            <span>{language === 'en' ? 'Average Safety Score' : 'คะแนนความปลอดภัยเฉลี่ย'}</span>
-            <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
-              <Award className="w-4 h-4" />
+        {/* Progress Bar & Quota Status Card */}
+        <div className={`p-5 sm:p-6 rounded-2xl border transition ${
+          isTargetAchieved 
+            ? 'bg-gradient-to-r from-emerald-500/10 via-emerald-50 to-teal-50 border-emerald-200' 
+            : 'bg-gradient-to-r from-sky-50 via-indigo-50/50 to-slate-50 border-sky-200'
+        }`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                {isTargetAchieved ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white shadow-sm">
+                    <CheckCircle className="w-3.5 h-3.5" />
+                    <span>{language === 'en' ? 'Target Achieved 🎉' : 'บรรลุเป้าหมายของเดือนแล้ว 🎉'}</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-sky-600 text-white shadow-sm">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{language === 'en' ? 'In Progress' : 'กำลังดำเนินการ'}</span>
+                  </span>
+                )}
+                <span className="text-xs font-bold text-slate-600">
+                  {language === 'en'
+                    ? `${thisMonthDone} of ${targetQuota} audits completed`
+                    : `ตรวจไปแล้ว ${thisMonthDone} จากเป้าหมาย ${targetQuota} ครั้ง`}
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-600 pt-1">
+                {isTargetAchieved ? (
+                  <span className="text-emerald-800 font-semibold">
+                    {language === 'en'
+                      ? `Excellent work! You have completed ${thisMonthDone} audits this month, reaching 100% of your target.`
+                      : `ยอดเยี่ยมมาก! คุณทำการตรวจเช็คครบตามเป้าหมายของเดือนนี้แล้ว (${thisMonthDone} ครั้ง)`}
+                  </span>
+                ) : (
+                  <span className="text-slate-700">
+                    {language === 'en'
+                      ? `You need ${remainingCount} more ${remainingCount === 1 ? 'audit' : 'audits'} this month to achieve your target (${targetQuota} audits/month).`
+                      : `ในเดือนนี้คุณยังต้องทำการตรวจเช็คอีก `}
+                    <strong className="text-indigo-600 font-bold">{remainingCount} ครั้ง</strong>
+                    {language === 'th' ? ` เพื่อให้ครบตามเกณฑ์มาตรฐาน (${targetQuota} ครั้ง/เดือน)` : ''}
+                  </span>
+                )}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="text-right shrink-0">
+                <div className="text-2xl sm:text-3xl font-black text-slate-900">
+                  {progressPercent}%
+                </div>
+                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                  {language === 'en' ? 'Completion' : 'ความคืบหน้า'}
+                </div>
+              </div>
+
+              <button
+                onClick={onGoToChecklist}
+                className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md shadow-sky-600/20 transition flex items-center gap-1.5 shrink-0"
+              >
+                <span>{language === 'en' ? 'Start Audit (+1)' : 'เริ่มตรวจเช็ค (+1 ครั้ง)'}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-emerald-600 mt-2">
-            {stats.averageScore}%
+
+          {/* Linear Progress Bar */}
+          <div className="w-full bg-slate-200/80 rounded-full h-3.5 mt-4 overflow-hidden p-0.5 border border-slate-300/40">
+            <div
+              className={`h-full rounded-full transition-all duration-700 ${
+                isTargetAchieved
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                  : 'bg-gradient-to-r from-sky-500 via-indigo-500 to-indigo-600'
+              }`}
+              style={{ width: `${progressPercent}%` }}
+            ></div>
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
-            {stats.averageScore >= 95 ? (language === 'en' ? 'Excellent Safety Standard' : 'มาตรฐานความปลอดภัยระดับดีเยี่ยม') : (language === 'en' ? 'Compliance Monitored' : 'อยู่ในเกณฑ์ติดตามควบคุม')}
-          </p>
         </div>
 
-        {/* Defects Found Card */}
-        <div 
-          onClick={onNavigateToDefects}
-          className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group"
-        >
-          <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-            <span>{language === 'en' ? 'Defects Discovered' : 'ข้อบกพร่องที่ตรวจพบ'}</span>
-            <div className="p-2 rounded-xl bg-red-50 text-red-600 group-hover:scale-110 transition">
-              <AlertTriangle className="w-4 h-4" />
+        {/* 4 Metric Cards for This Month */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* 1. Monthly Audits Done */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <span>{language === 'en' ? 'Audited This Month' : 'ตรวจแล้วเดือนนี้'}</span>
+              <div className="p-1.5 rounded-lg bg-sky-100 text-sky-700">
+                <ClipboardCheck className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-slate-900 mt-2 flex items-baseline gap-1">
+              <span>{thisMonthDone}</span>
+              <span className="text-xs text-slate-400 font-normal">/ {targetQuota} {language === 'th' ? 'ครั้ง' : 'times'}</span>
+            </div>
+            <div className="text-[11px] text-sky-600 font-medium mt-1">
+              {language === 'th' ? `เป้าหมาย: ${targetQuota} ครั้ง/เดือน` : `Target: ${targetQuota}/month`}
             </div>
           </div>
-          <div className="text-3xl font-extrabold text-red-600 mt-2">
-            {stats.defectsFound}
+
+          {/* 2. Monthly Average Score */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <span>{language === 'en' ? 'Monthly Avg Score' : 'คะแนนเฉลี่ยเดือนนี้'}</span>
+              <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+                <Award className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-emerald-600 mt-2">
+              {stats.thisMonthAvgScore}%
+            </div>
+            <div className="text-[11px] text-slate-500 mt-1">
+              {stats.thisMonthAvgScore >= 95 ? (language === 'th' ? 'ปลอดภัยระดับดีเยี่ยม' : 'Excellent') : (language === 'th' ? 'ต้องปรับปรุง' : 'Attention needed')}
+            </div>
           </div>
-          <p className="text-[11px] text-red-600 mt-1 flex items-center gap-1 font-medium">
-            <span>{language === 'en' ? 'Track and follow-up defects' : 'ติดตามประเด็นความผิดปกติ'}</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition" />
-          </p>
+
+          {/* 3. Safe Items OK this month */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <span>{language === 'en' ? 'Passed (OK)' : 'จุดที่ปลอดภัย (OK)'}</span>
+              <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
+                <Check className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-slate-900 mt-2">
+              {stats.thisMonthOk}
+            </div>
+            <div className="text-[11px] text-emerald-600 font-medium mt-1">
+              {language === 'th' ? 'ข้อที่ผ่านการตรวจ' : 'Items compliant'}
+            </div>
+          </div>
+
+          {/* 4. Defects Found this month */}
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
+              <span>{language === 'en' ? 'Defects (NO)' : 'พบสิ่งผิดปกติ (NO)'}</span>
+              <div className="p-1.5 rounded-lg bg-red-100 text-red-700">
+                <AlertTriangle className="w-3.5 h-3.5" />
+              </div>
+            </div>
+            <div className="text-2xl font-black text-red-600 mt-2">
+              {stats.thisMonthNo}
+            </div>
+            <div className="text-[11px] text-red-600 font-medium mt-1">
+              {language === 'th' ? 'จุดที่ต้องแก้ไข/ติดตาม' : 'Items requiring action'}
+            </div>
+          </div>
+        </div>
+
+        {/* 12-Month Audit History Visual Bar Breakdown */}
+        <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="w-4 h-4 text-sky-600" />
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                {language === 'en' 
+                  ? `Audit Frequency Overview (${stats.currentYear})` 
+                  : `ความถี่การตรวจเช็คในแต่ละเดือน (${stats.currentYear + 543})`}
+              </h3>
+            </div>
+            <span className="text-[11px] text-slate-500">
+              {language === 'en' ? `Target: ${targetQuota} audits/mo` : `เส้นเป้าหมาย: ${targetQuota} ครั้ง/เดือน`}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 text-center pt-2">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((m) => {
+              const mData = monthlyDataMap[m];
+              const count = mData?.count || 0;
+              const isCurrent = m === stats.currentMonth;
+              const monthLabel = language === 'th' ? SHORT_MONTHS_TH[m - 1] : SHORT_MONTHS_EN[m - 1];
+
+              // Height calculation: max relative height
+              const maxScale = Math.max(targetQuota * 1.2, 5);
+              const barHeightPct = Math.min(100, Math.max(8, Math.round((count / maxScale) * 100)));
+
+              return (
+                <div key={m} className="flex flex-col items-center gap-1.5">
+                  <div className="text-[10px] font-bold text-slate-600 h-4">
+                    {count > 0 ? count : '-'}
+                  </div>
+
+                  <div className={`w-full max-w-[28px] h-24 bg-white rounded-lg flex flex-col justify-end p-0.5 border ${
+                    isCurrent ? 'border-sky-400 bg-sky-50/50' : 'border-slate-200'
+                  }`}>
+                    <div
+                      className={`w-full rounded-md transition-all duration-500 ${
+                        count >= targetQuota
+                          ? 'bg-emerald-500'
+                          : isCurrent
+                          ? 'bg-sky-500'
+                          : count > 0
+                          ? 'bg-indigo-400'
+                          : 'bg-transparent'
+                      }`}
+                      style={{ height: `${count > 0 ? barHeightPct : 0}%` }}
+                      title={`${monthLabel}: ${count} ${language === 'th' ? 'ครั้ง' : 'audits'}`}
+                    ></div>
+                  </div>
+
+                  <span className={`text-[10px] font-semibold ${
+                    isCurrent ? 'text-sky-700 font-black' : 'text-slate-500'
+                  }`}>
+                    {monthLabel}
+                    {isCurrent && <span className="block text-[8px] text-sky-600 leading-none">●</span>}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Recent Personal Inspections Table */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <span>{language === 'en' ? 'Recent Inspections by You' : 'ประวัติการตรวจล่าสุดของคุณ'}</span>
+            </h3>
+            <button
+              onClick={onNavigateToHistory}
+              className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1"
+            >
+              <span>{language === 'en' ? 'View all inspection history' : 'ดูประวัติการตรวจทั้งหมด'}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {stats.recentInspections && stats.recentInspections.length > 0 ? (
+            <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                    <th className="py-2.5 px-3">{language === 'th' ? 'วันที่ตรวจ' : 'Date'}</th>
+                    <th className="py-2.5 px-3">{language === 'th' ? 'รหัสรายการ' : 'Code'}</th>
+                    <th className="py-2.5 px-3">{language === 'th' ? 'ระดับ' : 'Layer'}</th>
+                    <th className="py-2.5 px-3">{language === 'th' ? 'กะ' : 'Shift'}</th>
+                    <th className="py-2.5 px-3">{language === 'th' ? 'เครื่องจักร/ผลิตภัณฑ์' : 'M/C & Products'}</th>
+                    <th className="py-2.5 px-3 text-center">{language === 'th' ? 'คะแนน' : 'Score'}</th>
+                    <th className="py-2.5 px-3 text-center">{language === 'th' ? 'ผลตรวจ' : 'Results'}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {stats.recentInspections.map((ins: any) => (
+                    <tr key={ins.id} className="hover:bg-slate-50/80 transition">
+                      <td className="py-2.5 px-3 font-semibold text-slate-900">{ins.audit_date}</td>
+                      <td className="py-2.5 px-3 font-bold text-sky-700">#{ins.inspection_code || '001'}</td>
+                      <td className="py-2.5 px-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          ins.layer === 'Layer 1' ? 'bg-emerald-100 text-emerald-800' :
+                          ins.layer === 'Layer 2' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800'
+                        }`}>
+                          {ins.layer}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 font-medium">
+                        {ins.shift === 'เช้า' ? (language === 'th' ? 'กะเช้า' : 'Morning') :
+                         ins.shift === 'ดึก' ? (language === 'th' ? 'กะดึก' : 'Night') : ins.shift}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-600 truncate max-w-[200px]">{ins.mc_and_products}</td>
+                      <td className="py-2.5 px-3 text-center font-bold text-emerald-600">{ins.score_percent}%</td>
+                      <td className="py-2.5 px-3 text-center font-medium">
+                        <span className="text-emerald-700 font-bold">{ins.total_ok} OK</span>
+                        {ins.total_no > 0 && (
+                          <span className="text-red-600 font-bold ml-1.5">{ins.total_no} NO</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">
+              <ClipboardCheck className="w-6 h-6 text-slate-300 mx-auto mb-1.5" />
+              <span>{language === 'th' ? 'ยังไม่มีประวัติการตรวจในรอบนี้ กดเริ่มตรวจเพื่อบันทึกรายการแรก' : 'No audits yet. Click Start Audit to begin.'}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* 3. In-App User Notifications (User Request 5) */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* 3. In-App User Notifications Feed */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="px-6 py-4 bg-slate-50/80 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="relative">

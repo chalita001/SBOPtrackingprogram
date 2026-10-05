@@ -11,7 +11,6 @@ import {
   ClipboardCheck, 
   History, 
   AlertTriangle, 
-  Mail,
   Bell,
   Database,
   Cloud,
@@ -24,7 +23,6 @@ interface NavbarProps {
   onOpenLogin: () => void;
   onOpenRegister: () => void;
   onOpenAccountInfo: () => void;
-  onOpenEmailLogs: () => void;
   onOpenNotifications: () => void;
   unreadNotificationsCount?: number;
 }
@@ -35,7 +33,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLogin,
   onOpenRegister,
   onOpenAccountInfo,
-  onOpenEmailLogs,
   onOpenNotifications,
   unreadNotificationsCount = 0,
 }) => {
@@ -170,15 +167,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </button>
               </>
             )}
-
-            <button
-              onClick={onOpenEmailLogs}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
-              title="View Email Logs"
-            >
-              <Mail className="w-4 h-4 text-emerald-400" />
-              <span className="hidden xl:inline">{t.tabEmailLogs}</span>
-            </button>
           </nav>
 
           {/* User Profile & In-App Notification Bell */}

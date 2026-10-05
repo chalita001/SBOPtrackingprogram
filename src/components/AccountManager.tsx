@@ -255,9 +255,8 @@ export const AccountManager: React.FC = () => {
             <thead>
               <tr className="bg-slate-900 text-white font-semibold border-b border-slate-800">
                 <th className="py-3.5 px-4">{t.nameSurname}</th>
-                <th className="py-3.5 px-4">{t.emailAndPhone}</th>
+                <th className="py-3.5 px-4">{language === 'th' ? 'ชื่อผู้ใช้งาน (Username)' : 'Username'}</th>
                 <th className="py-3.5 px-4">{t.deptAndPosition}</th>
-                <th className="py-3.5 px-4">{t.responsibleArea}</th>
                 <th className="py-3.5 px-4">{t.systemRole}</th>
                 <th className="py-3.5 px-4">{t.accountStatus}</th>
                 <th className="py-3.5 px-4 text-center">{t.actions}</th>
@@ -266,13 +265,13 @@ export const AccountManager: React.FC = () => {
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <td colSpan={6} className="text-center py-12 text-slate-400">
                     {t.loading}
                   </td>
                 </tr>
               ) : usersList.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <td colSpan={6} className="text-center py-12 text-slate-400">
                     {t.noDataFound}
                   </td>
                 </tr>
@@ -305,18 +304,12 @@ export const AccountManager: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* Username / Contact */}
+                      {/* Username */}
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
-                          <span className="text-slate-400 font-bold">@</span>
-                          <span>{u.username || u.email}</span>
+                        <div className="flex items-center gap-1.5 text-slate-800 font-bold">
+                          <span className="text-sky-600">@</span>
+                          <span>{u.username || u.email?.split('@')[0]}</span>
                         </div>
-                        {u.phone && (
-                          <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mt-0.5">
-                            <Phone className="w-3 h-3 text-slate-400" />
-                            <span>{u.phone}</span>
-                          </div>
-                        )}
                       </td>
 
                       {/* Department & Position */}
@@ -326,14 +319,6 @@ export const AccountManager: React.FC = () => {
                           <span>{u.department}</span>
                         </div>
                         <div className="text-slate-500 text-[11px]">{u.position}</div>
-                      </td>
-
-                      {/* Responsible Area */}
-                      <td className="py-3 px-4 text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                          <span className="truncate max-w-[150px]">{u.responsible_area || '-'}</span>
-                        </div>
                       </td>
 
                       {/* Role */}

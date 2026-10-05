@@ -11,7 +11,6 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { LoginModal } from './components/LoginModal';
 import { RegisterModal } from './components/RegisterModal';
 import { AccountInfoModal } from './components/AccountInfoModal';
-import { EmailLogsModal } from './components/EmailLogsModal';
 import { NotificationsModal } from './components/NotificationsModal';
 import { ShieldCheck, AlertCircle, Database, Cloud } from 'lucide-react';
 
@@ -23,7 +22,6 @@ const MainContent: React.FC = () => {
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showRegister, setShowRegister] = useState<boolean>(false);
   const [showAccountInfo, setShowAccountInfo] = useState<boolean>(false);
-  const [showEmailLogs, setShowEmailLogs] = useState<boolean>(false);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
   const [unreadNotifs, setUnreadNotifs] = useState<number>(0);
 
@@ -67,7 +65,6 @@ const MainContent: React.FC = () => {
         onOpenLogin={() => setShowLogin(true)}
         onOpenRegister={() => setShowRegister(true)}
         onOpenAccountInfo={() => setShowAccountInfo(true)}
-        onOpenEmailLogs={() => setShowEmailLogs(true)}
         onOpenNotifications={() => setShowNotifications(true)}
         unreadNotificationsCount={unreadNotifs}
       />
@@ -168,11 +165,6 @@ const MainContent: React.FC = () => {
       <AccountInfoModal
         isOpen={showAccountInfo}
         onClose={() => setShowAccountInfo(false)}
-      />
-
-      <EmailLogsModal
-        isOpen={showEmailLogs}
-        onClose={() => setShowEmailLogs(false)}
       />
 
       <NotificationsModal

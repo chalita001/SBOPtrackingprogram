@@ -71,7 +71,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [month] = useState<number>(currentMonth); // Locked to current month
   const [auditDate] = useState<string>(currentDateStr); // Locked to current date
   const [layer, setLayer] = useState<string>(userRoleLayer || 'Layer 1');
-  const [shift, setShift] = useState<string>('กะ A (เช้า)');
+  const [shift, setShift] = useState<string>('เช้า');
   const [mcAndProducts, setMcAndProducts] = useState<string>('');
   const [comments, setComments] = useState<string>('');
   const [previousFindings, setPreviousFindings] = useState<string>('');
@@ -547,9 +547,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       layer === 'Layer 2' ? 'bg-indigo-600' : 'bg-purple-600'
                     }`} />
                     <span>
-                      {layer === 'Layer 1' && (language === 'th' ? 'Layer 1 — Leader (หัวหน้างานระดับต้น)' : 'Layer 1 — Leader (Daily / Shift Audit)')}
-                      {layer === 'Layer 2' && (language === 'th' ? 'Layer 2 — Supervisor (หัวหน้างานระดับกุม)' : 'Layer 2 — Supervisor (Weekly Audit)')}
-                      {layer === 'Layer 3' && (language === 'th' ? 'Layer 3 — Manager (ผู้จัดการแผนก)' : 'Layer 3 — Manager (Monthly Audit)')}
+                      {layer === 'Layer 1' && (language === 'th' ? 'Layer 1 — Leader (เป้าหมาย 40 ครั้ง/เดือน)' : 'Layer 1 — Leader (Target: 40/month)')}
+                      {layer === 'Layer 2' && (language === 'th' ? 'Layer 2 — Supervisor (เป้าหมาย 4 ครั้ง/เดือน)' : 'Layer 2 — Supervisor (Target: 4/month)')}
+                      {layer === 'Layer 3' && (language === 'th' ? 'Layer 3 — Manager (เป้าหมาย 1 ครั้ง/เดือน)' : 'Layer 3 — Manager (Target: 1/month)')}
                     </span>
                   </div>
                 </div>
@@ -559,14 +559,14 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   onChange={(e) => setLayer(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-sky-50 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
                 >
-                  <option value="Layer 1">{t.layer1}</option>
-                  <option value="Layer 2">{t.layer2}</option>
-                  <option value="Layer 3">{t.layer3}</option>
+                  <option value="Layer 1">{language === 'th' ? 'Layer 1 — Leader (40 ครั้ง/เดือน)' : 'Layer 1 — Leader (40/month)'}</option>
+                  <option value="Layer 2">{language === 'th' ? 'Layer 2 — Supervisor (4 ครั้ง/เดือน)' : 'Layer 2 — Supervisor (4/month)'}</option>
+                  <option value="Layer 3">{language === 'th' ? 'Layer 3 — Manager (1 ครั้ง/เดือน)' : 'Layer 3 — Manager (1/month)'}</option>
                 </select>
               )}
             </div>
 
-            {/* 4. Shift */}
+            {/* 4. Shift: เช้า / ดึก */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
                 {t.shift}
@@ -574,13 +574,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <select
                 value={shift}
                 onChange={(e) => setShift(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white"
               >
-                <option value="กะ A (เช้า)">{t.shiftA}</option>
-                <option value="กะ B (บ่าย)">{t.shiftB}</option>
-                <option value="กะ C (ดึก)">{t.shiftC}</option>
-                <option value="กะกลางวัน (Day)">{t.shiftDay}</option>
-                <option value="กะกลางคืน (Night)">{t.shiftNight}</option>
+                <option value="เช้า">{language === 'th' ? 'กะเช้า' : 'Morning Shift (เช้า)'}</option>
+                <option value="ดึก">{language === 'th' ? 'กะดึก' : 'Night Shift (ดึก)'}</option>
               </select>
             </div>
           </div>

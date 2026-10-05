@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, X, Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { LogIn, X, Lock, AlertCircle } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -34,11 +34,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickLogin = (demoUser: string, demoPass: string) => {
-    setUsername(demoUser);
-    setPassword(demoPass);
   };
 
   return (
@@ -115,39 +110,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               {loading ? t.signingIn : t.login}
             </button>
           </form>
-
-          {/* Quick Demo Logins for test */}
-          <div className="mt-6 pt-5 border-t border-slate-100">
-            <p className="text-xs font-medium text-slate-500 mb-2.5 text-center">
-              {t.quickLoginTitle}
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin', 'ehsadmin1234')}
-                className="p-2 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 font-medium text-left transition"
-              >
-                <div className="font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" />
-                  Admin
-                </div>
-                <div className="text-[11px] text-sky-600 truncate">@admin</div>
-                <div className="text-[10px] text-slate-400">Pass: ehsadmin1234</div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('usertester', 'test1234')}
-                className="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-medium text-left transition"
-              >
-                <div className="font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  User Tester
-                </div>
-                <div className="text-[11px] text-emerald-700 truncate">@usertester</div>
-                <div className="text-[10px] text-slate-400">Pass: test1234</div>
-              </button>
-            </div>
-          </div>
 
           <div className="mt-5 text-center text-xs text-slate-600">
             {t.noAccountYet}{' '}
