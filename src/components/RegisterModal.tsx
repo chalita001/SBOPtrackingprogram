@@ -17,11 +17,9 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    phone: '',
-    email: '',
+    username: '',
     department: 'MOLD',
     position: '',
-    responsibleArea: '',
     role: 'layer1',
     password: '',
     confirmPassword: '',
@@ -61,11 +59,9 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
       await register({
         firstName: formData.firstName,
         lastName: formData.lastName,
-        phone: formData.phone,
-        email: formData.email,
+        username: formData.username,
         department: formData.department,
         position: formData.position,
-        responsibleArea: formData.responsibleArea,
         role: formData.role,
         password: formData.password,
       });
@@ -73,7 +69,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
       setSuccess(
         language === 'en'
           ? 'Registration submitted! Your request has been sent for admin approval.'
-          : 'ลงทะเบียนสำเร็จ! ระบบได้บันทึกข้อมูลและส่งอีเมลแจ้งเตือนไปยังผู้ดูแลระบบเพื่อทำการอนุมัติสิทธิ์การใช้งานแล้ว'
+          : 'ลงทะเบียนสำเร็จ! ระบบได้บันทึกข้อมูลและส่งแจ้งเตือนไปยังผู้ดูแลระบบเพื่อทำการอนุมัติสิทธิ์การใช้งานแล้ว'
       );
     } catch (err: any) {
       setError(err.message || (language === 'en' ? 'Registration failed' : 'การลงทะเบียนไม่สำเร็จ'));
@@ -147,7 +143,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    placeholder={language === 'en' ? 'e.g. John' : 'เช่น สมศักดิ์'}
+                    placeholder={language === 'en' ? 'e.g. Somchai' : 'เช่น สมศักดิ์'}
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
                   />
                 </div>
@@ -161,45 +157,27 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    placeholder={language === 'en' ? 'e.g. Doe' : 'เช่น มั่นคง'}
+                    placeholder={language === 'en' ? 'e.g. Jaidee' : 'เช่น มั่นคง'}
                     className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.phone}
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="081-234-5678"
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.email} *
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                    <input
-                      type="email"
-                      required
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="user@sbop.com"
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
-                    />
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {language === 'en' ? 'Username (for login)' : 'ชื่อผู้ใช้งาน (Username)'} *
+                </label>
+                <div className="relative">
+                  <span className="w-4 h-4 text-slate-400 font-bold absolute left-3.5 top-2">@</span>
+                  <input
+                    type="text"
+                    required
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder={language === 'en' ? 'e.g. somchai.m' : 'เช่น somchai.m หรือ admin'}
+                    className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  />
                 </div>
               </div>
 
@@ -245,41 +223,22 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.responsibleArea} *
-                  </label>
-                  <div className="relative">
-                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                    <input
-                      type="text"
-                      required
-                      name="responsibleArea"
-                      value={formData.responsibleArea}
-                      onChange={handleChange}
-                      placeholder={language === 'en' ? 'e.g. Zone A (M/C 01-10)' : 'เช่น Zone A (M/C 01-10)'}
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.systemRole}
-                  </label>
-                  <div className="relative">
-                    <Shield className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleChange}
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition font-medium"
-                    >
-                      <option value="layer1">1. {t.roleLayer1}</option>
-                      <option value="layer2">2. {t.roleLayer2}</option>
-                      <option value="layer3">3. {t.roleLayer3}</option>
-                    </select>
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  {t.systemRole}
+                </label>
+                <div className="relative">
+                  <Shield className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition font-medium"
+                  >
+                    <option value="layer1">1. {t.roleLayer1}</option>
+                    <option value="layer2">2. {t.roleLayer2}</option>
+                    <option value="layer3">3. {t.roleLayer3}</option>
+                  </select>
                 </div>
               </div>
 

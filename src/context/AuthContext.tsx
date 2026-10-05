@@ -4,13 +4,14 @@ import { Language, translations } from '../i18n/translations';
 
 export interface User {
   id: number;
+  username?: string;
   firstName: string;
   lastName: string;
   phone?: string;
   email: string;
   department: string;
   position: string;
-  responsibleArea: string;
+  responsibleArea?: string;
   role: 'admin' | 'layer1' | 'layer2' | 'layer3' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
   status: 'pending' | 'approved' | 'rejected';
 }
@@ -58,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const data = await api.getMe();
-      setUser(data);
+      setUser(data.user || data);
     } catch (err) {
       console.warn('Session expired or invalid token:', err);
       removeAuthToken();

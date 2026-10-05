@@ -79,6 +79,9 @@ export const api = {
   },
   createInspection: (data: any) => request('/inspections', { method: 'POST', body: JSON.stringify(data) }),
   deleteInspection: (id: number) => request(`/inspections/${id}`, { method: 'DELETE' }),
+  updateInspectionItems: (id: number, items: any[]) =>
+    request(`/inspections/${id}/items`, { method: 'PUT', body: JSON.stringify({ items }) }),
+
 
   // Upload Photo to Cloudflare R2
   uploadImage: async (file: File) => {
@@ -108,9 +111,29 @@ export const api = {
   getEmailLogs: () => request('/email/logs'),
   sendCustomEmail: (emailData: any) => request('/email/send-alert', { method: 'POST', body: JSON.stringify(emailData) }),
 
+  // In-App Notifications
+  getNotifications: () => request('/notifications'),
+  markNotificationRead: (id: number) => request(`/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllNotificationsRead: () => request('/notifications/read-all', { method: 'POST' }),
+  sendNotification: (data: { userId?: number; title: string; message: string; type?: string; link?: string }) =>
+    request('/notifications', { method: 'POST', body: JSON.stringify(data) }),
+
   // Admin Dashboard
   getDashboardStats: (params?: Record<string, string>) => {
     const query = new URLSearchParams(params).toString();
     return request(`/dashboard/stats${query ? `?${query}` : ''}`);
   },
 };
+
+export function normalizeImageUrl(url?: string | null): string {
+  if (!url) return '';
+  // If it's already a relative /api/r2/ path, return as is
+  if (url.startsWith('/api/r2/')) return url;
+  // If it's a full R2 S3 storage domain or direct worker domain, convert to /api/r2/...
+  if (url.includes('r2.cloudflarestorage.com/r2sbop/')) {
+    const key = url.split('r2.cloudflarestorage.com/r2sbop/')[1];
+    return `/api/r2/${key}`;
+  }
+  return url;
+}
+

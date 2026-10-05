@@ -156,18 +156,22 @@ export default {
     if (url.pathname === '/api/auth/login' && request.method === 'POST') {
       try {
         const body: any = await request.json();
-        const rawInput = (body.email || '').trim().toLowerCase();
-        const email = rawInput.includes('@') ? rawInput : `${rawInput}@sbop.com`;
+        const rawInput = (body.username || body.email || '').trim();
+        const rawLower = rawInput.toLowerCase();
         const password = body.password || '';
 
-        const user: any = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+        const user: any = await env.DB.prepare(`
+          SELECT * FROM users 
+          WHERE username = ? OR username = ? OR email = ? OR email = ?
+        `).bind(rawInput, rawLower, rawLower, `${rawLower}@sbop.com`).first();
+
         if (!user) {
-          return jsonResponse({ error: 'Invalid email or password' }, 401);
+          return jsonResponse({ error: 'Invalid username or password' }, 401);
         }
 
         const isMatch = bcrypt.compareSync(password, user.password_hash);
         if (!isMatch) {
-          return jsonResponse({ error: 'Invalid email or password' }, 401);
+          return jsonResponse({ error: 'Invalid username or password' }, 401);
         }
 
         if (user.status === 'pending') {
@@ -186,12 +190,14 @@ export default {
 
         const token = await signJWT({
           id: user.id,
+          username: user.username || user.email,
           email: user.email,
           role: user.role,
           status: user.status,
           firstName: user.first_name,
           lastName: user.last_name,
           department: user.department,
+          position: user.position,
         }, jwtSecret);
 
         return jsonResponse({
@@ -199,13 +205,12 @@ export default {
           token,
           user: {
             id: user.id,
+            username: user.username || user.email,
             firstName: user.first_name,
             lastName: user.last_name,
             email: user.email,
-            phone: user.phone,
             department: user.department,
             position: user.position,
-            responsibleArea: user.responsible_area,
             role: user.role,
             status: user.status,
           },
@@ -215,59 +220,55 @@ export default {
       }
     }
 
-    // Auth: Register
+    // Auth: Register (Username based, without phone & area)
     if (url.pathname === '/api/auth/register' && request.method === 'POST') {
       try {
         const body: any = await request.json();
         const {
           firstName,
           lastName,
-          phone,
-          email,
+          username,
           department,
           position,
-          responsibleArea,
-          role = 'inspector',
+          role = 'layer1',
           password,
         } = body;
 
-        if (!firstName || !lastName || !email || !department || !position || !password) {
+        const u = (username || body.email || '').trim();
+
+        if (!firstName || !lastName || !u || !department || !position || !password) {
           return jsonResponse({ error: 'Please fill in all required fields' }, 400);
         }
 
-        const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email.trim().toLowerCase()).first();
+        const existing = await env.DB.prepare('SELECT id FROM users WHERE username = ? OR email = ?').bind(u, u).first();
         if (existing) {
-          return jsonResponse({ error: 'This email is already registered' }, 409);
+          return jsonResponse({ error: 'This username is already taken' }, 409);
         }
 
         const passwordHash = bcrypt.hashSync(password, 10);
+        const userEmail = u.includes('@') ? u.toLowerCase() : `${u.toLowerCase()}@sbop.local`;
+
         const result = await env.DB.prepare(`
           INSERT INTO users (
-            first_name, last_name, phone, email, department, position,
+            first_name, last_name, username, email, department, position,
             responsible_area, role, status, password_hash, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ) VALUES (?, ?, ?, ?, ?, ?, '', ?, 'pending', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         `).bind(
           firstName.trim(),
           lastName.trim(),
-          (phone || '').trim(),
-          email.trim().toLowerCase(),
+          u,
+          userEmail,
           department,
           position.trim(),
-          (responsibleArea || '').trim(),
           role,
           passwordHash
         ).run();
 
-        // Record email log
+        // In-app notification for admin
         await env.DB.prepare(`
-          INSERT INTO email_logs (recipient_email, recipient_name, subject, body, type, status, sent_at)
-          VALUES (?, ?, ?, ?, 'registration_alert', 'sent', CURRENT_TIMESTAMP)
-        `).bind(
-          'admin@sbop.com',
-          'Admin',
-          `[SBOP Alert] New user registered: ${firstName} ${lastName}`,
-          `New user registered: ${firstName} ${lastName} (${email}) for department ${department}`
-        ).run();
+          INSERT INTO notifications (user_id, title, message, type)
+          VALUES (NULL, 'สมาชิกใหม่รอการอนุมัติ', ?, 'alert')
+        `).bind(`มีผู้ใช้ใหม่ @${u} (${firstName} ${lastName}) สมัครเข้าใช้งานแผนก ${department}`).run();
 
         return jsonResponse({
           message: 'Registration successful! Your account is pending admin approval.',
@@ -279,29 +280,45 @@ export default {
       }
     }
 
-    // Auth: Current User Info
+    // Auth: Current User Info & Profile
     if (url.pathname === '/api/auth/me' && request.method === 'GET') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const user: any = await env.DB.prepare(`
-        SELECT id, first_name, last_name, phone, email, department, position,
-               responsible_area, role, status, created_at, updated_at
+        SELECT id, username, first_name, last_name, email, department, position,
+               role, status, created_at, updated_at
         FROM users WHERE id = ?
       `).bind(currentUser.id).first();
 
       if (!user) return jsonResponse({ error: 'User not found' }, 404);
 
+      // User stats for Profile
+      const stats: any = await env.DB.prepare(`
+        SELECT 
+          COUNT(*) as total_inspections,
+          COALESCE(ROUND(AVG(score_percent), 1), 100.0) as average_score,
+          COALESCE(SUM(total_no), 0) as defects_found
+        FROM inspections
+        WHERE auditor_id = ?
+      `).bind(user.id).first();
+
       return jsonResponse({
-        id: user.id,
-        firstName: user.first_name,
-        lastName: user.last_name,
-        phone: user.phone,
-        email: user.email,
-        department: user.department,
-        position: user.position,
-        responsibleArea: user.responsible_area,
-        role: user.role,
-        status: user.status,
-        createdAt: user.created_at,
+        user: {
+          id: user.id,
+          username: user.username || user.email,
+          firstName: user.first_name,
+          lastName: user.last_name,
+          email: user.email,
+          department: user.department,
+          position: user.position,
+          role: user.role,
+          status: user.status,
+          createdAt: user.created_at,
+        },
+        stats: {
+          totalInspections: stats?.total_inspections || 0,
+          averageScore: stats?.average_score || 100.0,
+          defectsFound: stats?.defects_found || 0,
+        }
       });
     }
 
@@ -631,17 +648,53 @@ export default {
           await env.DB.batch(itemStmts);
         }
 
-        // Email log if defects found
+        // Layer 2/3 updating prior Layer 1 answers
+        if (body.updatePriorInspectionId && Array.isArray(body.priorItemsUpdates)) {
+          for (const up of body.priorItemsUpdates) {
+            if (up.id) {
+              await env.DB.prepare(`
+                UPDATE inspection_items
+                SET result = ?, finding_topic = ?, severity = ?, action_plan = ?, responsible_person = ?, due_date = ?, image_url = ?
+                WHERE id = ?
+              `).bind(
+                up.result,
+                up.findingTopic || null,
+                up.severity || null,
+                up.actionPlan || null,
+                up.responsiblePerson || null,
+                up.dueDate || null,
+                up.imageUrl || null,
+                up.id
+              ).run();
+            }
+          }
+
+          // Recalculate prior inspection score
+          const counts: any = await env.DB.prepare(`
+            SELECT 
+              SUM(CASE WHEN result = 'OK' THEN 1 ELSE 0 END) as total_ok,
+              SUM(CASE WHEN result = 'NO' THEN 1 ELSE 0 END) as total_no
+            FROM inspection_items WHERE inspection_id = ?
+          `).bind(body.updatePriorInspectionId).first();
+          const pOk = counts?.total_ok || 0;
+          const pNo = counts?.total_no || 0;
+          const pTotal = pOk + pNo;
+          const pScore = pTotal > 0 ? Number(((pOk / pTotal) * 100).toFixed(2)) : 100.0;
+          await env.DB.prepare(`
+            UPDATE inspections SET total_ok = ?, total_no = ?, score_percent = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `).bind(pOk, pNo, pScore, body.updatePriorInspectionId).run();
+        }
+
+        // In-app notifications when defects found
         if (defectItems.length > 0) {
           await env.DB.prepare(`
-            INSERT INTO email_logs (recipient_email, recipient_name, subject, body, type, status, related_id, sent_at)
-            VALUES (?, ?, ?, ?, 'defect_alert', 'sent', ?, CURRENT_TIMESTAMP)
+            INSERT INTO notifications (user_id, title, message, type, link)
+            VALUES (NULL, ?, ?, 'alert', ?)
           `).bind(
-            'admin@sbop.com',
-            'Safety Admin',
-            `[SBOP Defect Alert] Defects found in ${departmentCode} (รหัสรายการ: ${inspectionCode || '001'}) on ${auditDate}`,
-            `Inspection ID: ${inspectionId}, Code: ${inspectionCode || '001'}, Found ${defectItems.length} issues in ${mcAndProducts}`,
-            inspectionId
+            `[พบสิ่งผิดปกติ SBOP] แผนก ${departmentCode} #${inspectionCode || '001'} (${layer})`,
+            `ผู้ตรวจ ${auditorName} ตรวจพบ ${defectItems.length} สิ่งผิดปกติ ที่ ${mcAndProducts}`,
+            `/defects`
           ).run();
         }
 
@@ -684,6 +737,58 @@ export default {
         await env.DB.prepare('DELETE FROM inspections WHERE id = ?').bind(id).run();
         return jsonResponse({ message: 'Inspection deleted successfully' });
       }
+    }
+
+    // Update inspection items (e.g. Layer 2 / Layer 3 editing Layer 1 answers)
+    if (url.pathname.match(/^\/api\/inspections\/\d+\/items$/) && request.method === 'PUT') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const inspectionId = parseInt(url.pathname.split('/')[3], 10);
+      const body: any = await request.json();
+      const itemsToUpdate = body.items || [];
+
+      for (const it of itemsToUpdate) {
+        if (it.id) {
+          await env.DB.prepare(`
+            UPDATE inspection_items
+            SET result = ?, finding_topic = ?, severity = ?, action_plan = ?, responsible_person = ?, due_date = ?, image_url = ?
+            WHERE id = ? AND inspection_id = ?
+          `).bind(
+            it.result,
+            it.finding_topic || it.findingTopic || null,
+            it.severity || null,
+            it.action_plan || it.actionPlan || null,
+            it.responsible_person || it.responsiblePerson || null,
+            it.due_date || it.dueDate || null,
+            it.image_url || it.imageUrl || null,
+            it.id,
+            inspectionId
+          ).run();
+        }
+      }
+
+      // Recalculate prior inspection score
+      const counts: any = await env.DB.prepare(`
+        SELECT 
+          SUM(CASE WHEN result = 'OK' THEN 1 ELSE 0 END) as total_ok,
+          SUM(CASE WHEN result = 'NO' THEN 1 ELSE 0 END) as total_no
+        FROM inspection_items WHERE inspection_id = ?
+      `).bind(inspectionId).first();
+      const pOk = counts?.total_ok || 0;
+      const pNo = counts?.total_no || 0;
+      const pTotal = pOk + pNo;
+      const pScore = pTotal > 0 ? Number(((pOk / pTotal) * 100).toFixed(2)) : 100.0;
+
+      await env.DB.prepare(`
+        UPDATE inspections SET total_ok = ?, total_no = ?, score_percent = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(pOk, pNo, pScore, inspectionId).run();
+
+      return jsonResponse({
+        message: 'Inspection items updated successfully',
+        totalOk: pOk,
+        totalNo: pNo,
+        scorePercent: pScore
+      });
     }
 
     // Admin Dashboard Statistics
@@ -799,8 +904,7 @@ export default {
           httpMetadata: { contentType: file.type || 'image/jpeg' },
         });
 
-        const r2PublicBase = env.R2_PUBLIC_URL || 'https://bfdba11ba88cafd6f064809c2fe29b99.r2.cloudflarestorage.com/r2sbop';
-        const imageUrl = `${r2PublicBase}/${key}`;
+        const imageUrl = `/api/r2/${key}`;
 
         return jsonResponse({
           message: 'Image uploaded successfully to Cloudflare R2',
@@ -813,6 +917,78 @@ export default {
       }
     }
 
+    // Serve images directly from R2 bucket
+    if (url.pathname.startsWith('/api/r2/')) {
+      const key = decodeURIComponent(url.pathname.replace(/^\/api\/r2\//, ''));
+      try {
+        const object = await env.R2_BUCKET.get(key);
+        if (!object) {
+          return new Response('Image not found', { status: 404 });
+        }
+        const headers = new Headers();
+        object.writeHttpMetadata(headers);
+        headers.set('etag', object.httpEtag);
+        headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+        headers.set('Access-Control-Allow-Origin', '*');
+        return new Response(object.body, { headers });
+      } catch (err: any) {
+        return new Response('Error retrieving image: ' + err.message, { status: 500 });
+      }
+    }
+
+    // In-App Notifications: List & Unread Count
+    if (url.pathname === '/api/notifications' && request.method === 'GET') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+
+      const { results: notifications } = await env.DB.prepare(`
+        SELECT * FROM notifications 
+        WHERE user_id = ? OR (user_id IS NULL AND (? = 'admin' OR type = 'broadcast' OR type = 'alert'))
+        ORDER BY id DESC LIMIT 50
+      `).bind(currentUser.id, currentUser.role).all();
+
+      const unreadRow: any = await env.DB.prepare(`
+        SELECT COUNT(*) as unread_count FROM notifications 
+        WHERE (user_id = ? OR (user_id IS NULL AND (? = 'admin' OR type = 'broadcast' OR type = 'alert')))
+          AND is_read = 0
+      `).bind(currentUser.id, currentUser.role).first();
+
+      return jsonResponse({
+        notifications: notifications || [],
+        unreadCount: unreadRow?.unread_count || 0,
+      });
+    }
+
+    // Notifications: Mark Single as Read
+    if (url.pathname.match(/^\/api\/notifications\/\d+\/read$/) && request.method === 'PATCH') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const notifId = parseInt(url.pathname.split('/')[3], 10);
+      await env.DB.prepare('UPDATE notifications SET is_read = 1 WHERE id = ?').bind(notifId).run();
+      return jsonResponse({ message: 'Marked as read' });
+    }
+
+    // Notifications: Mark All as Read
+    if (url.pathname === '/api/notifications/read-all' && request.method === 'POST') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      await env.DB.prepare(`
+        UPDATE notifications 
+        SET is_read = 1 
+        WHERE user_id = ? OR (user_id IS NULL AND (? = 'admin' OR type = 'broadcast' OR type = 'alert'))
+      `).bind(currentUser.id, currentUser.role).run();
+      return jsonResponse({ message: 'All marked as read' });
+    }
+
+    // Notifications: Send In-App Notification (Admin or System)
+    if (url.pathname === '/api/notifications' && request.method === 'POST') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const body: any = await request.json();
+      const { userId, title, message, type = 'info', link = null } = body;
+      await env.DB.prepare(`
+        INSERT INTO notifications (user_id, title, message, type, link, is_read, created_at)
+        VALUES (?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)
+      `).bind(userId || null, title, message, type, link).run();
+      return jsonResponse({ message: 'Notification sent successfully' }, 201);
+    }
+
     // Admin: Users List & Management
     if (url.pathname === '/api/users' && request.method === 'GET') {
       if (!currentUser || currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
@@ -821,7 +997,7 @@ export default {
       const search = url.searchParams.get('search');
 
       let sql = `
-        SELECT id, first_name, last_name, phone, email, department, position,
+        SELECT id, username, first_name, last_name, phone, email, department, position,
                responsible_area, role, status, approved_at, created_at, updated_at
         FROM users WHERE 1=1
       `;
@@ -829,9 +1005,9 @@ export default {
       if (status && status !== 'all') { sql += ' AND status = ?'; params.push(status); }
       if (dept && dept !== 'all') { sql += ' AND department = ?'; params.push(dept); }
       if (search) {
-        sql += ' AND (first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR position LIKE ?)';
+        sql += ' AND (username LIKE ? OR first_name LIKE ? OR last_name LIKE ? OR email LIKE ? OR position LIKE ?)';
         const t = `%${search}%`;
-        params.push(t, t, t, t);
+        params.push(t, t, t, t, t);
       }
 
       sql += " ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END, created_at DESC";
@@ -862,6 +1038,12 @@ export default {
         WHERE id = ?
       `).bind(currentUser.id, userId).run();
 
+      // In-app notification for user
+      await env.DB.prepare(`
+        INSERT INTO notifications (user_id, title, message, type)
+        VALUES (?, 'บัญชีของคุณได้รับการอนุมัติแล้ว', 'ยินดีต้อนรับสู่ระบบ SBOP บัญชีของคุณได้รับการอนุมัติโดยผู้ดูแลระบบแล้ว สามารถเริ่มบันทึกการตรวจได้ทันที', 'success')
+      `).bind(userId).run();
+
       // Log email
       await env.DB.prepare(`
         INSERT INTO email_logs (recipient_email, recipient_name, subject, body, type, status, sent_at)
@@ -885,6 +1067,12 @@ export default {
         SET status = 'rejected', approved_by = ?, approved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(currentUser.id, userId).run();
+
+      await env.DB.prepare(`
+        INSERT INTO notifications (user_id, title, message, type)
+        VALUES (?, 'บัญชีไม่ผ่านการอนุมัติ', 'ขออภัย บัญชีผู้ใช้งานของคุณไม่ได้รับการอนุมัติ กรุณาติดต่อ EHS หรือหัวหน้างาน', 'error')
+      `).bind(userId).run();
+
       return jsonResponse({ message: 'Account rejected' });
     }
 

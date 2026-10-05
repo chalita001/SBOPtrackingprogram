@@ -12,6 +12,7 @@ import {
   History, 
   AlertTriangle, 
   Mail,
+  Bell,
   Database,
   Cloud,
   BarChart3
@@ -24,6 +25,8 @@ interface NavbarProps {
   onOpenRegister: () => void;
   onOpenAccountInfo: () => void;
   onOpenEmailLogs: () => void;
+  onOpenNotifications: () => void;
+  unreadNotificationsCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -33,6 +36,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRegister,
   onOpenAccountInfo,
   onOpenEmailLogs,
+  onOpenNotifications,
+  unreadNotificationsCount = 0,
 }) => {
   const { user, logout, language, toggleLanguage, t } = useAuth();
 
@@ -67,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & System Title */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab('checklist')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setActiveTab(user ? 'profile' : 'checklist')}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 flex items-center justify-center shadow-md shadow-sky-500/20">
               <ShieldCheck className="w-6 h-6 text-white" />
             </div>
@@ -86,6 +91,21 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1">
+            {/* Profile Tab */}
+            {user && (
+              <button
+                onClick={() => setActiveTab('profile')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                  activeTab === 'profile'
+                    ? 'bg-sky-600 text-white shadow-sm'
+                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`}
+              >
+                <User className="w-4 h-4 text-sky-400" />
+                <span>{language === 'en' ? 'Profile' : 'โปรไฟล์'}</span>
+              </button>
+            )}
+
             <button
               onClick={() => setActiveTab('checklist')}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${
@@ -161,23 +181,38 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* User Profile / Auth Actions */}
+          {/* User Profile & In-App Notification Bell */}
           <div className="flex items-center gap-3">
             {user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                {/* Notification Bell Button */}
                 <button
-                  onClick={onOpenAccountInfo}
+                  onClick={onOpenNotifications}
+                  className="relative p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                  title={language === 'en' ? 'In-App Notifications' : 'การแจ้งเตือน'}
+                >
+                  <Bell className="w-5 h-5 text-amber-400" />
+                  {unreadNotificationsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center animate-pulse">
+                      {unreadNotificationsCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Profile Pill */}
+                <button
+                  onClick={() => setActiveTab('profile')}
                   className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left transition"
                 >
                   <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow">
-                    {user.firstName.charAt(0)}
+                    {user.firstName?.charAt(0) || 'U'}
                   </div>
                   <div className="hidden sm:block">
                     <div className="text-xs font-semibold text-slate-200 leading-tight">
                       {user.firstName} {user.lastName}
                     </div>
                     <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                      <span>{user.department}</span>
+                      <span>@{user.username || user.email?.split('@')[0]}</span>
                       <span>•</span>
                       <span className="capitalize font-medium text-sky-400">{user.role}</span>
                     </div>
@@ -215,6 +250,17 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Mobile Submenu Navigation */}
         <div className="lg:hidden flex items-center justify-around py-2 border-t border-slate-800 text-xs">
+          {user && (
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
+                activeTab === 'profile' ? 'text-sky-400 font-semibold' : 'text-slate-400'
+              }`}
+            >
+              <User className="w-4 h-4" />
+              <span>{language === 'th' ? 'โปรไฟล์' : 'Profile'}</span>
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('checklist')}
             className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
@@ -269,3 +315,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+

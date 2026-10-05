@@ -218,13 +218,13 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.email} ({language === 'en' ? 'Read-only' : 'แก้ไขไม่ได้'})
+                    {language === 'en' ? 'Username' : 'ชื่อผู้ใช้งาน (Username)'} ({language === 'en' ? 'Read-only' : 'แก้ไขไม่ได้'})
                   </label>
                   <input
-                    type="email"
+                    type="text"
                     disabled
-                    value={user.email}
-                    className="w-full px-3.5 py-2 bg-slate-100 border border-slate-300 rounded-xl text-sm text-slate-500 cursor-not-allowed"
+                    value={user.username ? `@${user.username}` : user.email}
+                    className="w-full px-3.5 py-2 bg-slate-100 border border-slate-300 rounded-xl text-sm text-slate-500 cursor-not-allowed font-medium"
                   />
                 </div>
               </div>

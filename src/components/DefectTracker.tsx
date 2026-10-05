@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, normalizeImageUrl } from '../services/api';
 import { localizeQuestion } from '../i18n/translations';
 import { 
   AlertTriangle, 
@@ -269,13 +269,13 @@ export const DefectTracker: React.FC = () => {
                       <span>📸 {t.attachPhoto}:</span>
                     </span>
                     <a
-                      href={d.image_url}
+                      href={normalizeImageUrl(d.image_url)}
                       target="_blank"
                       rel="noreferrer"
                       className="block overflow-hidden rounded-xl border border-slate-200 group relative"
                     >
                       <img
-                        src={d.image_url}
+                        src={normalizeImageUrl(d.image_url)}
                         alt="Defect"
                         className="w-full h-44 object-cover group-hover:scale-105 transition duration-300"
                       />

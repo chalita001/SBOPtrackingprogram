@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, normalizeImageUrl } from '../services/api';
 import { localizeQuestion, localizeCategory } from '../i18n/translations';
 import { 
   History, 
@@ -408,9 +408,9 @@ export const InspectionHistory: React.FC = () => {
                           {item.image_url && (
                             <div className="pt-1">
                               <span className="font-semibold text-[11px] block mb-1">📸 {t.attachPhoto}:</span>
-                              <a href={item.image_url} target="_blank" rel="noreferrer" className="inline-block group">
+                              <a href={normalizeImageUrl(item.image_url)} target="_blank" rel="noreferrer" className="inline-block group">
                                 <img
-                                  src={item.image_url}
+                                  src={normalizeImageUrl(item.image_url)}
                                   alt="Defect photo"
                                   className="h-28 w-auto object-cover rounded-lg border border-red-300 shadow-sm group-hover:opacity-90"
                                 />

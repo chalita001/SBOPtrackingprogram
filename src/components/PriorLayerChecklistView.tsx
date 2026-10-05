@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { localizeQuestion, localizeCategory, localizeSubcategory, localizeMethod } from '../i18n/translations';
+import { localizeQuestion, localizeCategory, localizeSubcategory } from '../i18n/translations';
+import { api, normalizeImageUrl } from '../services/api';
 import { 
   CheckCircle2, 
   XCircle, 
-  MinusCircle, 
   ChevronDown, 
   ChevronUp, 
   ExternalLink, 
   AlertTriangle,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Edit3,
+  Save,
+  Check,
+  RotateCcw
 } from 'lucide-react';
 
 interface PriorItem {
@@ -45,6 +49,7 @@ interface PriorLayerChecklistViewProps {
   layerTitle: string; // e.g. "Layer 1 (Leader)" or "Layer 2 (Supervisor)"
   inspectionCode?: string;
   defaultExpanded?: boolean;
+  onRefresh?: () => void;
 }
 
 export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = ({
@@ -52,14 +57,62 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
   layerTitle,
   inspectionCode,
   defaultExpanded = true,
+  onRefresh,
 }) => {
   const { language, t } = useAuth();
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const items = inspection.items || [];
+  // Editable state for Layer 2 / Layer 3 to modify Layer 1's answers
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editedItems, setEditedItems] = useState<PriorItem[]>(inspection.items || []);
+  const [savingEdit, setSavingEdit] = useState<boolean>(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEditedItems(inspection.items || []);
+  }, [inspection.items]);
+
+  const items = isEditing ? editedItems : (inspection.items || []);
   const totalCount = items.length;
-  const isPassed = (inspection.score_percent || 0) >= 85;
+
+  const currentOk = items.filter((i) => i.result === 'OK').length;
+  const currentNo = items.filter((i) => i.result === 'NO').length;
+  const totalEval = currentOk + currentNo;
+  const currentScore = totalEval > 0 ? ((currentOk / totalEval) * 100).toFixed(1) : Number(inspection.score_percent || 100).toFixed(1);
+  const isPassed = parseFloat(currentScore) >= 85;
+
+  // Handle changing result in edit mode
+  const handleItemResultChange = (itemId: number, newResult: 'OK' | 'NO') => {
+    setEditedItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, result: newResult } : it))
+    );
+  };
+
+  const handleItemFieldChange = (itemId: number, field: keyof PriorItem, val: any) => {
+    setEditedItems((prev) =>
+      prev.map((it) => (it.id === itemId ? { ...it, [field]: val } : it))
+    );
+  };
+
+  // Save modified answers to database
+  const handleSaveEdits = async () => {
+    setSavingEdit(true);
+    setSaveSuccessMsg(null);
+    try {
+      await api.updateInspectionItems(inspection.id, editedItems);
+      setSaveSuccessMsg(
+        language === 'en' ? 'Updated answers successfully!' : 'บันทึกการแก้ไขคำตอบเรียบร้อยแล้ว!'
+      );
+      setIsEditing(false);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      alert((language === 'en' ? 'Failed to update: ' : 'บันทึกไม่สำเร็จ: ') + err.message);
+    } finally {
+      setSavingEdit(false);
+      setTimeout(() => setSaveSuccessMsg(null), 4000);
+    }
+  };
 
   // Group items by category
   const groupedByCategory = items.reduce((acc, item) => {
@@ -90,7 +143,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                 {t.totalOk}
               </span>
               <span className="text-2xl font-bold text-emerald-400 tracking-tight">
-                {inspection.total_ok || 0}
+                {currentOk}
               </span>
             </div>
 
@@ -99,16 +152,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                 {t.totalNo}
               </span>
               <span className="text-2xl font-bold text-red-400 tracking-tight">
-                {inspection.total_no || 0}
-              </span>
-            </div>
-
-            <div className="border-l border-slate-800 pl-6">
-              <span className="text-xs text-slate-400 font-medium block">
-                {t.totalNa}
-              </span>
-              <span className="text-2xl font-bold text-slate-300 tracking-tight">
-                {inspection.total_na || 0}
+                {currentNo}
               </span>
             </div>
           </div>
@@ -120,7 +164,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                 {t.safetyScore}
               </span>
               <span className="text-3xl font-extrabold text-white tracking-tight">
-                {Number(inspection.score_percent || 0).toFixed(1)}%
+                {currentScore}%
               </span>
             </div>
 
@@ -134,11 +178,50 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
               {isPassed ? 'PASS' : 'FAIL'}
             </span>
 
+            {/* Edit Mode Toggle Button */}
+            {!isEditing ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditing(true);
+                  setIsExpanded(true);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                title={language === 'en' ? 'Edit prior layer answers' : 'แก้ไขคำตอบของผลการตรวจนี้'}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+                <span>{language === 'en' ? 'Edit Answers' : 'แก้ไขคำตอบ'}</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleSaveEdits}
+                  disabled={savingEdit}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{savingEdit ? (language === 'en' ? 'Saving...' : 'กำลังบันทึก...') : (language === 'en' ? 'Save Changes' : 'บันทึกการแก้ไข')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditedItems(inspection.items || []);
+                    setIsEditing(false);
+                  }}
+                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+                  title={language === 'en' ? 'Cancel' : 'ยกเลิก'}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Toggle button */}
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition ml-2"
+              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
               title={isExpanded ? t.collapseForm : t.expandForm}
             >
               {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -169,6 +252,13 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
         </div>
       </div>
 
+      {saveSuccessMsg && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 font-semibold flex items-center gap-2 animate-fadeIn">
+          <Check className="w-4 h-4 text-emerald-600" />
+          <span>{saveSuccessMsg}</span>
+        </div>
+      )}
+
       {/* 2. Questions list grouped by Category */}
       {isExpanded && (
         <div className="space-y-4 animate-fadeIn">
@@ -195,7 +285,6 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                 {catItems.map((item, itemIdx) => {
                   const isOk = item.result === 'OK';
                   const isNo = item.result === 'NO';
-                  const isNa = item.result === 'N/A';
 
                   return (
                     <div
@@ -203,7 +292,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                       className={`p-4 transition ${isNo ? 'bg-red-50/20' : 'hover:bg-slate-50/60'}`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        {/* Left: Subcategory, Question, Method */}
+                        {/* Left: Subcategory, Question (Explanation/Method removed as per request 4) */}
                         <div className="space-y-1 flex-1 pr-2">
                           {item.subcategory && (
                             <span className="inline-block text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded">
@@ -213,90 +302,141 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                           <div className="text-xs font-bold text-slate-900 leading-snug">
                             {localizeQuestion(item.question, language)}
                           </div>
-                          {item.method && (
-                            <div className="text-[11px] text-slate-400 italic">
-                              {language === 'th' ? `วิธีตรวจ: ${item.method}` : `Method: ${localizeMethod(item.method, 'en')}`}
-                            </div>
-                          )}
                         </div>
 
-                        {/* Right: Read-only Status Buttons (OK / NO / N/A) */}
+                        {/* Right: Status Buttons (OK / NO) - Editable or View mode */}
                         <div className="flex items-center gap-2 shrink-0">
-                          {/* OK Pill */}
-                          <div
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
-                              isOk
-                                ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-200'
-                                : 'border border-slate-200 text-slate-400 opacity-40 bg-slate-50'
-                            }`}
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>OK</span>
-                          </div>
+                          {isEditing ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleItemResultChange(item.id, 'OK')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                                  isOk
+                                    ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>OK</span>
+                              </button>
 
-                          {/* NO Pill */}
-                          <div
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
-                              isNo
-                                ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-200'
-                                : 'border border-slate-200 text-slate-400 opacity-40 bg-slate-50'
-                            }`}
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                            <span>NO</span>
-                          </div>
+                              <button
+                                type="button"
+                                onClick={() => handleItemResultChange(item.id, 'NO')}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                                  isNo
+                                    ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-400'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-700'
+                                }`}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>NO</span>
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              {/* OK Pill */}
+                              <div
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
+                                  isOk
+                                    ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-200'
+                                    : 'border border-slate-200 text-slate-400 opacity-40 bg-slate-50'
+                                }`}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>OK</span>
+                              </div>
 
-                          {/* N/A Pill */}
-                          <div
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
-                              isNa
-                                ? 'bg-slate-600 text-white shadow-sm ring-2 ring-slate-200'
-                                : 'border border-slate-200 text-slate-400 opacity-40 bg-slate-50'
-                            }`}
-                          >
-                            <MinusCircle className="w-3.5 h-3.5" />
-                            <span>N/A</span>
-                          </div>
+                              {/* NO Pill */}
+                              <div
+                                className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition ${
+                                  isNo
+                                    ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-200'
+                                    : 'border border-slate-200 text-slate-400 opacity-40 bg-slate-50'
+                                }`}
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>NO</span>
+                              </div>
+                            </>
+                          )}
                         </div>
                       </div>
 
-                      {/* If NO: Show finding details & Cloudflare R2 image */}
+                      {/* If NO: Show or edit finding details & Cloudflare R2 image */}
                       {isNo && (
                         <div className="mt-3 p-3.5 bg-red-50/80 border border-red-200 rounded-xl space-y-2 text-xs text-red-950">
                           <div className="flex items-start justify-between gap-2">
-                            <div className="flex items-center gap-1.5 font-bold text-red-800">
+                            <div className="flex items-center gap-1.5 font-bold text-red-800 flex-1">
                               <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
-                              <span>{language === 'th' ? 'ประเด็นความเสี่ยง:' : 'Safety Finding:'} {item.finding_topic || (language === 'th' ? 'พบข้อผิดปกติ' : 'Defect Anomaly')}</span>
+                              {isEditing ? (
+                                <input
+                                  type="text"
+                                  value={item.finding_topic || ''}
+                                  onChange={(e) => handleItemFieldChange(item.id, 'finding_topic', e.target.value)}
+                                  placeholder={language === 'th' ? 'ระบุประเด็นความผิดปกติ...' : 'Finding topic...'}
+                                  className="w-full px-2.5 py-1 bg-white border border-red-300 rounded text-xs font-normal"
+                                />
+                              ) : (
+                                <span>{language === 'th' ? 'ประเด็นความเสี่ยง:' : 'Safety Finding:'} {item.finding_topic || (language === 'th' ? 'พบข้อผิดปกติ' : 'Defect Anomaly')}</span>
+                              )}
                             </div>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-200 text-red-900 border border-red-300">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-200 text-red-900 border border-red-300 shrink-0">
                               {item.severity || 'Major'}
                             </span>
                           </div>
 
-                          {item.action_plan && (
-                            <div className="text-[11px] text-slate-700">
-                              <strong>{language === 'th' ? 'แผนแก้ไข:' : 'Action Plan:'}</strong> {item.action_plan}
+                          {isEditing ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                              <div className="sm:col-span-2">
+                                <label className="block text-[10px] font-bold text-slate-700">{t.actionPlan}</label>
+                                <input
+                                  type="text"
+                                  value={item.action_plan || ''}
+                                  onChange={(e) => handleItemFieldChange(item.id, 'action_plan', e.target.value)}
+                                  placeholder="Action plan..."
+                                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] font-bold text-slate-700">{t.dueDate}</label>
+                                <input
+                                  type="date"
+                                  value={item.due_date || ''}
+                                  onChange={(e) => handleItemFieldChange(item.id, 'due_date', e.target.value)}
+                                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs"
+                                />
+                              </div>
                             </div>
-                          )}
+                          ) : (
+                            <>
+                              {item.action_plan && (
+                                <div className="text-[11px] text-slate-700">
+                                  <strong>{language === 'th' ? 'แผนแก้ไข:' : 'Action Plan:'}</strong> {item.action_plan}
+                                </div>
+                              )}
 
-                          <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
-                            {item.responsible_person && (
-                              <span>{language === 'th' ? 'ผู้รับผิดชอบ:' : 'Responsible:'} <strong>{item.responsible_person}</strong></span>
-                            )}
-                            {item.due_date && (
-                              <span>{language === 'th' ? 'กำหนดเสร็จ:' : 'Target Due:'} <strong>{item.due_date}</strong></span>
-                            )}
-                          </div>
+                              <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
+                                {item.responsible_person && (
+                                  <span>{language === 'th' ? 'ผู้รับผิดชอบ:' : 'Responsible:'} <strong>{item.responsible_person}</strong></span>
+                                )}
+                                {item.due_date && (
+                                  <span>{language === 'th' ? 'กำหนดเสร็จ:' : 'Target Due:'} <strong>{item.due_date}</strong></span>
+                                )}
+                              </div>
+                            </>
+                          )}
 
                           {item.image_url && (
                             <div className="pt-2 flex items-center gap-3">
                               <button
                                 type="button"
-                                onClick={() => setSelectedImage(item.image_url!)}
+                                onClick={() => setSelectedImage(normalizeImageUrl(item.image_url))}
                                 className="relative group overflow-hidden rounded-lg border border-red-200 shadow-sm"
                               >
                                 <img
-                                  src={item.image_url}
+                                  src={normalizeImageUrl(item.image_url)}
                                   alt="Defect proof"
                                   className="w-20 h-16 object-cover group-hover:scale-105 transition"
                                 />
@@ -305,7 +445,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                 </div>
                               </button>
                               <a
-                                href={item.image_url}
+                                href={normalizeImageUrl(item.image_url)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-1 text-[11px] text-sky-600 hover:text-sky-700 font-semibold underline"
@@ -366,3 +506,4 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
     </div>
   );
 };
+

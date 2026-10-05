@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, normalizeImageUrl } from '../services/api';
 import { 
   ClipboardCheck, 
   CheckCircle2, 
@@ -37,7 +37,7 @@ interface ChecklistItemState {
   subcategory?: string;
   method?: string;
   layer: string;
-  result: 'OK' | 'NO' | 'N/A';
+  result: 'OK' | 'NO' | '';
   findingTopic: string;
   severity: 'Minor' | 'Major';
   actionPlan: string;
@@ -102,16 +102,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       setLayer(userRoleLayer);
     }
   }, [userRoleLayer]);
-
-  // Quick fill all OK
-  const handleQuickFillAllOk = () => {
-    setItems((prev) =>
-      prev.map((item) => ({
-        ...item,
-        result: 'OK',
-      }))
-    );
-  };
 
   // Load Departments & enforce user's department
   useEffect(() => {
@@ -222,7 +212,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           subcategory: localizeSubcategory(tmpl.subcategory || '', language),
           method: localizeMethod(tmpl.method || (language === 'th' ? 'สังเกตและตรวจสอบ' : 'Observe & Audit'), language),
           layer: tmpl.layer || layer,
-          result: 'OK', // Default to OK
+          result: '', // Starts unselected: auditor must choose OK or NO manually
           findingTopic: '',
           severity: 'Minor',
           actionPlan: '',
@@ -246,8 +236,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     };
   }, [departmentCode, layer, language]);
 
-  // Handle Result change (OK, NO, N/A)
-  const handleResultChange = (index: number, result: 'OK' | 'NO' | 'N/A') => {
+  // Handle Result change (OK, NO)
+  const handleResultChange = (index: number, result: 'OK' | 'NO') => {
     setItems((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], result };
@@ -300,7 +290,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   // Calculate stats
   const totalOk = items.filter((i) => i.result === 'OK').length;
   const totalNo = items.filter((i) => i.result === 'NO').length;
-  const totalNa = items.filter((i) => i.result === 'N/A').length;
+  const totalPending = items.filter((i) => !i.result).length;
   const totalEvaluated = totalOk + totalNo;
   const scorePercent = totalEvaluated > 0 ? ((totalOk / totalEvaluated) * 100).toFixed(1) : '100.0';
 
@@ -313,6 +303,17 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         type: 'error'
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const unevaluated = items.find((i) => !i.result);
+    if (unevaluated) {
+      setFeedback({
+        text: language === 'en'
+          ? `Please select OK or NO for all items before saving (${totalPending} questions remaining).`
+          : `กรุณาติ๊กเลือก OK หรือ NO ให้ครบทุกข้อก่อนบันทึก (เหลืออีก ${totalPending} ข้อที่ยังไม่ได้ติ๊ก)`,
+        type: 'error'
+      });
       return;
     }
 
@@ -422,19 +423,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   : 'ระบบสังเกตและตรวจประเมินพฤติกรรมความปลอดภัยหน้างาน (SBOP) แยกระดับ Leader / Supervisor / Manager'}
               </p>
             </div>
-          </div>
-
-          {/* Quick Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleQuickFillAllOk}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-semibold transition"
-              title={language === 'en' ? 'Set all items to OK' : 'ตั้งค่าทุกข้อเป็น OK ทั้งหมด'}
-            >
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>{language === 'en' ? 'All OK' : 'ผ่านทั้งหมด (All OK)'}</span>
-            </button>
           </div>
         </div>
 
@@ -757,6 +745,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   layerTitle="Layer 1 (Leader)"
                   inspectionCode={inspectionCode}
                   defaultExpanded={true}
+                  onRefresh={() => {
+                    api.getPriorLayers(departmentCode, year, month, inspectionCode).then(setPriorLayersData).catch(console.error);
+                  }}
                 />
               ) : (
                 <div className="py-6 text-center bg-white/70 rounded-2xl border border-dashed border-indigo-200 text-slate-500 text-xs">
@@ -834,6 +825,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                         layerTitle="Layer 1 (Leader)"
                         inspectionCode={inspectionCode}
                         defaultExpanded={false}
+                        onRefresh={() => {
+                          api.getPriorLayers(departmentCode, year, month, inspectionCode).then(setPriorLayersData).catch(console.error);
+                        }}
                       />
                     ) : (
                       <div className="py-4 text-center bg-white/70 rounded-2xl border border-dashed border-purple-200 text-slate-500 text-xs">
@@ -861,6 +855,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                         layerTitle="Layer 2 (Supervisor)"
                         inspectionCode={inspectionCode}
                         defaultExpanded={true}
+                        onRefresh={() => {
+                          api.getPriorLayers(departmentCode, year, month, inspectionCode).then(setPriorLayersData).catch(console.error);
+                        }}
                       />
                     ) : (
                       <div className="py-4 text-center bg-white/70 rounded-2xl border border-dashed border-purple-200 text-slate-500 text-xs">
@@ -891,8 +888,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 <span className="text-xl font-bold text-red-400">{totalNo}</span>
               </div>
               <div className="border-l border-slate-800 pl-6">
-                <span className="text-[11px] text-slate-400 font-medium block">{t.totalNa}</span>
-                <span className="text-xl font-bold text-slate-300">{totalNa}</span>
+                <span className="text-[11px] text-amber-400 font-medium block">
+                  {language === 'en' ? 'Pending' : 'ยังไม่ตรวจ'}
+                </span>
+                <span className="text-xl font-bold text-amber-400">{totalPending}</span>
               </div>
             </div>
 
@@ -968,19 +967,14 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                               <p className="text-xs text-slate-800 font-medium leading-relaxed">
                                 {item.question}
                               </p>
-                              {item.method && (
-                                <p className="text-[11px] text-slate-400 italic">
-                                  {t.method}: {item.method}
-                                </p>
-                              )}
                             </div>
 
-                            {/* Evaluation Buttons: OK / NO / N/A */}
+                            {/* Evaluation Buttons: OK / NO */}
                             <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-start">
                               <button
                                 type="button"
                                 onClick={() => handleResultChange(itemIndex, 'OK')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
                                   item.result === 'OK'
                                     ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-400'
                                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -993,7 +987,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                               <button
                                 type="button"
                                 onClick={() => handleResultChange(itemIndex, 'NO')}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${
                                   item.result === 'NO'
                                     ? 'bg-red-600 text-white shadow-sm ring-2 ring-red-400'
                                     : 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-700'
@@ -1001,18 +995,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                               >
                                 <XCircle className="w-3.5 h-3.5" />
                                 <span>NO</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => handleResultChange(itemIndex, 'N/A')}
-                                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                                  item.result === 'N/A'
-                                    ? 'bg-slate-600 text-white shadow-sm'
-                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                }`}
-                              >
-                                N/A
                               </button>
                             </div>
                           </div>
@@ -1101,7 +1083,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                   {item.imageUrl ? (
                                     <div className="flex items-center gap-2 p-1.5 bg-white border border-emerald-300 rounded-lg">
                                       <img
-                                        src={item.imageUrl}
+                                        src={normalizeImageUrl(item.imageUrl)}
                                         alt="Defect"
                                         className="w-10 h-10 object-cover rounded shadow-sm"
                                       />
@@ -1111,7 +1093,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                           <span>{t.photoUploaded}</span>
                                         </div>
                                         <a
-                                          href={item.imageUrl}
+                                          href={normalizeImageUrl(item.imageUrl)}
                                           target="_blank"
                                           rel="noreferrer"
                                           className="text-[10px] text-sky-600 hover:underline block truncate"

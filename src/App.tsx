@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { api } from './services/api';
 import { Navbar } from './components/Navbar';
+import { ProfileView } from './components/ProfileView';
 import { InspectionChecklist } from './components/InspectionChecklist';
 import { InspectionHistory } from './components/InspectionHistory';
 import { DefectTracker } from './components/DefectTracker';
@@ -10,17 +12,41 @@ import { LoginModal } from './components/LoginModal';
 import { RegisterModal } from './components/RegisterModal';
 import { AccountInfoModal } from './components/AccountInfoModal';
 import { EmailLogsModal } from './components/EmailLogsModal';
+import { NotificationsModal } from './components/NotificationsModal';
 import { ShieldCheck, AlertCircle, Database, Cloud } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const { user, loading, t } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('checklist');
+  const [activeTab, setActiveTab] = useState<string>('profile');
 
   // Modals
   const [showLogin, setShowLogin] = useState<boolean>(false);
   const [showRegister, setShowRegister] = useState<boolean>(false);
   const [showAccountInfo, setShowAccountInfo] = useState<boolean>(false);
   const [showEmailLogs, setShowEmailLogs] = useState<boolean>(false);
+  const [showNotifications, setShowNotifications] = useState<boolean>(false);
+  const [unreadNotifs, setUnreadNotifs] = useState<number>(0);
+
+  // Load unread notification count
+  const refreshUnreadCount = async () => {
+    if (!user) return;
+    try {
+      const data = await api.getNotifications();
+      setUnreadNotifs(data.unreadCount || 0);
+    } catch (err) {
+      console.warn('Failed to load notifications count:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      refreshUnreadCount();
+      // On fresh load with logged-in user, default to profile landing page
+      setActiveTab('profile');
+    } else {
+      setActiveTab('checklist');
+    }
+  }, [user?.id]);
 
   if (loading) {
     return (
@@ -42,6 +68,8 @@ const MainContent: React.FC = () => {
         onOpenRegister={() => setShowRegister(true)}
         onOpenAccountInfo={() => setShowAccountInfo(true)}
         onOpenEmailLogs={() => setShowEmailLogs(true)}
+        onOpenNotifications={() => setShowNotifications(true)}
+        unreadNotificationsCount={unreadNotifs}
       />
 
       {/* Main Container */}
@@ -52,7 +80,7 @@ const MainContent: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
               <span>
-                {t.pendingApprovalNotice.replace('{0}', user.email)}
+                {t.pendingApprovalNotice.replace('{0}', user.username ? `@${user.username}` : user.email)}
               </span>
             </div>
             <button
@@ -65,6 +93,16 @@ const MainContent: React.FC = () => {
         )}
 
         {/* View Switcher */}
+        {/* Profile Landing View */}
+        {activeTab === 'profile' && user && (
+          <ProfileView
+            onGoToChecklist={() => setActiveTab('checklist')}
+            onOpenAccountInfo={() => setShowAccountInfo(true)}
+            onNavigateToHistory={() => setActiveTab('history')}
+            onNavigateToDefects={() => setActiveTab('defects')}
+          />
+        )}
+
         {activeTab === 'checklist' && (
           <InspectionChecklist onSuccessSave={() => setActiveTab('history')} />
         )}
@@ -108,7 +146,10 @@ const MainContent: React.FC = () => {
       {/* Modals */}
       <LoginModal
         isOpen={showLogin}
-        onClose={() => setShowLogin(false)}
+        onClose={() => {
+          setShowLogin(false);
+          setActiveTab('profile');
+        }}
         onSwitchToRegister={() => {
           setShowLogin(false);
           setShowRegister(true);
@@ -133,9 +174,21 @@ const MainContent: React.FC = () => {
         isOpen={showEmailLogs}
         onClose={() => setShowEmailLogs(false)}
       />
+
+      <NotificationsModal
+        isOpen={showNotifications}
+        onClose={() => {
+          setShowNotifications(false);
+          refreshUnreadCount();
+        }}
+        onNavigateToTab={(tab) => {
+          setActiveTab(tab);
+        }}
+      />
     </div>
   );
 };
+
 
 export const App: React.FC = () => {
   return (

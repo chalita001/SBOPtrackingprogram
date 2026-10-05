@@ -287,10 +287,15 @@ export const AccountManager: React.FC = () => {
                     <tr key={u.id} className="hover:bg-slate-50/80 transition">
                       {/* Name */}
                       <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900 text-sm">
-                          {u.first_name} {u.last_name}
+                        <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                          <span>{u.first_name} {u.last_name}</span>
+                          {u.username && (
+                            <span className="text-[11px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
+                              @{u.username}
+                            </span>
+                          )}
                           {isCurrentUser && (
-                            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold">
                               {t.you}
                             </span>
                           )}
@@ -300,16 +305,18 @@ export const AccountManager: React.FC = () => {
                         </div>
                       </td>
 
-                      {/* Email & Phone */}
+                      {/* Username / Contact */}
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-1.5 text-slate-800 font-medium">
-                          <Mail className="w-3.5 h-3.5 text-slate-400" />
-                          <span>{u.email}</span>
+                        <div className="flex items-center gap-1.5 text-slate-800 font-semibold">
+                          <span className="text-slate-400 font-bold">@</span>
+                          <span>{u.username || u.email}</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mt-0.5">
-                          <Phone className="w-3 h-3 text-slate-400" />
-                          <span>{u.phone || '-'}</span>
-                        </div>
+                        {u.phone && (
+                          <div className="flex items-center gap-1.5 text-slate-500 text-[11px] mt-0.5">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            <span>{u.phone}</span>
+                          </div>
+                        )}
                       </td>
 
                       {/* Department & Position */}
