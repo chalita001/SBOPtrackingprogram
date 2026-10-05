@@ -26,6 +26,7 @@ export const DefectTracker: React.FC = () => {
   // In-App Notification Modal State
   const [notifyModalDefect, setNotifyModalDefect] = useState<any | null>(null);
   const [usersDirectory, setUsersDirectory] = useState<any[]>([]);
+  const [modalDept, setModalDept] = useState<string>('all');
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [notifTitle, setNotifTitle] = useState('');
   const [notifMessage, setNotifMessage] = useState('');
@@ -128,8 +129,11 @@ export const DefectTracker: React.FC = () => {
 
       if (matchedUser) {
         setSelectedUserId(matchedUser.id.toString());
+        if (matchedUser.department) setModalDept(matchedUser.department);
       } else {
-        const deptUsers = (list || []).filter((u: any) => u.department === defect.departmentCode);
+        const targetDept = defect.departmentCode || 'all';
+        setModalDept(targetDept);
+        const deptUsers = (list || []).filter((u: any) => u.department === targetDept);
         if (deptUsers.length > 0) {
           setSelectedUserId(deptUsers[0].id.toString());
         } else if (list && list.length > 0) {
@@ -417,32 +421,69 @@ export const DefectTracker: React.FC = () => {
             )}
 
             <form onSubmit={handleSendNotification} className="space-y-3.5 text-xs">
-              {/* Recipient User Picker */}
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  {t.selectResponsibleUser}
-                </label>
-                <select
-                  required
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white"
-                >
-                  <option value="">{language === 'en' ? '-- Select Recipient User --' : '-- กรุณาเลือกผู้รับผิดชอบ --'}</option>
-                  {usersDirectory.map((u) => {
-                    const isSameDept = u.department === notifyModalDefect.departmentCode;
-                    return (
-                      <option key={u.id} value={u.id.toString()}>
-                        {isSameDept ? '⭐ ' : ''}{u.first_name} {u.last_name} (@{u.username}) — [{u.department}] {u.position || u.role}
+              {/* Recipient User: แผนก > user ในแผนก */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* 1. แผนก */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-sky-600" />
+                    <span>{language === 'en' ? 'Department' : 'แผนกผู้รับผิดชอบ'}</span>
+                  </label>
+                  <select
+                    value={modalDept}
+                    onChange={(e) => {
+                      const newDept = e.target.value;
+                      setModalDept(newDept);
+                      const deptUsers = newDept === 'all' 
+                        ? usersDirectory 
+                        : usersDirectory.filter((u) => u.department === newDept);
+                      if (deptUsers.length > 0) {
+                        setSelectedUserId(deptUsers[0].id.toString());
+                      } else {
+                        setSelectedUserId('');
+                      }
+                    }}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  >
+                    <option value="all">{language === 'en' ? '-- All Departments --' : '-- ทุกแผนก --'}</option>
+                    <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                    <option value="FACILITY">Facility (สาธารณูปโภค)</option>
+                    <option value="ASSY">Assembly (แผนกประกอบ)</option>
+                    <option value="WH">Warehouse (คลังสินค้า)</option>
+                    <option value="QC">QC (ควบคุมคุณภาพ)</option>
+                    <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
+                    <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                    <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
+                  </select>
+                </div>
+
+                {/* 2. User ในแผนก */}
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                    <User className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>{language === 'en' ? 'Responsible User' : 'ผู้รับผิดชอบ (User ในแผนก)'} *</span>
+                  </label>
+                  <select
+                    required
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                  >
+                    <option value="">{language === 'en' ? '-- Select User in Dept --' : '-- กรุณาเลือกผู้รับผิดชอบ --'}</option>
+                    {usersDirectory
+                      .filter((u) => modalDept === 'all' || u.department === modalDept)
+                      .map((u) => (
+                        <option key={u.id} value={u.id.toString()}>
+                          {u.first_name} {u.last_name} (@{u.username}) [{u.department}] {u.position ? `— ${u.position}` : ''}
+                        </option>
+                      ))}
+                    {usersDirectory.filter((u) => modalDept === 'all' || u.department === modalDept).length === 0 && (
+                      <option value="" disabled>
+                        {language === 'en' ? '(No users registered in this department)' : '(ไม่มีพนักงานในแผนกนี้)'}
                       </option>
-                    );
-                  })}
-                </select>
-                <p className="text-[11px] text-slate-400 mt-1">
-                  {language === 'en' 
-                    ? '⭐ Highlights users in the same department.' 
-                    : '⭐ สัญลักษณ์ดาวระบุผู้ใช้งานที่อยู่ในแผนกเดียวกัน'}
-                </p>
+                    )}
+                  </select>
+                </div>
               </div>
 
               {/* Title */}

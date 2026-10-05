@@ -32,6 +32,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
 
   // Send Alert state (for admin)
   const [showSendForm, setShowSendForm] = useState(false);
+  const [deptFilter, setDeptFilter] = useState<string>('all');
   const [targetUserId, setTargetUserId] = useState<string>('');
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
@@ -199,7 +200,32 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               <span>{language === 'en' ? 'Send In-App Notification to User' : 'ส่งการแจ้งเตือนไปยังผู้ใช้งาน'}</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                  {language === 'en' ? 'Department' : 'แผนก'}
+                </label>
+                <select
+                  value={deptFilter}
+                  onChange={(e) => {
+                    const newDept = e.target.value;
+                    setDeptFilter(newDept);
+                    setTargetUserId('');
+                  }}
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                >
+                  <option value="all">{language === 'en' ? '-- All Departments --' : '-- ทุกแผนก --'}</option>
+                  <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                  <option value="FACILITY">Facility (สาธารณูปโภค)</option>
+                  <option value="ASSY">Assembly (แผนกประกอบ)</option>
+                  <option value="WH">Warehouse (คลังสินค้า)</option>
+                  <option value="QC">QC (ควบคุมคุณภาพ)</option>
+                  <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
+                  <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                  <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-[11px] font-semibold text-slate-700 mb-1">
                   {language === 'en' ? 'Recipient User' : 'ผู้รับการแจ้งเตือน'}
@@ -207,14 +233,16 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                 <select
                   value={targetUserId}
                   onChange={(e) => setTargetUserId(e.target.value)}
-                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
                   <option value="">{language === 'en' ? 'Broadcast to All Users' : 'แจ้งเตือนทุกคน (Broadcast)'}</option>
-                  {usersList.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.first_name} {u.last_name} (@{u.username || u.email}) — แผนก {u.department}
-                    </option>
-                  ))}
+                  {usersList
+                    .filter((u) => deptFilter === 'all' || u.department === deptFilter)
+                    .map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.first_name} {u.last_name} (@{u.username || u.email}) — แผนก {u.department}
+                      </option>
+                    ))}
                 </select>
               </div>
 
@@ -225,7 +253,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                 <select
                   value={alertType}
                   onChange={(e) => setAlertType(e.target.value as any)}
-                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                  className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
                   <option value="alert">⚠️ {language === 'en' ? 'Safety Alert (Red)' : 'เตือนความปลอดภัย (สีแดง)'}</option>
                   <option value="info">ℹ️ {language === 'en' ? 'General Info (Blue)' : 'ข้อมูลทั่วไป (สีฟ้า)'}</option>

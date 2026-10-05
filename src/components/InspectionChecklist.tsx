@@ -22,6 +22,7 @@ import {
   ExternalLink,
   ShieldAlert,
   UserCheck,
+  User,
   ChevronRight,
   Eye,
   Hash,
@@ -42,6 +43,8 @@ interface ChecklistItemState {
   severity: 'Minor' | 'Major';
   actionPlan: string;
   responsiblePerson: string;
+  responsibleDept?: string;
+  isCustomResponsible?: boolean;
   dueDate: string;
   imageUrl?: string;
   imageKey?: string;
@@ -85,6 +88,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   // Items State
   const [items, setItems] = useState<ChecklistItemState[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
+  const [usersDirectory, setUsersDirectory] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ text: string; type: 'success' | 'error' | 'warning' } | null>(null);
@@ -110,6 +114,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       if (user?.department && user.role !== 'admin') {
         setDepartmentCode(user.department);
       }
+    }).catch(console.error);
+
+    api.getUsersDirectory().then((data) => {
+      setUsersDirectory(data || []);
     }).catch(console.error);
   }, [user]);
 
@@ -217,6 +225,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           severity: 'Minor',
           actionPlan: '',
           responsiblePerson: '',
+          responsibleDept: departmentCode,
+          isCustomResponsible: false,
           dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
           imageUrl: '',
           imageKey: '',
@@ -240,7 +250,21 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const handleResultChange = (index: number, result: 'OK' | 'NO') => {
     setItems((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], result };
+      const cur = next[index];
+      const dept = cur.responsibleDept || departmentCode;
+      let respPerson = cur.responsiblePerson;
+      if (result === 'NO' && !respPerson) {
+        const deptUsers = usersDirectory.filter((u) => u.department === dept);
+        if (deptUsers.length > 0) {
+          respPerson = `${deptUsers[0].first_name} ${deptUsers[0].last_name}`;
+        }
+      }
+      next[index] = { 
+        ...cur, 
+        result,
+        responsibleDept: dept,
+        responsiblePerson: respPerson,
+      };
       return next;
     });
   };
@@ -741,6 +765,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   inspection={priorLayersData.layer1}
                   layerTitle="Layer 1 (Leader)"
                   inspectionCode={inspectionCode}
+                  departmentCode={departmentCode}
                   defaultExpanded={true}
                   onRefresh={() => {
                     api.getPriorLayers(departmentCode, year, month, inspectionCode).then(setPriorLayersData).catch(console.error);
@@ -821,6 +846,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                         inspection={priorLayersData.layer1}
                         layerTitle="Layer 1 (Leader)"
                         inspectionCode={inspectionCode}
+                        departmentCode={departmentCode}
                         defaultExpanded={false}
                         onRefresh={() => {
                           api.getPriorLayers(departmentCode, year, month, inspectionCode).then(setPriorLayersData).catch(console.error);
@@ -851,6 +877,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                         inspection={priorLayersData.layer2}
                         layerTitle="Layer 2 (Supervisor)"
                         inspectionCode={inspectionCode}
+                        departmentCode={departmentCode}
                         defaultExpanded={true}
                         onRefresh={() => {
                           api.getPriorLayers(departmentCode, year, month, inspectionCode).then(setPriorLayersData).catch(console.error);
@@ -1032,30 +1059,115 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                 />
                               </div>
 
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="sm:col-span-2">
-                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                    {t.actionPlan}
-                                  </label>
-                                  <input
-                                    type="text"
-                                    value={item.actionPlan}
-                                    onChange={(e) => handleItemFieldChange(itemIndex, 'actionPlan', e.target.value)}
-                                    placeholder={t.actionPlaceholder}
-                                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-sky-400"
-                                  />
-                                </div>
+                              {/* Action Plan */}
+                              <div>
+                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                                  {t.actionPlan}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={item.actionPlan}
+                                  onChange={(e) => handleItemFieldChange(itemIndex, 'actionPlan', e.target.value)}
+                                  placeholder={t.actionPlaceholder}
+                                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                />
+                              </div>
+
+                              {/* ผู้รับผิดชอบ: แผนก > userในแผนก */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-0.5">
+                                {/* 1. แผนกของผู้รับผิดชอบ */}
                                 <div>
-                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                    {t.responsiblePerson}
+                                  <label className="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center gap-1">
+                                    <Building2 className="w-3 h-3 text-sky-600" />
+                                    <span>{language === 'en' ? 'Responsible Dept' : 'แผนกผู้รับผิดชอบ'} *</span>
                                   </label>
-                                  <input
-                                    type="text"
-                                    value={item.responsiblePerson}
-                                    onChange={(e) => handleItemFieldChange(itemIndex, 'responsiblePerson', e.target.value)}
-                                    placeholder={t.responsiblePlaceholder}
-                                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800"
-                                  />
+                                  <select
+                                    value={item.responsibleDept || departmentCode}
+                                    onChange={(e) => {
+                                      const newDept = e.target.value;
+                                      handleItemFieldChange(itemIndex, 'responsibleDept', newDept);
+                                      const deptUsers = usersDirectory.filter((u) => u.department === newDept);
+                                      if (deptUsers.length > 0) {
+                                        handleItemFieldChange(itemIndex, 'responsiblePerson', `${deptUsers[0].first_name} ${deptUsers[0].last_name}`);
+                                        handleItemFieldChange(itemIndex, 'isCustomResponsible', false);
+                                      } else {
+                                        handleItemFieldChange(itemIndex, 'responsiblePerson', '');
+                                      }
+                                    }}
+                                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                  >
+                                    <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                                    <option value="FACILITY">Facility (สาธารณูปโภค)</option>
+                                    <option value="ASSY">Assembly (แผนกประกอบ)</option>
+                                    <option value="WH">Warehouse (คลังสินค้า)</option>
+                                    <option value="QC">QC (ควบคุมคุณภาพ)</option>
+                                    <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
+                                    <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                                    <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
+                                  </select>
+                                </div>
+
+                                {/* 2. ผู้รับผิดชอบ (User ในแผนก) */}
+                                <div>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <label className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
+                                      <User className="w-3 h-3 text-indigo-600" />
+                                      <span>{language === 'en' ? 'Responsible User' : 'ผู้รับผิดชอบ (User ในแผนก)'} *</span>
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const nextCustom = !item.isCustomResponsible;
+                                        handleItemFieldChange(itemIndex, 'isCustomResponsible', nextCustom);
+                                        if (nextCustom) handleItemFieldChange(itemIndex, 'responsiblePerson', '');
+                                      }}
+                                      className="text-[10px] text-sky-600 hover:text-sky-800 underline font-medium"
+                                    >
+                                      {item.isCustomResponsible
+                                        ? (language === 'en' ? '← Select from list' : '← เลือกจากรายชื่อ')
+                                        : (language === 'en' ? '✏️ Type custom' : '✏️ ระบุชื่ออื่น')}
+                                    </button>
+                                  </div>
+
+                                  {item.isCustomResponsible ? (
+                                    <input
+                                      type="text"
+                                      value={item.responsiblePerson}
+                                      onChange={(e) => handleItemFieldChange(itemIndex, 'responsiblePerson', e.target.value)}
+                                      placeholder={language === 'en' ? 'Type contractor / external name...' : 'ระบุชื่อพนักงาน หรือผู้รับเหมา...'}
+                                      className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-amber-400"
+                                    />
+                                  ) : (
+                                    <select
+                                      value={item.responsiblePerson}
+                                      onChange={(e) => {
+                                        if (e.target.value === '__custom__') {
+                                          handleItemFieldChange(itemIndex, 'isCustomResponsible', true);
+                                          handleItemFieldChange(itemIndex, 'responsiblePerson', '');
+                                        } else {
+                                          handleItemFieldChange(itemIndex, 'responsiblePerson', e.target.value);
+                                        }
+                                      }}
+                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                    >
+                                      <option value="">{language === 'en' ? '-- Select User in Dept --' : '-- เลือกผู้รับผิดชอบในแผนก --'}</option>
+                                      {usersDirectory
+                                        .filter((u) => u.department === (item.responsibleDept || departmentCode))
+                                        .map((u) => (
+                                          <option key={u.id} value={`${u.first_name} ${u.last_name}`}>
+                                            {u.first_name} {u.last_name} (@{u.username}) {u.position ? `— ${u.position}` : ''}
+                                          </option>
+                                        ))}
+                                      {usersDirectory.filter((u) => u.department === (item.responsibleDept || departmentCode)).length === 0 && (
+                                        <option value="" disabled>
+                                          {language === 'en' ? '(No users registered in this dept)' : '(ยังไม่มี User ลงทะเบียนในแผนกนี้)'}
+                                        </option>
+                                      )}
+                                      <option value="__custom__">
+                                        {language === 'en' ? '✏️ Specify other / external person...' : '✏️ ระบุชื่ออื่น / ผู้รับเหมา...'}
+                                      </option>
+                                    </select>
+                                  )}
                                 </div>
                               </div>
 

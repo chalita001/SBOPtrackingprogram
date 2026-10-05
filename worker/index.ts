@@ -884,6 +884,40 @@ export default {
             `ผู้ตรวจ ${auditorName} ตรวจพบ ${defectItems.length} สิ่งผิดปกติ ที่ ${mcAndProducts}`,
             `/defects`
           ).run();
+
+          // Dispatch direct notifications to assigned responsible persons
+          try {
+            const assignedNames = Array.from(
+              new Set(defectItems.map((d: any) => (d.responsiblePerson || d.responsible_person || '').trim()).filter(Boolean))
+            );
+            if (assignedNames.length > 0) {
+              const { results: allUsers } = await env.DB.prepare(
+                'SELECT id, username, first_name, last_name FROM users WHERE status = ?'
+              ).bind('approved').all();
+
+              for (const name of assignedNames) {
+                const target = (name as string).toLowerCase();
+                const matchedUser: any = (allUsers || []).find((u: any) => {
+                  const fullName = `${u.first_name} ${u.last_name}`.trim().toLowerCase();
+                  const uName = (u.username || '').toLowerCase();
+                  return fullName === target || target.includes(fullName) || fullName.includes(target) || uName === target;
+                });
+
+                if (matchedUser) {
+                  await env.DB.prepare(`
+                    INSERT INTO notifications (user_id, title, message, type, link, is_read, created_at)
+                    VALUES (?, ?, ?, 'alert', '/defects', 0, CURRENT_TIMESTAMP)
+                  `).bind(
+                    matchedUser.id,
+                    `[มอบหมายงานแก้ไข SBOP] แผนก ${departmentCode} #${inspectionCode || '001'}`,
+                    `คุณได้รับมอบหมายให้รับผิดชอบแก้ไขจุดบกพร่อง SBOP (${layer}) ที่ ${mcAndProducts} โดยผู้ตรวจ ${auditorName}`
+                  ).run();
+                }
+              }
+            }
+          } catch (notifErr) {
+            console.error('Failed to dispatch responsible person notifications:', notifErr);
+          }
         }
 
         return jsonResponse({
@@ -970,6 +1004,38 @@ export default {
         UPDATE inspections SET total_ok = ?, total_no = ?, score_percent = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(pOk, pNo, pScore, inspectionId).run();
+
+      // Notify assigned responsible persons for newly updated defect items
+      try {
+        const noItems = itemsToUpdate.filter((it: any) => it.result === 'NO' && (it.responsible_person || it.responsiblePerson));
+        if (noItems.length > 0) {
+          const parentIns: any = await env.DB.prepare('SELECT department_code, inspection_code, layer FROM inspections WHERE id = ?').bind(inspectionId).first();
+          const { results: allUsers } = await env.DB.prepare(
+            'SELECT id, username, first_name, last_name FROM users WHERE status = ?'
+          ).bind('approved').all();
+
+          for (const it of noItems) {
+            const resp = (it.responsible_person || it.responsiblePerson || '').trim().toLowerCase();
+            const matchedUser: any = (allUsers || []).find((u: any) => {
+              const fullName = `${u.first_name} ${u.last_name}`.trim().toLowerCase();
+              const uName = (u.username || '').toLowerCase();
+              return fullName === resp || resp.includes(fullName) || fullName.includes(resp) || uName === resp;
+            });
+            if (matchedUser) {
+              await env.DB.prepare(`
+                INSERT INTO notifications (user_id, title, message, type, link, is_read, created_at)
+                VALUES (?, ?, ?, 'alert', '/defects', 0, CURRENT_TIMESTAMP)
+              `).bind(
+                matchedUser.id,
+                `[อัปเดตงานแก้ไข SBOP] แผนก ${parentIns?.department_code || ''} #${parentIns?.inspection_code || '001'}`,
+                `คุณได้รับมอบหมายให้แก้ไขจุดบกพร่อง SBOP (${parentIns?.layer || ''}) ประเด็น: ${it.finding_topic || it.findingTopic || it.question || 'จุดบกพร่อง'}`
+              ).run();
+            }
+          }
+        }
+      } catch (notifErr) {
+        console.error('Failed to notify responsible persons on item update:', notifErr);
+      }
 
       return jsonResponse({
         message: 'Inspection items updated successfully',

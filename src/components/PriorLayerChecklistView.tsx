@@ -13,7 +13,9 @@ import {
   Edit3,
   Save,
   Check,
-  RotateCcw
+  RotateCcw,
+  Building2,
+  User
 } from 'lucide-react';
 
 interface PriorItem {
@@ -29,6 +31,8 @@ interface PriorItem {
   severity?: string;
   action_plan?: string;
   responsible_person?: string;
+  responsible_dept?: string;
+  is_custom_responsible?: boolean;
   due_date?: string;
   image_url?: string;
 }
@@ -36,6 +40,7 @@ interface PriorItem {
 interface PriorLayerChecklistViewProps {
   inspection: {
     id: number;
+    department_code?: string;
     auditor_name: string;
     audit_date: string;
     shift: string;
@@ -48,6 +53,7 @@ interface PriorLayerChecklistViewProps {
   };
   layerTitle: string; // e.g. "Layer 1 (Leader)" or "Layer 2 (Supervisor)"
   inspectionCode?: string;
+  departmentCode?: string;
   defaultExpanded?: boolean;
   onRefresh?: () => void;
 }
@@ -56,12 +62,21 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
   inspection,
   layerTitle,
   inspectionCode,
+  departmentCode,
   defaultExpanded = true,
   onRefresh,
 }) => {
   const { language, t } = useAuth();
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [usersDirectory, setUsersDirectory] = useState<any[]>([]);
+
+  // Fetch approved users directory for responsible person selector
+  useEffect(() => {
+    api.getUsersDirectory().then((data) => {
+      setUsersDirectory(data || []);
+    }).catch(console.error);
+  }, []);
 
   // Editable state for Layer 2 / Layer 3 to modify Layer 1's answers
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -388,26 +403,131 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                           </div>
 
                           {isEditing ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
-                              <div className="sm:col-span-2">
-                                <label className="block text-[10px] font-bold text-slate-700">{t.actionPlan}</label>
-                                <input
-                                  type="text"
-                                  value={item.action_plan || ''}
-                                  onChange={(e) => handleItemFieldChange(item.id, 'action_plan', e.target.value)}
-                                  placeholder="Action plan..."
-                                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs"
-                                />
+                            <div className="space-y-2 pt-1">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <div className="sm:col-span-2">
+                                  <label className="block text-[10px] font-bold text-slate-700">{t.actionPlan}</label>
+                                  <input
+                                    type="text"
+                                    value={item.action_plan || ''}
+                                    onChange={(e) => handleItemFieldChange(item.id, 'action_plan', e.target.value)}
+                                    placeholder="Action plan..."
+                                    className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-700">{t.dueDate}</label>
+                                  <input
+                                    type="date"
+                                    value={item.due_date || ''}
+                                    onChange={(e) => handleItemFieldChange(item.id, 'due_date', e.target.value)}
+                                    className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs"
+                                  />
+                                </div>
                               </div>
-                              <div>
-                                <label className="block text-[10px] font-bold text-slate-700">{t.dueDate}</label>
-                                <input
-                                  type="date"
-                                  value={item.due_date || ''}
-                                  onChange={(e) => handleItemFieldChange(item.id, 'due_date', e.target.value)}
-                                  className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs"
-                                />
-                              </div>
+
+                              {/* Cascading: แผนกผู้รับผิดชอบ > ผู้รับผิดชอบ (User ในแผนก) */}
+                              {(() => {
+                                const currentItemDept = item.responsible_dept || 
+                                  (item.responsible_person ? usersDirectory.find((u) => `${u.first_name} ${u.last_name}` === item.responsible_person)?.department : null) || 
+                                  inspection.department_code || departmentCode || 'MOLD';
+
+                                return (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-red-200/60">
+                                    {/* 1. แผนกผู้รับผิดชอบ */}
+                                    <div>
+                                      <label className="block text-[10px] font-bold text-slate-700 mb-0.5 flex items-center gap-1">
+                                        <Building2 className="w-3 h-3 text-sky-600" />
+                                        <span>{language === 'en' ? 'Responsible Dept' : 'แผนกผู้รับผิดชอบ'}</span>
+                                      </label>
+                                      <select
+                                        value={currentItemDept}
+                                        onChange={(e) => {
+                                          const newDept = e.target.value;
+                                          handleItemFieldChange(item.id, 'responsible_dept', newDept);
+                                          const deptUsers = usersDirectory.filter((u) => u.department === newDept);
+                                          if (deptUsers.length > 0) {
+                                            handleItemFieldChange(item.id, 'responsible_person', `${deptUsers[0].first_name} ${deptUsers[0].last_name}`);
+                                            handleItemFieldChange(item.id, 'is_custom_responsible', false);
+                                          } else {
+                                            handleItemFieldChange(item.id, 'responsible_person', '');
+                                          }
+                                        }}
+                                        className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                      >
+                                        <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                                        <option value="FACILITY">Facility (สาธารณูปโภค)</option>
+                                        <option value="ASSY">Assembly (แผนกประกอบ)</option>
+                                        <option value="WH">Warehouse (คลังสินค้า)</option>
+                                        <option value="QC">QC (ควบคุมคุณภาพ)</option>
+                                        <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
+                                        <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                                        <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
+                                      </select>
+                                    </div>
+
+                                    {/* 2. ผู้รับผิดชอบ (User ในแผนก) */}
+                                    <div>
+                                      <div className="flex items-center justify-between mb-0.5">
+                                        <label className="text-[10px] font-bold text-slate-700 flex items-center gap-1">
+                                          <User className="w-3 h-3 text-indigo-600" />
+                                          <span>{language === 'en' ? 'Responsible User' : 'ผู้รับผิดชอบ (User ในแผนก)'}</span>
+                                        </label>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            const nextCustom = !item.is_custom_responsible;
+                                            handleItemFieldChange(item.id, 'is_custom_responsible', nextCustom);
+                                            if (nextCustom) handleItemFieldChange(item.id, 'responsible_person', '');
+                                          }}
+                                          className="text-[9px] text-sky-600 hover:text-sky-800 underline font-medium"
+                                        >
+                                          {item.is_custom_responsible
+                                            ? (language === 'en' ? '← Select from list' : '← เลือกจากรายชื่อ')
+                                            : (language === 'en' ? '✏️ Type custom' : '✏️ ระบุชื่ออื่น')}
+                                        </button>
+                                      </div>
+
+                                      {item.is_custom_responsible ? (
+                                        <input
+                                          type="text"
+                                          value={item.responsible_person || ''}
+                                          onChange={(e) => handleItemFieldChange(item.id, 'responsible_person', e.target.value)}
+                                          placeholder={language === 'en' ? 'Type contractor / external name...' : 'ระบุชื่อพนักงาน หรือผู้รับเหมา...'}
+                                          className="w-full px-2 py-1 bg-white border border-amber-300 rounded text-xs text-slate-800"
+                                        />
+                                      ) : (
+                                        <select
+                                          value={item.responsible_person || ''}
+                                          onChange={(e) => {
+                                            if (e.target.value === '__custom__') {
+                                              handleItemFieldChange(item.id, 'is_custom_responsible', true);
+                                              handleItemFieldChange(item.id, 'responsible_person', '');
+                                            } else {
+                                              handleItemFieldChange(item.id, 'responsible_person', e.target.value);
+                                            }
+                                          }}
+                                          className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                        >
+                                          <option value="">{language === 'en' ? '-- Select User in Dept --' : '-- เลือกผู้รับผิดชอบในแผนก --'}</option>
+                                          {usersDirectory
+                                            .filter((u) => u.department === currentItemDept)
+                                            .map((u) => (
+                                              <option key={u.id} value={`${u.first_name} ${u.last_name}`}>
+                                                {u.first_name} {u.last_name} (@{u.username}) {u.position ? `— ${u.position}` : ''}
+                                              </option>
+                                            ))}
+                                          {usersDirectory.filter((u) => u.department === currentItemDept).length === 0 && (
+                                            <option value="" disabled>
+                                              {language === 'en' ? '(No users registered in this dept)' : '(ยังไม่มี User ลงทะเบียนในแผนกนี้)'}
+                                            </option>
+                                          )}
+                                        </select>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           ) : (
                             <>
