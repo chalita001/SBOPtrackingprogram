@@ -13,7 +13,7 @@ import { RegisterModal } from './components/RegisterModal';
 import { AccountInfoModal } from './components/AccountInfoModal';
 import { NotificationsModal } from './components/NotificationsModal';
 import { ChecklistManagerModal } from './components/ChecklistManagerModal';
-import { ShieldCheck, AlertCircle, Database, Cloud, Eye } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Database, Cloud, Eye, LogIn } from 'lucide-react';
 
 const MainContent: React.FC = () => {
   const { user, logout, loading, language, t } = useAuth();
@@ -77,7 +77,7 @@ const MainContent: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-        {/* Guest Mode Banner (User requirement 3) */}
+        {/* Guest Mode Banner (User requirement: Default to Guest Mode) */}
         {user && user.role === 'guest' && (
           <div className="mb-5 p-3.5 bg-gradient-to-r from-slate-900 via-[#1E2229] to-slate-900 border border-emerald-500/50 rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-fadeIn">
             <div className="flex items-center gap-2.5 text-xs">
@@ -90,19 +90,17 @@ const MainContent: React.FC = () => {
                 </span>
                 <span className="text-slate-300 ml-1.5 block sm:inline">
                   {language === 'th' 
-                    ? '— คุณสามารถดูแดชบอร์ดสถิติรวมทุกแผนก และรายการสิ่งผิดปกติได้ทั้งหมด (ดูได้อย่างเดียว ไม่สามารถแก้ไขหรือบันทึกข้อมูลได้)'
-                    : '— View-only access to combined executive dashboard & defects across all departments.'}
+                    ? '— เปิดดูแดชบอร์ดสถิติรวมทุกแผนก และรายการปัญหาได้ทันที (ดูได้อย่างเดียว หากต้องการตรวจหรือแก้ไขกรุณากดเข้าสู่ระบบ)'
+                    : '— View-only access to combined dashboard & defects across all departments. Click Login to access full features.'}
                 </span>
               </div>
             </div>
             <button
-              onClick={() => {
-                logout();
-                setShowLogin(true);
-              }}
-              className="px-3 py-1.5 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 whitespace-nowrap"
+              onClick={() => setShowLogin(true)}
+              className="px-4 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-950/40 shrink-0 whitespace-nowrap flex items-center gap-1.5 hover:scale-[1.02] active:scale-[0.98]"
             >
-              {language === 'th' ? 'เข้าสู่ระบบด้วยบัญชีจริง' : 'Login to Real Account'}
+              <LogIn className="w-3.5 h-3.5" />
+              <span>{language === 'th' ? 'เข้าสู่ระบบ (Login)' : 'Login'}</span>
             </button>
           </div>
         )}

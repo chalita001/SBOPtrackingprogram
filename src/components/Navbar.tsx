@@ -84,7 +84,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* TE Connectivity Logo & System Title */}
           <div 
             className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0" 
-            onClick={() => setActiveTab(user ? 'profile' : 'checklist')}
+            onClick={() => setActiveTab(user && !isGuest ? 'profile' : 'dashboard')}
           >
             <TELogo variant="white-text" height={28} className="sm:hidden" />
             <TELogo variant="white-text" height={34} className="hidden sm:block" />
@@ -200,102 +200,81 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* User Profile & In-App Notification Bell */}
-          <div className="flex items-center gap-3 shrink-0">
-            {user ? (
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {user && !isGuest ? (
               <div className="flex items-center gap-2 sm:gap-3">
-                {/* Notification Bell Button (Hidden for guest) */}
-                {!isGuest && (
-                  <button
-                    onClick={onOpenNotifications}
-                    className="relative p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
-                    title={language === 'en' ? 'In-App Notifications' : 'การแจ้งเตือน'}
-                  >
-                    <Bell className="w-5 h-5 text-amber-400" />
-                    {unreadNotificationsCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center animate-pulse">
-                        {unreadNotificationsCount}
-                      </span>
-                    )}
-                  </button>
-                )}
+                {/* Notification Bell Button */}
+                <button
+                  onClick={onOpenNotifications}
+                  className="relative p-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-300 hover:text-white transition"
+                  title={language === 'en' ? 'In-App Notifications' : 'การแจ้งเตือน'}
+                >
+                  <Bell className="w-5 h-5 text-amber-400" />
+                  {unreadNotificationsCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-[10px] font-black flex items-center justify-center animate-pulse">
+                      {unreadNotificationsCount}
+                    </span>
+                  )}
+                </button>
 
                 {/* Profile Pill */}
-                {isGuest ? (
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950/60 border border-emerald-500/40 text-left">
-                    <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow overflow-hidden shrink-0">
-                      <Eye className="w-4 h-4" />
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left transition"
+                >
+                  <div className="w-8 h-8 min-w-[2rem] min-h-[2rem] max-w-[2rem] max-h-[2rem] aspect-square rounded-full bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white flex items-center justify-center font-bold text-sm shadow overflow-hidden shrink-0 border border-slate-700">
+                    {user.avatarUrl ? (
+                      <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full max-w-full max-h-full object-cover aspect-square block" />
+                    ) : (
+                      user.firstName?.charAt(0) || 'U'
+                    )}
+                  </div>
+                  <div className="hidden sm:block">
+                    <div className="text-xs font-semibold text-slate-200 leading-tight">
+                      {user.firstName} {user.lastName}
                     </div>
-                    <div className="hidden sm:block">
-                      <div className="text-xs font-bold text-emerald-300 leading-tight">
-                        {language === 'th' ? 'ผู้มาเยือน (Guest)' : 'Guest User'}
-                      </div>
-                      <div className="text-[10px] text-emerald-400/80 font-medium">
-                        {language === 'th' ? '👁️ ดูได้อย่างเดียว' : '👁️ View Only'}
-                      </div>
+                    <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                      <span>@{user.username || user.email?.split('@')[0]}</span>
+                      <span>•</span>
+                      <span className={`capitalize font-semibold ${user.role === 'superadmin' ? 'text-purple-300 font-bold' : 'text-[#F37021]'}`}>
+                        {user.role === 'superadmin' ? '👑 Super Admin' : user.role}
+                      </span>
                     </div>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => setActiveTab('profile')}
-                    className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left transition"
-                  >
-                    <div className="w-8 h-8 min-w-[2rem] min-h-[2rem] max-w-[2rem] max-h-[2rem] aspect-square rounded-full bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white flex items-center justify-center font-bold text-sm shadow overflow-hidden shrink-0 border border-slate-700">
-                      {user.avatarUrl ? (
-                        <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full max-w-full max-h-full object-cover aspect-square block" />
-                      ) : (
-                        user.firstName?.charAt(0) || 'U'
-                      )}
-                    </div>
-                    <div className="hidden sm:block">
-                      <div className="text-xs font-semibold text-slate-200 leading-tight">
-                        {user.firstName} {user.lastName}
-                      </div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                        <span>@{user.username || user.email?.split('@')[0]}</span>
-                        <span>•</span>
-                        <span className={`capitalize font-semibold ${user.role === 'superadmin' ? 'text-purple-300 font-bold' : 'text-[#F37021]'}`}>
-                          {user.role === 'superadmin' ? '👑 Super Admin' : user.role}
-                        </span>
-                      </div>
-                    </div>
-                  </button>
-                )}
+                </button>
 
                 <button
                   onClick={logout}
-                  className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition"
-                  title={isGuest ? (language === 'th' ? 'ออกจากโหมดผู้มาเยือน' : 'Exit Guest Mode') : t.logout}
+                  className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition"
+                  title={t.logout}
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                {/* Guest Login Button (User requirement 3) */}
-                <button
-                  onClick={() => {
-                    loginAsGuest();
-                    setActiveTab('dashboard');
-                  }}
-                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-300 bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/40 transition shadow-xs"
-                  title={language === 'th' ? 'เข้าชมระบบสำหรับผู้มาเยือน (ดูแดชบอร์ดและรายการปัญหาได้ทุกแผนก)' : 'Browse as Guest (View-Only)'}
-                >
-                  <Eye className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{language === 'th' ? 'ผู้มาเยือน' : 'Guest'}</span>
-                </button>
+                {/* Guest Mode Indicator Badge */}
+                <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-950/70 border border-emerald-500/40 text-emerald-300 text-xs font-semibold">
+                  <Eye className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="hidden sm:inline">{language === 'th' ? 'โหมดผู้มาเยือน (ดูได้อย่างเดียว)' : 'Guest (View Only)'}</span>
+                  <span className="sm:hidden text-[11px]">{language === 'th' ? 'ผู้มาเยือน' : 'Guest'}</span>
+                </div>
 
+                {/* Primary Login Button: Click to log in to real account */}
                 <button
                   onClick={onOpenLogin}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800 transition border border-slate-700"
+                  className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#F37021] hover:bg-[#DE5F14] transition shadow-md shadow-orange-950/30 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <LogIn className="w-4 h-4 text-[#F37021]" />
+                  <LogIn className="w-4 h-4 text-white shrink-0" />
                   <span>{t.login}</span>
                 </button>
+
+                {/* Register Button */}
                 <button
                   onClick={onOpenRegister}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium bg-[#F37021] hover:bg-[#DE5F14] text-white transition shadow-md shadow-[#F37021]/30 font-semibold"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-750 transition border border-slate-700"
                 >
-                  <UserPlus className="w-4 h-4" />
+                  <UserPlus className="w-4 h-4 text-[#F37021] shrink-0" />
                   <span>{t.register}</span>
                 </button>
               </div>
@@ -305,16 +284,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Mobile Submenu Navigation */}
         <div className="lg:hidden flex items-center gap-1 py-1.5 px-1 border-t border-slate-800 text-xs overflow-x-auto no-scrollbar">
-          {!user && (
+          {isGuest && (
             <button
-              onClick={() => {
-                loginAsGuest();
-                setActiveTab('dashboard');
-              }}
-              className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 text-emerald-400 hover:text-white font-bold bg-emerald-950/40 border border-emerald-500/30"
+              onClick={onOpenLogin}
+              className="flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 text-white font-bold bg-[#F37021] border border-[#DE5F14] shadow-xs"
             >
-              <Eye className="w-4 h-4" />
-              <span className="text-[10px]">{language === 'th' ? 'ผู้มาเยือน' : 'Guest'}</span>
+              <LogIn className="w-4 h-4" />
+              <span className="text-[10px]">{t.login}</span>
             </button>
           )}
           {user && !isGuest && (

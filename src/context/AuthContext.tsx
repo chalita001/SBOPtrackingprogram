@@ -34,8 +34,38 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const createGuestUser = (lang: Language = language): User => ({
+    id: 999999,
+    username: 'guest',
+    firstName: lang === 'th' ? 'ผู้มาเยือน' : 'Guest',
+    lastName: lang === 'th' ? '(ดูข้อมูลได้อย่างเดียว)' : '(View Only)',
+    email: 'guest@sbop.local',
+    department: 'ALL',
+    position: lang === 'th' ? 'ผู้มาเยือน / Visitor' : 'Visitor (View Only)',
+    role: 'guest',
+    status: 'approved',
+  });
+
+  const [user, setUser] = useState<User | null>(() => {
+    // If no real token is stored, start directly in Guest Mode
+    const token = getAuthToken();
+    if (!token) {
+      return {
+        id: 999999,
+        username: 'guest',
+        firstName: 'ผู้มาเยือน',
+        lastName: '(ดูข้อมูลได้อย่างเดียว)',
+        email: 'guest@sbop.local',
+        department: 'ALL',
+        position: 'ผู้มาเยือน / Visitor',
+        role: 'guest',
+        status: 'approved',
+      };
+    }
+    return null;
+  });
+
+  const [loading, setLoading] = useState(false);
   const [language, setLanguageState] = useState<Language>(() => {
     return (localStorage.getItem('sbop_lang') as Language) || 'th';
   });
@@ -48,30 +78,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const toggleLanguage = () => {
-    setLanguage(language === 'th' ? 'en' : 'th');
+    const nextLang = language === 'th' ? 'en' : 'th';
+    setLanguage(nextLang);
+    setUser((curr) => {
+      if (curr && curr.role === 'guest') {
+        return createGuestUser(nextLang);
+      }
+      return curr;
+    });
   };
 
   const reloadUser = async () => {
-    // Check if in guest mode
-    if (localStorage.getItem('sbop_guest_mode') === 'true') {
-      setUser({
-        id: 999999,
-        username: 'guest',
-        firstName: language === 'th' ? 'ผู้มาเยือน' : 'Guest',
-        lastName: language === 'th' ? '(ดูข้อมูลได้อย่างเดียว)' : '(View Only)',
-        email: 'guest@sbop.local',
-        department: 'ALL',
-        position: language === 'th' ? 'ผู้มาเยือน / Visitor' : 'Visitor (View Only)',
-        role: 'guest',
-        status: 'approved',
-      });
-      setLoading(false);
-      return;
-    }
-
     const token = getAuthToken();
     if (!token) {
-      setUser(null);
+      // Default to guest mode automatically
+      setUser(createGuestUser());
       setLoading(false);
       return;
     }
@@ -82,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Session expired or invalid token:', err);
       removeAuthToken();
-      setUser(null);
+      setUser(createGuestUser());
     } finally {
       setLoading(false);
     }
@@ -93,37 +114,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (credentials: any) => {
-    localStorage.removeItem('sbop_guest_mode');
     const res = await api.login(credentials);
     setAuthToken(res.token);
     setUser(res.user);
   };
 
   const loginAsGuest = () => {
-    localStorage.setItem('sbop_guest_mode', 'true');
     removeAuthToken();
-    setUser({
-      id: 999999,
-      username: 'guest',
-      firstName: language === 'th' ? 'ผู้มาเยือน' : 'Guest',
-      lastName: language === 'th' ? '(ดูข้อมูลได้อย่างเดียว)' : '(View Only)',
-      email: 'guest@sbop.local',
-      department: 'ALL',
-      position: language === 'th' ? 'ผู้มาเยือน / Visitor' : 'Visitor (View Only)',
-      role: 'guest',
-      status: 'approved',
-    });
+    setUser(createGuestUser());
   };
 
   const register = async (userData: any) => {
-    localStorage.removeItem('sbop_guest_mode');
     return await api.register(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem('sbop_guest_mode');
     removeAuthToken();
-    setUser(null);
+    setUser(createGuestUser());
   };
 
   return (
