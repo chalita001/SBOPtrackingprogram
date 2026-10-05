@@ -259,33 +259,29 @@ export const DefectTracker: React.FC = () => {
               <span>{t.refresh}</span>
             </button>
 
-            {isPrivileged && (
-              <>
-                <button
-                  onClick={() => {
-                    setExportModalTab('excel');
-                    setShowExportModal(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-xs"
-                  title={language === 'th' ? 'ส่งออกข้อมูลสิ่งผิดปกติเป็น Excel' : 'Export defects to Excel'}
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>{t.exportExcelBtn || 'Export Excel'}</span>
-                </button>
+            <button
+              onClick={() => {
+                setExportModalTab('excel');
+                setShowExportModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-xs"
+              title={language === 'th' ? 'ส่งออกข้อมูลสิ่งผิดปกติเป็น Excel' : 'Export defects to Excel'}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>{t.exportExcelBtn || 'Export Excel'}</span>
+            </button>
 
-                <button
-                  onClick={() => {
-                    setExportModalTab('images');
-                    setShowExportModal(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-xs"
-                  title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็น ZIP' : 'Export defect photos to ZIP'}
-                >
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => {
+                setExportModalTab('images');
+                setShowExportModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-xs"
+              title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็น ZIP' : 'Export defect photos to ZIP'}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
+            </button>
           </div>
         </div>
 
@@ -656,14 +652,12 @@ export const DefectTracker: React.FC = () => {
         </div>
       )}
 
-      {/* Export Center Modal (Admin & Super Admin) */}
-      {isPrivileged && (
-        <ExportDataModal
-          isOpen={showExportModal}
-          onClose={() => setShowExportModal(false)}
-          defaultTab={exportModalTab}
-        />
-      )}
+      {/* Export Center Modal */}
+      <ExportDataModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        defaultTab={exportModalTab}
+      />
     </div>
   );
 };

@@ -17,7 +17,9 @@ import {
   ChevronRight,
   TrendingUp,
   AlertCircle,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Trash2,
+  ShieldAlert
 } from 'lucide-react';
 import { ExportDataModal } from './ExportDataModal';
 
@@ -113,9 +115,30 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
   const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
 
-  // Export Modal state (Admin & Superadmin)
+  // Export Modal state
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const [exportModalTab, setExportModalTab] = useState<'excel' | 'images'>('excel');
+
+  // Deleting defect state
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const handleDeleteDefectFromDashboard = async (defect: any) => {
+    const confirmMsg = language === 'en'
+      ? `Are you sure you want to remove this resolved defect (#${defect.inspection_code || '001'} - ${defect.finding_topic || defect.question})?\nThis will permanently delete any associated photo evidence from Cloudflare R2 storage and recalculate the compliance score.`
+      : `คุณต้องการลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว (รหัสตรวจ #${defect.inspection_code || '001'} - ${defect.finding_topic || defect.question}) ใช่หรือไม่?\nระบบจะลบรูปภาพหลักฐานออกจาก Cloudflare R2 อย่างถาวร และปรับปรุงคะแนนความปลอดภัยของรอบตรวจให้ถูกต้อง`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setDeletingId(defect.id);
+    try {
+      await api.deleteDefect(defect.id);
+      await fetchDashboardData();
+    } catch (err: any) {
+      alert((language === 'en' ? 'Failed to delete defect: ' : 'ไม่สามารถลบข้อผิดพลาดได้: ') + (err.message || 'Unknown error'));
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -233,35 +256,75 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               <span>{t.updateData}</span>
             </button>
 
-            {/* Export Buttons for Admin & Super Admin */}
-            {isPrivileged && (
-              <>
-                <button
-                  onClick={() => {
-                    setExportModalTab('excel');
-                    setShowExportModal(true);
-                  }}
-                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-900/20 flex-1 sm:flex-initial"
-                  title={language === 'th' ? 'ส่งออกข้อมูลการตรวจและสถิติเป็น Excel / CSV' : 'Export audits and metrics to Excel / CSV'}
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>{t.exportExcelBtn || 'Export Excel'}</span>
-                </button>
+            {/* Export Buttons */}
+            <button
+              onClick={() => {
+                setExportModalTab('excel');
+                setShowExportModal(true);
+              }}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-900/20 flex-1 sm:flex-initial"
+              title={language === 'th' ? 'ส่งออกข้อมูลการตรวจและสถิติเป็น Excel / CSV' : 'Export audits and metrics to Excel / CSV'}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>{t.exportExcelBtn || 'Export Excel'}</span>
+            </button>
 
-                <button
-                  onClick={() => {
-                    setExportModalTab('images');
-                    setShowExportModal(true);
-                  }}
-                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-900/20 flex-1 sm:flex-initial"
-                  title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็นไฟล์ ZIP หรือพิมพ์แค็ตตาล็อกรูปภาพ' : 'Export defect photos to ZIP or print catalog'}
-                >
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
-                </button>
-              </>
-            )}
+            <button
+              onClick={() => {
+                setExportModalTab('images');
+                setShowExportModal(true);
+              }}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-900/20 flex-1 sm:flex-initial"
+              title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็นไฟล์ ZIP หรือพิมพ์แค็ตตาล็อกรูปภาพ' : 'Export defect photos to ZIP or print catalog'}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
+            </button>
           </div>
+        </div>
+      </div>
+
+      {/* 2. Admin & Management Action Card: ข้อมูลสำหรับ Admin ขึ้นไป */}
+      <div className="bg-gradient-to-r from-slate-900 via-[#1E2229] to-slate-900 border border-[#F37021]/30 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
+              <ShieldAlert className="w-5 h-5" />
+            </span>
+            <h2 className="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+              <span>ข้อมูลสำหรับ Admin ขึ้นไป (Admin Controls & Export Center)</span>
+            </h2>
+            <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              Active
+            </span>
+          </div>
+          <p className="text-xs text-slate-300">
+            ระบบส่งออกข้อมูลการตรวจเช็คความปลอดภัย รายการข้อบกพร่อง สถิติ KPI และดาวน์โหลดรูปภาพจาก Cloudflare R2
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => {
+              setExportModalTab('excel');
+              setShowExportModal(true);
+            }}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-950/40 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Export Excel</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setExportModalTab('images');
+              setShowExportModal(true);
+            }}
+            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-950/40 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <ImageIcon className="w-4 h-4" />
+            <span>Export รูปภาพ</span>
+          </button>
         </div>
       </div>
 
@@ -695,6 +758,20 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                     {t.noPhotoAttached}
                   </div>
                 )}
+
+                {/* Delete Resolved Defect Button */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteDefectFromDashboard(defect)}
+                    disabled={deletingId === defect.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
+                    title={language === 'th' ? 'ลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว พร้อมลบรูปภาพหลักฐาน' : 'Delete resolved defect and photo'}
+                  >
+                    <Trash2 className={`w-3.5 h-3.5 ${deletingId === defect.id ? 'animate-spin' : 'text-rose-500'}`} />
+                    <span>{deletingId === defect.id ? (language === 'th' ? 'กำลังลบ...' : 'Deleting...') : (t.deleteResolvedDefect || 'ลบข้อผิดพลาด (แก้ไขแล้ว)')}</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -734,14 +811,12 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         </div>
       )}
 
-      {/* Export Center Modal (Admin & Super Admin) */}
-      {isPrivileged && (
-        <ExportDataModal
-          isOpen={showExportModal}
-          onClose={() => setShowExportModal(false)}
-          defaultTab={exportModalTab}
-        />
-      )}
+      {/* Export Center Modal */}
+      <ExportDataModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        defaultTab={exportModalTab}
+      />
     </div>
   );
 };

@@ -111,7 +111,7 @@ const MainContent: React.FC = () => {
 
         {activeTab === 'defects' && <DefectTracker />}
 
-        {activeTab === 'dashboard' && user && (
+        {activeTab === 'dashboard' && (
           <AdminDashboard
             onNavigateToAccounts={() => setActiveTab('accounts')}
             onNavigateToDefects={() => setActiveTab('defects')}

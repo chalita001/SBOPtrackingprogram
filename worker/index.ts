@@ -976,7 +976,9 @@ export default {
 
     // Inspections: List & Create
     if (url.pathname === '/api/inspections') {
-      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      if (request.method === 'POST' && !currentUser) {
+        return jsonResponse({ error: 'Unauthorized: Please log in to submit inspections' }, 401);
+      }
 
       if (request.method === 'GET') {
         const dept = url.searchParams.get('department');
@@ -1235,7 +1237,6 @@ export default {
 
     // Inspections: Detail & Delete
     if (url.pathname.startsWith('/api/inspections/')) {
-      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const id = parseInt(url.pathname.split('/')[3], 10);
 
       if (request.method === 'GET') {
@@ -1346,10 +1347,8 @@ export default {
       });
     }
 
-    // Admin Dashboard Statistics
+    // Admin Dashboard Statistics (Publicly viewable by all users & guests)
     if (url.pathname === '/api/dashboard/stats' && request.method === 'GET') {
-      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
-
       const year = url.searchParams.get('year');
       const month = url.searchParams.get('month');
       const dept = url.searchParams.get('department');
@@ -1436,12 +1435,8 @@ export default {
       });
     }
 
-    // Admin & SuperAdmin: Comprehensive Data Export (Excel & Photos)
+    // Comprehensive Data Export (Excel & Photos)
     if (url.pathname === '/api/export/data' && request.method === 'GET') {
-      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) {
-        return jsonResponse({ error: 'Forbidden: Admin access required for data export' }, 403);
-      }
-
       const year = url.searchParams.get('year');
       const month = url.searchParams.get('month');
       const dept = url.searchParams.get('department');
@@ -1503,7 +1498,6 @@ export default {
 
     // Defects: Delete / Resolve Defect Item and Remove Associated Photo from Cloudflare R2
     if (url.pathname.match(/^\/api\/defects\/\d+$/) && request.method === 'DELETE') {
-      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const itemId = parseInt(url.pathname.split('/')[3], 10);
 
       const item: any = await env.DB.prepare('SELECT * FROM inspection_items WHERE id = ?').bind(itemId).first();

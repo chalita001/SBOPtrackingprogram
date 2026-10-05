@@ -3,10 +3,9 @@ import db from '../db.js';
 import { authenticate, requireAdmin, AuthRequest } from '../auth.js';
 
 const router = Router();
-router.use(authenticate);
 
-// Executive Dashboard Statistics (Visible to all users)
-router.get('/stats', (req: AuthRequest, res: Response) => {
+// Executive Dashboard Statistics (Visible to all users & guests)
+router.get('/stats', (req: any, res: Response) => {
   try {
     const { year, month, department } = req.query;
 
