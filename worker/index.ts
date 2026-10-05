@@ -999,11 +999,12 @@ export default {
         if (layer && layer !== 'all') { sql += ' AND i.layer = ?'; params.push(layer); }
         if (code && code !== 'all') { sql += ' AND i.inspection_code = ?'; params.push(code); }
 
-        // Non-admin/superadmin users only see their own inspection history; Admins and Superadmins see all
+        // Non-admin/superadmin users see all inspection data within their own department; Admins and Superadmins see all departments
         const isPrivilegedUser = currentUser.role === 'admin' || currentUser.role === 'superadmin';
         if (!isPrivilegedUser) {
-          sql += ' AND i.auditor_id = ?';
-          params.push(currentUser.id);
+          const userDept = currentUser.department || 'MOLD';
+          sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
+          params.push(userDept, currentUser.id);
         }
 
         sql += ' ORDER BY i.audit_date DESC, i.id DESC';
@@ -1021,8 +1022,9 @@ export default {
         `;
         const statsParams: any[] = [];
         if (!isPrivilegedUser) {
-          statsSql += ' WHERE auditor_id = ?';
-          statsParams.push(currentUser.id);
+          const userDept = currentUser.department || 'MOLD';
+          statsSql += ' WHERE (department_code = ? OR auditor_id = ?)';
+          statsParams.push(userDept, currentUser.id);
         }
 
         const stats = await env.DB.prepare(statsSql).bind(...statsParams).first();
@@ -1563,6 +1565,27 @@ export default {
       return jsonResponse({ message: 'All marked as read' });
     }
 
+    // Notifications: Clear / Delete Read Notifications
+    if (url.pathname === '/api/notifications/clear-read' && (request.method === 'POST' || request.method === 'DELETE')) {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const isPrivileged = currentUser.role === 'admin' || currentUser.role === 'superadmin';
+
+      if (isPrivileged) {
+        await env.DB.prepare(`
+          DELETE FROM notifications 
+          WHERE is_read = 1 
+            AND (user_id = ? OR (user_id IS NULL AND type IN ('registration_alert', 'alert', 'broadcast')))
+        `).bind(currentUser.id).run();
+      } else {
+        await env.DB.prepare(`
+          DELETE FROM notifications 
+          WHERE is_read = 1 
+            AND (user_id = ? OR (user_id IS NULL AND type = 'broadcast'))
+        `).bind(currentUser.id).run();
+      }
+      return jsonResponse({ message: 'Read notifications cleared successfully' });
+    }
+
     // Notifications: Send In-App Notification (Admin or System)
     if (url.pathname === '/api/notifications' && request.method === 'POST') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -1700,6 +1723,30 @@ export default {
 
       await env.DB.prepare('DELETE FROM users WHERE id = ?').bind(userId).run();
       return jsonResponse({ message: 'User deleted successfully' });
+    }
+
+    // SuperAdmin / Admin: Reset User Password to 123456
+    if (url.pathname.match(/^\/api\/users\/\d+\/reset-password$/) && request.method === 'POST') {
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) return jsonResponse({ error: 'Forbidden' }, 403);
+      const userId = parseInt(url.pathname.split('/')[3], 10);
+      const targetUser: any = await env.DB.prepare('SELECT id, first_name, last_name, email FROM users WHERE id = ?').bind(userId).first();
+      if (!targetUser) return jsonResponse({ error: 'User not found' }, 404);
+
+      const defaultPassword = '123456';
+      const newHash = bcrypt.hashSync(defaultPassword, 10);
+      await env.DB.prepare(`
+        UPDATE users 
+        SET password_hash = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(newHash, userId).run();
+
+      // In-app notification for the user
+      await env.DB.prepare(`
+        INSERT INTO notifications (user_id, title, message, type)
+        VALUES (?, 'รหัสผ่านของคุณถูกรีเซ็ตเป็น 123456', 'ผู้ดูแลระบบได้ทำการรีเซ็ตรหัสผ่านเริ่มต้นของคุณเป็น: 123456 กรุณาเข้าสู่ระบบและเปลี่ยนรหัสผ่านใหม่เพื่อความปลอดภัย', 'alert')
+      `).bind(userId).run();
+
+      return jsonResponse({ message: `รหัสผ่านของ ${targetUser.first_name} ${targetUser.last_name} ถูกรีเซ็ตเป็น 123456 เรียบร้อยแล้ว` });
     }
 
     // Email Logs

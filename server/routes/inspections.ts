@@ -107,10 +107,11 @@ router.get('/', (req: AuthRequest, res: Response) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    // Non-admin users only see their own inspection history; Admins see all
-    if (req.user!.role !== 'admin') {
-      sql += ' AND i.auditor_id = ?';
-      params.push(req.user!.id);
+    // Non-admin users see all inspections within their department; Admins see all
+    if (req.user!.role !== 'admin' && req.user!.role !== 'superadmin') {
+      const userDept = req.user!.department || 'MOLD';
+      sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
+      params.push(userDept, req.user!.id);
     }
 
     sql += ' ORDER BY i.audit_date DESC, i.id DESC';
@@ -128,9 +129,10 @@ router.get('/', (req: AuthRequest, res: Response) => {
       FROM inspections
     `;
     const statsParams: any[] = [];
-    if (req.user!.role !== 'admin') {
-      statsSql += ' WHERE auditor_id = ?';
-      statsParams.push(req.user!.id);
+    if (req.user!.role !== 'admin' && req.user!.role !== 'superadmin') {
+      const userDept = req.user!.department || 'MOLD';
+      statsSql += ' WHERE (department_code = ? OR auditor_id = ?)';
+      statsParams.push(userDept, req.user!.id);
     }
 
     const stats = db.prepare(statsSql).get(...statsParams);

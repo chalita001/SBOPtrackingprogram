@@ -16,7 +16,8 @@ import {
   Phone, 
   Mail, 
   MapPin, 
-  RefreshCw
+  RefreshCw,
+  KeyRound
 } from 'lucide-react';
 
 export const AccountManager: React.FC = () => {
@@ -129,6 +130,25 @@ export const AccountManager: React.FC = () => {
       loadUsers();
     } catch (err: any) {
       setActionMessage({ text: err.message || 'Update role failed', type: 'error' });
+    }
+  };
+
+  const handleResetPassword = async (targetUser: any) => {
+    const confirmMsg = language === 'th'
+      ? `คุณต้องการรีเซ็ตรหัสผ่านของ ${targetUser.first_name} ${targetUser.last_name} ให้เป็น "123456" ใช่หรือไม่?\n(ผู้ใช้จะสามารถใช้รหัส 123456 เพื่อเข้าสู่ระบบได้ทันที)`
+      : `Are you sure you want to reset password for ${targetUser.first_name} ${targetUser.last_name} to "123456"?`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const res = await api.resetUserPassword(targetUser.id);
+      const successMsg = language === 'th'
+        ? `รีเซ็ตรหัสผ่านของ ${targetUser.first_name} ${targetUser.last_name} เป็น 123456 สำเร็จแล้ว`
+        : res.message || 'Password reset to 123456 successfully.';
+      setActionMessage({ text: successMsg, type: 'success' });
+      setEditingUser(null);
+      loadUsers();
+    } catch (err: any) {
+      setActionMessage({ text: err.message || 'Reset password failed', type: 'error' });
     }
   };
 
@@ -382,7 +402,16 @@ export const AccountManager: React.FC = () => {
                       className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition flex items-center gap-1"
                     >
                       <Shield className="w-3.5 h-3.5" />
-                      <span>{language === 'th' ? 'เปลี่ยนสิทธิ์' : 'Edit Role'}</span>
+                      <span>{language === 'th' ? 'แก้ไขสิทธิ์' : 'Edit Role'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleResetPassword(u)}
+                      className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold transition flex items-center gap-1"
+                      title={language === 'th' ? 'รีเซ็ตรหัสผ่านเป็น 123456' : 'Reset password to 123456'}
+                    >
+                      <KeyRound className="w-3.5 h-3.5 text-amber-600" />
+                      <span>{language === 'th' ? 'รีเซ็ตรหัส' : 'Reset Pass'}</span>
                     </button>
 
                     {!isCurrentUser && (
@@ -570,6 +599,14 @@ export const AccountManager: React.FC = () => {
                             <Shield className="w-4 h-4" />
                           </button>
 
+                          <button
+                            onClick={() => handleResetPassword(u)}
+                            className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 transition"
+                            title={language === 'th' ? 'รีเซ็ตรหัสผ่านเป็น 123456' : 'Reset password to 123456'}
+                          >
+                            <KeyRound className="w-4 h-4" />
+                          </button>
+
                           {!isCurrentUser && (
                             <button
                               onClick={() => handleDelete(u.id, `${u.first_name} ${u.last_name}`)}
@@ -635,6 +672,31 @@ export const AccountManager: React.FC = () => {
                   <option value="TOOL">Tooling</option>
                   <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
                 </select>
+              </div>
+
+              {/* Reset Password to 123456 */}
+              <div className="pt-2 pb-1 border-t border-slate-100">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-amber-50/90 border border-amber-200/90 rounded-xl">
+                  <div>
+                    <div className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                      <KeyRound className="w-3.5 h-3.5 text-amber-700" />
+                      <span>{language === 'th' ? 'รีเซ็ตรหัสผ่าน (เป็น 123456)' : 'Reset Password (to 123456)'}</span>
+                    </div>
+                    <div className="text-[11px] text-amber-700 mt-0.5">
+                      {language === 'th' 
+                        ? 'กรณีผู้ใช้ลืมรหัสผ่าน สามารถกดรีเซ็ตให้เป็น 123456 ได้ทันที' 
+                        : 'Reset password directly to "123456" in case user forgot.'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleResetPassword(editingUser)}
+                    className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition shadow-sm shrink-0 flex items-center justify-center gap-1.5"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>{language === 'th' ? 'รีเซ็ตเป็น 123456' : 'Reset to 123456'}</span>
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">

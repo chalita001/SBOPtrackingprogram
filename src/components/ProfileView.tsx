@@ -21,7 +21,8 @@ import {
   CheckCircle,
   BarChart2,
   Sparkles,
-  Users
+  Users,
+  Trash2
 } from 'lucide-react';
 
 interface ProfileViewProps {
@@ -148,6 +149,20 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     }
   };
 
+  const handleClearRead = async () => {
+    const confirmMsg = language === 'th'
+      ? 'คุณต้องการลบการแจ้งเตือนที่อ่านแล้วทั้งหมดใช่หรือไม่?'
+      : 'Are you sure you want to clear all read notifications?';
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await api.clearReadNotifications();
+      setNotifications((prev) => prev.filter((n) => n.is_read === 0));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (!user) return null;
 
   const roleTitle =
@@ -185,9 +200,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0 overflow-hidden relative group">
+            <div className="w-20 h-20 min-w-[5rem] min-h-[5rem] max-w-[5rem] max-h-[5rem] sm:w-24 sm:h-24 sm:min-w-[6rem] sm:min-h-[6rem] sm:max-w-[6rem] sm:max-h-[6rem] rounded-2xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shadow-lg border-2 border-white/30 shrink-0 overflow-hidden relative group aspect-square">
               {user.avatarUrl ? (
-                <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full max-w-full max-h-full object-cover aspect-square block" />
               ) : (
                 user.firstName?.charAt(0) || 'U'
               )}
@@ -619,14 +634,27 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
           </div>
 
-          {unreadCount > 0 && (
-            <button
-              onClick={handleMarkAllRead}
-              className="text-xs font-bold text-[#F37021] hover:text-[#DE5F14] bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition"
-            >
-              {language === 'en' ? 'Mark All as Read' : 'อ่านทั้งหมดแล้ว'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={handleMarkAllRead}
+                className="text-xs font-bold text-[#F37021] hover:text-[#DE5F14] bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-lg transition"
+              >
+                {language === 'en' ? 'Mark All as Read' : 'อ่านทั้งหมดแล้ว'}
+              </button>
+            )}
+
+            {notifications.some((n) => n.is_read === 1) && (
+              <button
+                onClick={handleClearRead}
+                className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 border border-red-200"
+                title={language === 'th' ? 'ลบรายการแจ้งเตือนที่อ่านแล้วออก' : 'Clear read notifications'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{language === 'th' ? 'ล้างที่อ่านแล้ว' : 'Clear Read'}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="divide-y divide-slate-100 max-h-[380px] overflow-y-auto">

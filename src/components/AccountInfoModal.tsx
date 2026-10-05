@@ -120,9 +120,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
         {/* Header */}
         <div className="bg-[#1E2229] border-b border-slate-800 p-6 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-bold text-xl flex items-center justify-center shadow-lg border border-white/20 overflow-hidden shrink-0">
+            <div className="w-12 h-12 min-w-[3rem] min-h-[3rem] max-w-[3rem] max-h-[3rem] aspect-square rounded-xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-bold text-xl flex items-center justify-center shadow-lg border border-white/20 overflow-hidden shrink-0">
               {avatarUrl ? (
-                <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full max-w-full max-h-full object-cover aspect-square block" />
               ) : (
                 user.firstName.charAt(0)
               )}
@@ -203,9 +203,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
               {/* Profile Avatar Upload Section */}
               <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50/60 border border-orange-200/80 flex flex-col sm:flex-row items-center gap-4">
                 <div className="relative group shrink-0">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-extrabold text-2xl flex items-center justify-center shadow-md border-2 border-white overflow-hidden">
+                  <div className="w-20 h-20 min-w-[5rem] min-h-[5rem] max-w-[5rem] max-h-[5rem] aspect-square rounded-2xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-extrabold text-2xl flex items-center justify-center shadow-md border-2 border-white overflow-hidden shrink-0">
                     {avatarUrl ? (
-                      <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                      <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full max-w-full max-h-full object-cover aspect-square block" />
                     ) : (
                       user.firstName?.charAt(0) || 'U'
                     )}

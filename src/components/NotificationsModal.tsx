@@ -11,7 +11,8 @@ import {
   ExternalLink, 
   CheckCheck,
   Building2,
-  User as UserIcon
+  User as UserIcon,
+  Trash2
 } from 'lucide-react';
 
 interface NotificationsModalProps {
@@ -88,6 +89,21 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
       setUnreadCount(0);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleClearRead = async () => {
+    const confirmMsg = language === 'th'
+      ? 'คุณต้องการลบการแจ้งเตือนที่อ่านแล้วทั้งหมดใช่หรือไม่?'
+      : 'Are you sure you want to clear all read notifications?';
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await api.clearReadNotifications();
+      setNotifications((prev) => prev.filter((n) => n.is_read === 0));
+    } catch (err: any) {
+      console.error('Failed to clear read notifications:', err);
+      alert((language === 'th' ? 'เกิดข้อผิดพลาดในการล้างการแจ้งเตือน: ' : 'Failed to clear read notifications: ') + err.message);
     }
   };
 
@@ -176,6 +192,18 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 <span>{language === 'en' ? 'Mark All Read' : 'อ่านทั้งหมดแล้ว'}</span>
+              </button>
+            )}
+
+            {notifications.some((n) => n.is_read === 1) && (
+              <button
+                type="button"
+                onClick={handleClearRead}
+                className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-2.5 py-1 rounded-lg transition flex items-center gap-1 border border-red-200"
+                title={language === 'th' ? 'ลบรายการแจ้งเตือนที่อ่านแล้วออกจากระบบ' : 'Clear all read notifications'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{language === 'th' ? 'ล้างที่อ่านแล้ว' : 'Clear Read'}</span>
               </button>
             )}
 

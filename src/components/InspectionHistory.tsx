@@ -44,11 +44,17 @@ export const InspectionHistory: React.FC = () => {
     month?: number;
   } | null>(null);
 
+  const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
+
   const loadHistory = async () => {
     setLoading(true);
     try {
       const params: Record<string, string> = {};
-      if (selectedDept !== 'all') params.department = selectedDept;
+      if (isPrivileged) {
+        if (selectedDept !== 'all') params.department = selectedDept;
+      } else {
+        params.department = user?.department || 'MOLD';
+      }
       if (selectedYear !== 'all') params.year = selectedYear;
       if (selectedMonth !== 'all') params.month = selectedMonth;
       if (searchTerm.trim()) params.search = searchTerm.trim();
@@ -101,7 +107,11 @@ export const InspectionHistory: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">{t.tabHistory}</h1>
-              <p className="text-xs text-slate-500">{t.historySubtitle}</p>
+              <p className="text-xs text-slate-500">
+                {isPrivileged 
+                  ? (language === 'th' ? 'ประวัติการตรวจเช็คทั้งหมดทุกแผนกในระบบ' : 'Inspection records across all departments (Admin/Superadmin)')
+                  : (language === 'th' ? `ประวัติการตรวจเช็คที่เชื่อมโยงร่วมกันทั้งหมดในแผนก ${user?.department || ''}` : `Linked inspection records for department ${user?.department || ''}`)}
+              </p>
             </div>
           </div>
 
@@ -114,19 +124,18 @@ export const InspectionHistory: React.FC = () => {
           </button>
         </div>
 
-        {/* User Scope Indicator: Admin Sees All vs User Sees Own */}
+        {/* User Scope Indicator: Admin Sees All vs User Sees Department-wide */}
         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-          {(user?.role === 'admin' || user?.role === 'superadmin') ? (
+          {isPrivileged ? (
             <div className="flex items-center gap-2 text-purple-900 bg-purple-50 px-3.5 py-1.5 rounded-xl border border-purple-200">
-              <span className="font-bold">{t.adminModeBadge}</span>
-              <span>{t.adminModeDesc}</span>
+              <span className="font-bold">👑 Super Admin / Admin Mode</span>
+              <span>{language === 'th' ? '(เข้าถึงข้อมูลประวัติการตรวจทุกแผนกได้เหมือนเดิม)' : '(Full access across all departments)'}</span>
             </div>
           ) : (
             <div className="flex items-center gap-2 text-orange-950 bg-orange-50 px-3.5 py-1.5 rounded-xl border border-orange-200">
-              <span className="font-bold">{t.userModeBadge}</span>
-              <span>
-                {t.userModeDesc.replace('{0}', user ? `${user.firstName} ${user.lastName}` : '')}
-              </span>
+              <Building2 className="w-4 h-4 text-[#F37021]" />
+              <span className="font-bold">{language === 'th' ? `แผนก ${user?.department || ''}` : `Dept: ${user?.department || ''}`}</span>
+              <span>{language === 'th' ? '• เชื่อมโยงข้อมูลประวัติการตรวจร่วมกันทุกคนในแผนก' : '• Linked inspection records across your entire department'}</span>
             </div>
           )}
         </div>
@@ -172,21 +181,28 @@ export const InspectionHistory: React.FC = () => {
         {/* Filters: 3-column grid on mobile, flex row on sm */}
         <div className="grid grid-cols-3 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-3">
           {/* Dept Filter */}
-          <select
-            value={selectedDept}
-            onChange={(e) => setSelectedDept(e.target.value)}
-            className="px-2.5 sm:px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-          >
-            <option value="all">{t.allDepartments}</option>
-            <option value="MOLD">Molding</option>
-            <option value="FACILITY">Facility</option>
-            <option value="ASSY">Assembly</option>
-            <option value="WH">Warehouse</option>
-            <option value="QC">QC</option>
-            <option value="STAMPING">Stamping</option>
-            <option value="TOOL">Tooling</option>
-            <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
-          </select>
+          {isPrivileged ? (
+            <select
+              value={selectedDept}
+              onChange={(e) => setSelectedDept(e.target.value)}
+              className="px-2.5 sm:px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
+            >
+              <option value="all">{t.allDepartments}</option>
+              <option value="MOLD">Molding</option>
+              <option value="FACILITY">Facility</option>
+              <option value="ASSY">Assembly</option>
+              <option value="WH">Warehouse</option>
+              <option value="QC">QC</option>
+              <option value="STAMPING">Stamping</option>
+              <option value="TOOL">Tooling</option>
+              <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
+            </select>
+          ) : (
+            <div className="px-2.5 sm:px-3 py-2 bg-orange-50 border border-orange-200 text-[#F37021] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 truncate">
+              <Building2 className="w-3.5 h-3.5 shrink-0" />
+              <span>{user?.department || 'MOLD'}</span>
+            </div>
+          )}
 
           {/* Year Filter */}
           <select

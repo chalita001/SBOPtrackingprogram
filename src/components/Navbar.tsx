@@ -219,9 +219,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setActiveTab('profile')}
                   className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left transition"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white flex items-center justify-center font-bold text-sm shadow overflow-hidden shrink-0 border border-slate-700">
+                  <div className="w-8 h-8 min-w-[2rem] min-h-[2rem] max-w-[2rem] max-h-[2rem] aspect-square rounded-full bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white flex items-center justify-center font-bold text-sm shadow overflow-hidden shrink-0 border border-slate-700">
                     {user.avatarUrl ? (
-                      <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                      <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full max-w-full max-h-full object-cover aspect-square block" />
                     ) : (
                       user.firstName?.charAt(0) || 'U'
                     )}

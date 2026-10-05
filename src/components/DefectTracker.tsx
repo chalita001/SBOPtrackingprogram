@@ -33,10 +33,16 @@ export const DefectTracker: React.FC = () => {
   const [sendingNotif, setSendingNotif] = useState(false);
   const [notifSuccess, setNotifSuccess] = useState<string | null>(null);
 
+  const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
+
   const loadDefects = async () => {
     setLoading(true);
     try {
-      const data = await api.getInspections();
+      const params: Record<string, string> = {};
+      if (!isPrivileged) {
+        params.department = user?.department || 'MOLD';
+      }
+      const data = await api.getInspections(params);
       const allDefects: any[] = [];
 
       for (const ins of (data.inspections || [])) {
@@ -189,7 +195,11 @@ export const DefectTracker: React.FC = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">{t.tabDefects}</h1>
-              <p className="text-xs text-slate-500">{t.defectBoardSubtitle}</p>
+              <p className="text-xs text-slate-500">
+                {isPrivileged
+                  ? (language === 'th' ? 'รายการสิ่งผิดปกติทั้งหมดในระบบ (สิทธิ์ Admin / Super Admin เห็นข้อมูลทุกแผนก)' : 'Defects and anomalies across all departments (Admin/Superadmin)')
+                  : (language === 'th' ? `รายการสิ่งผิดปกติทั้งหมดที่ตรวจพบในแผนก ${user?.department || ''} (เชื่อมโยงข้อมูลร่วมกันในแผนก)` : `Linked anomalies for department ${user?.department || ''}`)}
+              </p>
             </div>
           </div>
 
@@ -236,21 +246,28 @@ export const DefectTracker: React.FC = () => {
           </select>
 
           {/* Dept */}
-          <select
-            value={filterDept}
-            onChange={(e) => setFilterDept(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-          >
-            <option value="all">{t.allDepartments}</option>
-            <option value="MOLD">Molding</option>
-            <option value="FACILITY">Facility</option>
-            <option value="ASSY">Assembly</option>
-            <option value="WH">Warehouse</option>
-            <option value="QC">QC</option>
-            <option value="STAMPING">Stamping</option>
-            <option value="TOOL">Tooling</option>
-            <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
-          </select>
+          {isPrivileged ? (
+            <select
+              value={filterDept}
+              onChange={(e) => setFilterDept(e.target.value)}
+              className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
+            >
+              <option value="all">{t.allDepartments}</option>
+              <option value="MOLD">Molding</option>
+              <option value="FACILITY">Facility</option>
+              <option value="ASSY">Assembly</option>
+              <option value="WH">Warehouse</option>
+              <option value="QC">QC</option>
+              <option value="STAMPING">Stamping</option>
+              <option value="TOOL">Tooling</option>
+              <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
+            </select>
+          ) : (
+            <div className="px-2.5 py-1.5 bg-orange-50 border border-orange-200 text-[#F37021] rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 shrink-0" />
+              <span>{user?.department || 'MOLD'}</span>
+            </div>
+          )}
         </div>
 
         <div className="text-xs text-slate-500 font-medium ml-auto">

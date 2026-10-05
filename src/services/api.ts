@@ -53,6 +53,7 @@ export const api = {
   approveUser: (id: number) => request(`/users/${id}/approve`, { method: 'PUT' }),
   rejectUser: (id: number) => request(`/users/${id}/reject`, { method: 'PUT' }),
   updateUserRole: (id: number, data: any) => request(`/users/${id}/role`, { method: 'PUT', body: JSON.stringify(data) }),
+  resetUserPassword: (id: number) => request(`/users/${id}/reset-password`, { method: 'POST' }),
   deleteUser: (id: number) => request(`/users/${id}`, { method: 'DELETE' }),
 
   // Departments
@@ -125,6 +126,7 @@ export const api = {
   getNotifications: () => request('/notifications'),
   markNotificationRead: (id: number) => request(`/notifications/${id}/read`, { method: 'PATCH' }),
   markAllNotificationsRead: () => request('/notifications/read-all', { method: 'POST' }),
+  clearReadNotifications: () => request('/notifications/clear-read', { method: 'POST' }),
   sendNotification: (data: { userId?: number; title: string; message: string; type?: string; link?: string }) =>
     request('/notifications', { method: 'POST', body: JSON.stringify(data) }),
   getUsersDirectory: () => request('/users/directory'),

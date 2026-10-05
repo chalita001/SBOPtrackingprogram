@@ -165,4 +165,19 @@ router.delete('/:id', (req: AuthRequest, res: Response) => {
   }
 });
 
+// Reset password to 123456
+router.post('/:id/reset-password', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    const user = db.prepare('SELECT id, first_name, last_name, email FROM users WHERE id = ?').get(userId) as any;
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const bcrypt = await import('bcryptjs');
+    const newHash = bcrypt.hashSync('123456', 10);
+    db.prepare('UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(newHash, userId);
+    return res.json({ message: `รหัสผ่านของ ${user.first_name} ${user.last_name} ถูกรีเซ็ตเป็น 123456 เรียบร้อยแล้ว` });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
