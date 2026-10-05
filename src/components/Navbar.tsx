@@ -72,78 +72,76 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16">
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 w-full">
+        <div className="flex items-center justify-between h-14 sm:h-16 gap-3">
           {/* TE Connectivity Logo & System Title */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group shrink-0" onClick={() => setActiveTab(user ? 'profile' : 'checklist')}>
+          <div 
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0" 
+            onClick={() => setActiveTab(user ? 'profile' : 'checklist')}
+          >
             <TELogo variant="white-text" height={28} className="sm:hidden" />
-            <TELogo variant="white-text" height={36} className="hidden sm:block" />
-            <div className="border-l border-slate-700/90 pl-2.5 sm:pl-3">
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-[#F37021] transition">
-                  SBOP
-                </span>
-                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
-                  Rev. H
-                </span>
-              </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-400 hidden md:block">
-                {t.appSubtitle}
-              </p>
+            <TELogo variant="white-text" height={34} className="hidden sm:block" />
+            <div className="border-l border-slate-700/80 pl-2.5 sm:pl-3 flex items-center gap-2">
+              <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-[#F37021] transition">
+                SBOP
+              </span>
+              <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
+                Rev. H
+              </span>
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1.5">
+          {/* Navigation Links (Desktop Segmented Bar) */}
+          <nav className="hidden lg:flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 gap-1 shrink-0">
             {/* Profile Tab */}
             {user && (
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                   activeTab === 'profile'
-                    ? 'bg-[#F37021] text-white shadow-md shadow-[#F37021]/30'
-                    : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    ? 'bg-[#F37021] text-white shadow-xs font-bold'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
                 }`}
               >
-                <User className="w-4 h-4" />
-                <span>{language === 'en' ? 'Profile' : 'โปรไฟล์'}</span>
+                <User className="w-4 h-4 shrink-0" />
+                <span>{language === 'th' ? 'โปรไฟล์' : 'Profile'}</span>
               </button>
             )}
 
             <button
               onClick={() => setActiveTab('checklist')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                 activeTab === 'checklist'
-                  ? 'bg-[#F37021] text-white shadow-md shadow-[#F37021]/30'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-[#F37021] text-white shadow-xs font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
               }`}
             >
-              <ClipboardCheck className="w-4 h-4" />
-              <span>{t.tabChecklist}</span>
+              <ClipboardCheck className="w-4 h-4 shrink-0" />
+              <span>{language === 'th' ? 'แบบตรวจเช็ค' : 'Checklist'}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('history')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                 activeTab === 'history'
-                  ? 'bg-[#F37021] text-white shadow-md shadow-[#F37021]/30'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-[#F37021] text-white shadow-xs font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
               }`}
             >
-              <History className="w-4 h-4" />
-              <span>{t.tabHistory}</span>
+              <History className="w-4 h-4 shrink-0" />
+              <span>{language === 'th' ? 'ประวัติการตรวจ' : 'History'}</span>
             </button>
 
             <button
               onClick={() => setActiveTab('defects')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                 activeTab === 'defects'
-                  ? 'bg-[#F37021] text-white shadow-md shadow-[#F37021]/30'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                  ? 'bg-[#F37021] text-white shadow-xs font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
               }`}
             >
-              <AlertTriangle className="w-4 h-4 text-amber-400" />
-              <span>{t.tabDefects}</span>
+              <AlertTriangle className={`w-4 h-4 shrink-0 ${activeTab === 'defects' ? 'text-white' : 'text-amber-400'}`} />
+              <span>{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
             </button>
 
             {/* Admin only Tabs: Dashboard & Account Manager */}
@@ -151,33 +149,33 @@ export const Navbar: React.FC<NavbarProps> = ({
               <>
                 <button
                   onClick={() => setActiveTab('dashboard')}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                     activeTab === 'dashboard'
-                      ? 'bg-[#F37021] text-white shadow-md shadow-[#F37021]/30'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-[#F37021] text-white shadow-xs font-bold'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
                   }`}
                 >
-                  <BarChart3 className="w-4 h-4" />
-                  <span>{t.tabDashboard}</span>
+                  <BarChart3 className="w-4 h-4 shrink-0" />
+                  <span>{language === 'th' ? 'แดชบอร์ด' : 'Dashboard'}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('accounts')}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
                     activeTab === 'accounts'
-                      ? 'bg-[#F37021] text-white shadow-md shadow-[#F37021]/30'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-[#F37021] text-white shadow-xs font-bold'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
                   }`}
                 >
-                  <Users className="w-4 h-4" />
-                  <span>{t.tabAccountManager}</span>
+                  <Users className="w-4 h-4 shrink-0" />
+                  <span>{language === 'th' ? 'จัดการสมาชิก' : 'Members'}</span>
                 </button>
               </>
             )}
           </nav>
 
           {/* User Profile & In-App Notification Bell */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {user ? (
               <div className="flex items-center gap-2 sm:gap-3">
                 {/* Notification Bell Button */}
