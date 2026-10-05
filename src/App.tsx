@@ -48,10 +48,10 @@ const MainContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white">
-        <div className="w-12 h-12 border-4 border-sky-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+      <div className="min-h-screen bg-[#14171C] flex flex-col items-center justify-center text-white">
+        <div className="w-12 h-12 border-4 border-[#F37021] border-t-transparent rounded-full animate-spin mb-4"></div>
         <div className="font-bold text-lg">{t.systemLoading}</div>
-        <div className="text-xs text-slate-400 mt-1">Cloudflare D1 & R2 Ready</div>
+        <div className="text-xs text-slate-400 mt-1">TE Connectivity • Cloudflare D1 & R2 Ready</div>
       </div>
     );
   }
@@ -119,17 +119,17 @@ const MainContent: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs mt-auto">
+      <footer className="bg-[#14171C] text-slate-400 py-6 border-t border-slate-800 text-xs mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-sky-400" />
+            <ShieldCheck className="w-4 h-4 text-[#F37021]" />
             <span className="font-semibold text-slate-200">
-              SBOP Tracking Program — Rev. H (TE-EHS-053)
+              TE Connectivity • SBOP Safety Tracking System — Rev. H (TE-EHS-053)
             </span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
             <span className="flex items-center gap-1">
-              <Database className="w-3 h-3 text-sky-400" />
+              <Database className="w-3 h-3 text-[#F37021]" />
               <span>Cloudflare D1: d1sbop (413b2fe9-b280-4a1b-81ac-cb20f9e41935)</span>
             </span>
             <span className="flex items-center gap-1">

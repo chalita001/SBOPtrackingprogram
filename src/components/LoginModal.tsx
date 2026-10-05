@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, X, Lock, AlertCircle } from 'lucide-react';
+import { TELogo } from './TELogo';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -40,19 +41,22 @@ export const LoginModal: React.FC<LoginModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 to-sky-900 p-6 text-white flex items-center justify-between">
+        <div className="bg-[#1E2229] border-b border-slate-800 p-6 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center">
-              <LogIn className="w-5 h-5 text-sky-400" />
-            </div>
+            <TELogo variant="mark" height={34} />
             <div>
-              <h2 className="text-lg font-bold">{t.login}</h2>
-              <p className="text-xs text-sky-200">{t.loginSubtitle}</p>
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <span>{t.login}</span>
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
+                  SBOP
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">{t.loginSubtitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -80,7 +84,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="admin หรือ usertester"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                 />
               </div>
             </div>
@@ -97,7 +101,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                 />
               </div>
             </div>
@@ -105,7 +109,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-md shadow-sky-600/20 text-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-[#F37021] hover:bg-[#DE5F14] text-white font-semibold rounded-xl shadow-md shadow-[#F37021]/20 text-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {loading ? t.signingIn : t.login}
             </button>
@@ -116,7 +120,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             <button
               type="button"
               onClick={onSwitchToRegister}
-              className="text-sky-600 hover:text-sky-700 font-bold underline transition ml-1"
+              className="text-[#F37021] hover:text-[#DE5F14] font-bold underline transition ml-1"
             >
               {t.register}
             </button>

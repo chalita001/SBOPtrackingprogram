@@ -91,12 +91,12 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
         {/* Header */}
         <div className="p-4 sm:p-5 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
+            <div className="p-2.5 rounded-2xl bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
               <FileText className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[#F37021]/20 text-orange-300 border border-[#F37021]/30">
                   {language === 'th' ? 'รหัสเอกสาร' : 'Document Code'} #{inspectionCode}
                 </span>
                 <span className="text-xs text-slate-400">
@@ -133,7 +133,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-slate-50/50">
           {loading ? (
             <div className="py-20 flex flex-col items-center justify-center text-slate-500 gap-3">
-              <RefreshCw className="w-8 h-8 text-sky-600 animate-spin" />
+              <RefreshCw className="w-8 h-8 text-[#F37021] animate-spin" />
               <span className="text-xs font-semibold">{language === 'th' ? 'กำลังโหลดประวัติรหัสเอกสาร...' : 'Loading document audit trail...'}</span>
             </div>
           ) : error ? (
@@ -166,7 +166,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
                   </div>
                   <div className="border-l border-slate-200 pl-4 sm:pl-6">
                     <span className="text-[10px] text-slate-400 block font-semibold">{language === 'th' ? 'จำนวนรอบที่ตรวจ' : 'Total Audits'}</span>
-                    <span className="font-bold text-sky-700 text-sm">{data.totalRounds} / 3 Layers</span>
+                    <span className="font-bold text-[#F37021] text-sm">{data.totalRounds} / 3 Layers</span>
                   </div>
                 </div>
 
@@ -194,7 +194,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
               {/* 3-Stage Progress Timeline */}
               <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
                 <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-sky-600" />
+                  <ShieldCheck className="w-4 h-4 text-[#F37021]" />
                   <span>{language === 'th' ? 'สายการตรวจเช็คตามลำดับขั้น (Audit Progression)' : 'Audit Progression Across Layers'}</span>
                 </h3>
 
@@ -384,7 +384,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
                   onClick={() => setActiveTab('timeline')}
                   className={`px-4 py-2 text-xs font-bold rounded-t-xl transition whitespace-nowrap ${
                     activeTab === 'timeline'
-                      ? 'bg-white border-t-2 border-x border-t-sky-600 border-x-slate-200 text-sky-800'
+                      ? 'bg-white border-t-2 border-x border-t-[#F37021] border-x-slate-200 text-[#F37021]'
                       : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                   }`}
                 >
@@ -544,7 +544,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
                                   <button
                                     type="button"
                                     onClick={() => setSelectedImage(normalizeImageUrl(def.image_url))}
-                                    className="inline-flex items-center gap-1 text-[11px] text-sky-600 hover:text-sky-800 font-semibold underline"
+                                    className="inline-flex items-center gap-1 text-[11px] text-[#F37021] hover:text-[#DE5F14] font-semibold underline"
                                   >
                                     <ImageIcon className="w-3 h-3" />
                                     <span>{language === 'th' ? 'ดูรูปหลักฐาน' : 'View Proof Photo'}</span>
@@ -592,7 +592,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1 flex-1">
                               {it.subcategory && (
-                                <span className="inline-block text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded">
+                                <span className="inline-block text-[10px] font-bold text-[#F37021] bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
                                   {localizeSubcategory(it.subcategory, language)}
                                 </span>
                               )}
@@ -633,7 +633,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
                                   <button
                                     type="button"
                                     onClick={() => setSelectedImage(normalizeImageUrl(it.image_url))}
-                                    className="inline-flex items-center gap-1 text-sky-700 hover:text-sky-900 font-bold underline"
+                                    className="inline-flex items-center gap-1 text-[#F37021] hover:text-[#DE5F14] font-bold underline"
                                   >
                                     <ImageIcon className="w-3.5 h-3.5" />
                                     <span>{language === 'th' ? 'ดูรูปถ่ายหลักฐาน' : 'View Proof Photo'}</span>

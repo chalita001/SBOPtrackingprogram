@@ -284,9 +284,9 @@ export const DefectTracker: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-xs text-slate-900 flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-sky-600" />
+                        <Building2 className="w-3.5 h-3.5 text-[#F37021]" />
                         <span>{t.department}: {d.departmentCode}</span>
-                        <span className="px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-bold">
+                        <span className="px-1.5 py-0.5 rounded bg-orange-100 text-[#F37021] text-[10px] font-bold">
                           #{d.inspectionCode || '001'}
                         </span>
                       </span>
@@ -321,7 +321,7 @@ export const DefectTracker: React.FC = () => {
                 {d.image_url ? (
                   <div className="space-y-1">
                     <span className="text-[11px] text-slate-500 font-semibold block flex items-center gap-1">
-                      <Camera className="w-3.5 h-3.5 text-sky-600" />
+                      <Camera className="w-3.5 h-3.5 text-[#F37021]" />
                       <span>📸 {t.attachPhoto}:</span>
                     </span>
                     <a
@@ -426,7 +426,7 @@ export const DefectTracker: React.FC = () => {
                 {/* 1. แผนก */}
                 <div>
                   <label className="block font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-sky-600" />
+                    <Building2 className="w-3.5 h-3.5 text-[#F37021]" />
                     <span>{language === 'en' ? 'Department' : 'แผนกผู้รับผิดชอบ'}</span>
                   </label>
                   <select

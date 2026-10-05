@@ -122,9 +122,9 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 to-sky-950 p-5 text-white flex items-center justify-between shrink-0">
+        <div className="bg-[#1E2229] p-5 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center text-sky-400">
+            <div className="w-10 h-10 rounded-xl bg-[#F37021]/20 border border-[#F37021]/30 flex items-center justify-center text-[#F37021]">
               <Bell className="w-5 h-5" />
             </div>
             <div>
@@ -138,7 +138,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-sky-200">
+              <p className="text-xs text-slate-300">
                 {language === 'en' ? 'Notifications and alerts for your account' : 'ข้อความแจ้งเตือนเฉพาะผู้ใช้งานและการตรวจพบสิ่งผิดปกติ'}
               </p>
             </div>
@@ -172,7 +172,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               <button
                 type="button"
                 onClick={handleMarkAllRead}
-                className="text-xs font-bold text-sky-700 hover:text-sky-800 bg-sky-100/70 hover:bg-sky-100 px-3 py-1 rounded-lg transition flex items-center gap-1"
+                className="text-xs font-bold text-[#F37021] hover:text-[#DE5F14] bg-orange-100/70 hover:bg-orange-100 px-3 py-1 rounded-lg transition flex items-center gap-1"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
                 <span>{language === 'en' ? 'Mark All Read' : 'อ่านทั้งหมดแล้ว'}</span>
@@ -183,7 +183,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowSendForm(!showSendForm)}
-                className="text-xs font-bold text-indigo-700 hover:text-indigo-800 bg-indigo-100/70 hover:bg-indigo-100 px-3 py-1 rounded-lg transition flex items-center gap-1"
+                className="text-xs font-bold text-slate-700 hover:text-slate-900 bg-slate-200/70 hover:bg-slate-200 px-3 py-1 rounded-lg transition flex items-center gap-1"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{showSendForm ? (language === 'en' ? 'Close Form' : 'ปิดฟอร์ม') : (language === 'en' ? '+ Send Alert' : '+ ส่งการแจ้งเตือน')}</span>
@@ -194,9 +194,9 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
 
         {/* Send Alert Form (Admin only) */}
         {showSendForm && user?.role === 'admin' && (
-          <form onSubmit={handleSendNotification} className="p-4 bg-indigo-50/60 border-b border-indigo-100 space-y-3 shrink-0 animate-fadeIn">
-            <div className="font-bold text-xs text-indigo-900 flex items-center gap-1.5">
-              <Send className="w-3.5 h-3.5 text-indigo-600" />
+          <form onSubmit={handleSendNotification} className="p-4 bg-orange-50/50 border-b border-orange-100 space-y-3 shrink-0 animate-fadeIn">
+            <div className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+              <Send className="w-3.5 h-3.5 text-[#F37021]" />
               <span>{language === 'en' ? 'Send In-App Notification to User' : 'ส่งการแจ้งเตือนไปยังผู้ใช้งาน'}</span>
             </div>
 
@@ -301,7 +301,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               <button
                 type="submit"
                 disabled={sending}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold transition disabled:opacity-50"
+                className="px-4 py-1.5 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-lg text-xs font-bold transition disabled:opacity-50"
               >
                 {sending ? (language === 'en' ? 'Sending...' : 'กำลังส่ง...') : (language === 'en' ? 'Send Alert' : 'ส่งแจ้งเตือน')}
               </button>
@@ -320,7 +320,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
         <div className="overflow-y-auto divide-y divide-slate-100 flex-1">
           {loading ? (
             <div className="py-16 text-center text-xs text-slate-400">
-              <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <div className="w-6 h-6 border-2 border-[#F37021] border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
               <span>{t.loading}</span>
             </div>
           ) : notifications.length === 0 ? (
@@ -337,7 +337,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
             notifications.map((notif) => {
               const isUnread = notif.is_read === 0;
               const dateStr = notif.created_at
-                ? new Date(notif.created_at).toLocaleString(language === 'th' ? 'th-TH' : 'en-US')
+                 ? new Date(notif.created_at).toLocaleString(language === 'th' ? 'th-TH' : 'en-US')
                 : '';
 
               return (
@@ -345,7 +345,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   key={notif.id}
                   onClick={() => isUnread && handleMarkAsRead(notif.id)}
                   className={`p-4 transition flex items-start gap-3.5 cursor-pointer ${
-                    isUnread ? 'bg-sky-50/50 hover:bg-sky-50' : 'hover:bg-slate-50/80'
+                    isUnread ? 'bg-orange-50/40 hover:bg-orange-50/70' : 'hover:bg-slate-50/80'
                   }`}
                 >
                   <div
@@ -354,7 +354,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                         ? 'bg-red-100 text-red-700'
                         : notif.type === 'success'
                         ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-sky-100 text-sky-700'
+                        : 'bg-orange-100 text-[#F37021]'
                     }`}
                   >
                     {notif.type === 'alert' ? (
@@ -373,7 +373,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                           {notif.title}
                         </span>
                         {isUnread && (
-                          <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0"></span>
+                          <span className="w-2 h-2 rounded-full bg-[#F37021] shrink-0"></span>
                         )}
                       </div>
                       <span className="text-[10px] text-slate-400 shrink-0">{dateStr}</span>
@@ -393,7 +393,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                               else onNavigateToTab('checklist');
                             }
                           }}
-                          className="text-[11px] font-semibold text-sky-600 hover:underline inline-flex items-center gap-1"
+                          className="text-[11px] font-semibold text-[#F37021] hover:underline inline-flex items-center gap-1"
                         >
                           <span>{language === 'en' ? 'Open link' : 'ดูรายละเอียด'}</span>
                           <ExternalLink className="w-3 h-3" />

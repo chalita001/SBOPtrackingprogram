@@ -483,7 +483,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-600 to-indigo-600 text-white flex items-center justify-center shadow-md">
+            <div className="w-12 h-12 rounded-xl bg-[#F37021] text-white flex items-center justify-center shadow-md shadow-[#F37021]/20">
               <ClipboardCheck className="w-6 h-6" />
             </div>
             <div>
@@ -492,7 +492,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold border border-slate-200">
                   Doc. TE-EHS-053
                 </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-orange-50 text-[#F37021] border border-orange-200">
                   {layer === 'Layer 1' ? 'Layer 1 (Leader)' : layer === 'Layer 2' ? 'Layer 2 (Supervisor)' : 'Layer 3 (Manager)'}
                 </span>
               </div>
@@ -538,7 +538,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-sky-600" />
+                  <Building2 className="w-3.5 h-3.5 text-[#F37021]" />
                   <span>{t.department}</span>
                 </label>
                 {isDeptLocked && (
@@ -555,7 +555,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 className={`w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold text-slate-800 transition ${
                   isDeptLocked 
                     ? 'bg-slate-100 border-slate-300 cursor-not-allowed text-slate-600'
-                    : 'bg-slate-50 border-slate-300 focus:ring-2 focus:ring-sky-500 focus:bg-white'
+                    : 'bg-slate-50 border-slate-300 focus:ring-2 focus:ring-[#F37021] focus:bg-white'
                 }`}
               >
                 {departments.map((d) => (
@@ -571,7 +571,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-sky-600" />
+                    <Calendar className="w-3.5 h-3.5 text-[#F37021]" />
                     <span>{t.year}</span>
                   </label>
                   <Lock className="w-2.5 h-2.5 text-slate-400" />
@@ -636,7 +636,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 <select
                   value={layer}
                   onChange={(e) => setLayer(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-sky-50 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-900 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
+                  className="w-full px-3.5 py-2.5 bg-orange-50/60 border-2 border-[#F37021]/50 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#F37021] transition shadow-sm"
                 >
                   <option value="Layer 1">{language === 'th' ? 'Layer 1 — Leader (40 ครั้ง/เดือน)' : 'Layer 1 — Leader (40/month)'}</option>
                   <option value="Layer 2">{language === 'th' ? 'Layer 2 — Supervisor (4 ครั้ง/เดือน)' : 'Layer 2 — Supervisor (4/month)'}</option>
@@ -653,7 +653,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <select
                 value={shift}
                 onChange={(e) => setShift(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#F37021] focus:bg-white"
               >
                 <option value="เช้า">{language === 'th' ? 'กะเช้า' : 'Morning Shift (เช้า)'}</option>
                 <option value="ดึก">{language === 'th' ? 'กะดึก' : 'Night Shift (ดึก)'}</option>
@@ -667,7 +667,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             <div className="sm:col-span-4">
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-sky-600" />
+                  <Tag className="w-3.5 h-3.5 text-[#F37021]" />
                   <span>{t.inspectionCode} *</span>
                 </label>
                 <span className="text-[10px] text-slate-500">
@@ -680,7 +680,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   <select
                     value={inspectionCode}
                     onChange={(e) => handleSelectCode(e.target.value)}
-                    className="w-full px-3 py-2 bg-sky-50/70 border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-950 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
+                    className="w-full px-3 py-2 bg-orange-50/60 border-2 border-[#F37021] rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#F37021] transition shadow-sm"
                   >
                     {availableCodes.map((c) => (
                       <option key={c.inspection_code} value={c.inspection_code}>
@@ -695,7 +695,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   <button
                     type="button"
                     onClick={() => handleSelectCode('__NEW__')}
-                    className="px-2.5 py-2 bg-sky-100 hover:bg-sky-200 text-sky-800 font-bold rounded-xl text-xs whitespace-nowrap transition shadow-sm"
+                    className="px-2.5 py-2 bg-orange-100 hover:bg-orange-200 text-[#F37021] font-bold rounded-xl text-xs whitespace-nowrap transition shadow-sm"
                     title={t.newInspectionCode}
                   >
                     {t.newInspectionCode}
@@ -720,7 +720,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       value={isCustomCode ? customCodeInput : inspectionCode}
                       onChange={(e) => handleCustomCodeChange(e.target.value)}
                       placeholder={t.inspectionCodePlaceholder}
-                      className="w-full pl-8 pr-3 py-2 bg-white border-2 border-sky-400 rounded-xl text-xs font-bold text-sky-950 focus:ring-2 focus:ring-sky-500 transition shadow-sm"
+                      className="w-full pl-8 pr-3 py-2 bg-white border-2 border-[#F37021] rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#F37021] transition shadow-sm"
                     />
                   </div>
                   {availableCodes.length > 0 && (
@@ -794,7 +794,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 value={mcAndProducts}
                 onChange={(e) => setMcAndProducts(e.target.value)}
                 placeholder={t.machinePlaceholder}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:bg-white font-medium"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#F37021] focus:bg-white font-medium"
               />
             </div>
 
@@ -940,7 +940,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <h4 className="text-xs font-bold text-slate-800 flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-sky-500"></span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#F37021]"></span>
                         <span>{t.layer1LeaderResults}</span>
                       </h4>
                       {priorLayersData?.layer1 && (
@@ -1003,7 +1003,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           )}
 
           {/* Real-time Score Board */}
-          <div className="bg-gradient-to-r from-slate-900 to-sky-950 p-4 rounded-xl text-white flex flex-wrap items-center justify-between gap-4 shadow-sm border border-slate-800">
+          <div className="bg-gradient-to-r from-[#181B20] to-[#252C37] p-4 rounded-xl text-white flex flex-wrap items-center justify-between gap-4 shadow-sm border border-slate-800">
             <div className="flex items-center gap-6">
               <div>
                 <span className="text-[11px] text-slate-400 font-medium block">
@@ -1029,7 +1029,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <div className="text-xs text-sky-200 font-semibold">{t.safetyScore}</div>
+                <div className="text-xs text-orange-200 font-semibold">{t.safetyScore}</div>
                 <div className="text-2xl font-black text-white tracking-tight">
                   {scorePercent}%
                 </div>
@@ -1052,7 +1052,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           <div className="space-y-6 pt-4">
             {loading ? (
               <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200">
-                <div className="w-8 h-8 border-4 border-sky-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                <div className="w-8 h-8 border-4 border-[#F37021] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
                 <p className="text-xs text-slate-500">
                   {t.loadingDeptQuestions.replace('{0}', departmentCode).replace('{1}', layer)}
                 </p>
@@ -1067,7 +1067,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   {/* Category Header */}
                   <div className="bg-slate-100 px-5 py-3 border-b border-slate-200 flex items-center justify-between">
                     <div className="font-bold text-slate-800 text-xs tracking-wide uppercase flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-sky-600"></span>
+                      <span className="w-2 h-2 rounded-full bg-[#F37021]"></span>
                       <span>{categoryName}</span>
                     </div>
                     <span className="text-[11px] font-medium text-slate-500">
@@ -1092,7 +1092,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                             {/* Question text */}
                             <div className="flex-1 space-y-1">
                               {item.subcategory && (
-                                <div className="text-[11px] font-semibold text-sky-700 bg-sky-50 inline-block px-2 py-0.5 rounded">
+                                <div className="text-[11px] font-semibold text-[#F37021] bg-orange-50 inline-block px-2 py-0.5 rounded">
                                   {item.subcategory}
                                 </div>
                               )}
@@ -1177,7 +1177,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                   value={item.actionPlan}
                                   onChange={(e) => handleItemFieldChange(itemIndex, 'actionPlan', e.target.value)}
                                   placeholder={t.actionPlaceholder}
-                                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-[#F37021]"
                                 />
                               </div>
 
@@ -1186,7 +1186,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                 {/* 1. แผนกของผู้รับผิดชอบ */}
                                 <div>
                                   <label className="block text-[11px] font-semibold text-slate-700 mb-1 flex items-center gap-1">
-                                    <Building2 className="w-3 h-3 text-sky-600" />
+                                    <Building2 className="w-3 h-3 text-[#F37021]" />
                                     <span>{language === 'en' ? 'Responsible Dept' : 'แผนกผู้รับผิดชอบ'} *</span>
                                   </label>
                                   <select
@@ -1202,7 +1202,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                         handleItemFieldChange(itemIndex, 'responsiblePerson', '');
                                       }
                                     }}
-                                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                    className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#F37021]"
                                   >
                                     <option value="MOLD">Molding / MM (แผนกฉีด)</option>
                                     <option value="FACILITY">Facility (สาธารณูปโภค)</option>
@@ -1219,7 +1219,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                 <div>
                                   <div className="flex items-center justify-between mb-1">
                                     <label className="text-[11px] font-semibold text-slate-700 flex items-center gap-1">
-                                      <User className="w-3 h-3 text-indigo-600" />
+                                      <User className="w-3 h-3 text-[#F37021]" />
                                       <span>{language === 'en' ? 'Responsible User' : 'ผู้รับผิดชอบ (User ในแผนก)'} *</span>
                                     </label>
                                     <button
@@ -1229,7 +1229,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                         handleItemFieldChange(itemIndex, 'isCustomResponsible', nextCustom);
                                         if (nextCustom) handleItemFieldChange(itemIndex, 'responsiblePerson', '');
                                       }}
-                                      className="text-[10px] text-sky-600 hover:text-sky-800 underline font-medium"
+                                      className="text-[10px] text-[#F37021] hover:text-[#DE5F14] underline font-medium"
                                     >
                                       {item.isCustomResponsible
                                         ? (language === 'en' ? '← Select from list' : '← เลือกจากรายชื่อ')
@@ -1256,7 +1256,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                           handleItemFieldChange(itemIndex, 'responsiblePerson', e.target.value);
                                         }
                                       }}
-                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                      className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#F37021]"
                                     >
                                       <option value="">{language === 'en' ? '-- Select User in Dept --' : '-- เลือกผู้รับผิดชอบในแผนก --'}</option>
                                       {usersDirectory
@@ -1313,7 +1313,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                           href={normalizeImageUrl(item.imageUrl)}
                                           target="_blank"
                                           rel="noreferrer"
-                                          className="text-[10px] text-sky-600 hover:underline block truncate"
+                                          className="text-[10px] text-[#F37021] hover:underline block truncate"
                                         >
                                           {item.imageUrl}
                                         </a>
@@ -1329,7 +1329,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                     </div>
                                   ) : (
                                     <label className="flex items-center justify-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer shadow-sm transition">
-                                      <Camera className="w-4 h-4 text-sky-600" />
+                                      <Camera className="w-4 h-4 text-[#F37021]" />
                                       <span>
                                         {item.uploadingImage
                                           ? (language === 'en' ? 'Uploading to Cloudflare R2...' : 'กำลังอัปโหลดไปยัง Cloudflare R2...')
@@ -1376,7 +1376,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 value={previousFindings}
                 onChange={(e) => setPreviousFindings(e.target.value)}
                 placeholder={t.previousPlaceholder}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-[#F37021] focus:bg-white"
               />
             </div>
 
@@ -1389,13 +1389,13 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
                 placeholder={t.commentsPlaceholder}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-[#F37021] focus:bg-white"
               />
             </div>
 
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-xs text-slate-500 flex items-center gap-1.5">
-                <Info className="w-4 h-4 text-sky-600" />
+                <Info className="w-4 h-4 text-[#F37021]" />
                 <span>
                   {layer === 'Layer 1' && t.l1Guidance}
                   {layer === 'Layer 2' && t.l2Guidance}
@@ -1408,7 +1408,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   type="submit"
                   disabled={saving || loading || items.length === 0 || isL1CodeTaken}
                   title={isL1CodeTaken ? (language === 'th' ? 'รหัสนี้ตรวจโดย Layer 1 ไปแล้ว ไม่สามารถสร้างซ้ำได้' : 'Code already inspected by Layer 1') : undefined}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 text-xs transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-[#F37021] hover:bg-[#DE5F14] text-white font-bold rounded-xl shadow-lg shadow-[#F37021]/30 text-xs transition flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{saving ? t.saving : t.saveInspection}</span>

@@ -118,9 +118,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 to-sky-900 p-6 text-white flex items-center justify-between">
+        <div className="bg-[#1E2229] border-b border-slate-800 p-6 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 text-white font-bold text-xl flex items-center justify-center shadow-lg border border-white/20 overflow-hidden shrink-0">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-bold text-xl flex items-center justify-center shadow-lg border border-white/20 overflow-hidden shrink-0">
               {avatarUrl ? (
                 <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
@@ -129,7 +129,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
             </div>
             <div>
               <h2 className="text-lg font-bold">{user.firstName} {user.lastName}</h2>
-              <div className="flex items-center gap-2 text-xs text-sky-200">
+              <div className="flex items-center gap-2 text-xs text-slate-400">
                 <span>@{user.username || user.email?.split('@')[0]}</span>
                 <span>•</span>
                 <span className="font-semibold text-emerald-300">
@@ -158,7 +158,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
             onClick={() => { setActiveTab('profile'); setMessage(null); }}
             className={`pb-3 px-4 text-sm font-semibold transition border-b-2 ${
               activeTab === 'profile'
-                ? 'border-sky-600 text-sky-600'
+                ? 'border-[#F37021] text-[#F37021]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -168,7 +168,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
             onClick={() => { setActiveTab('security'); setMessage(null); }}
             className={`pb-3 px-4 text-sm font-semibold transition border-b-2 flex items-center gap-1.5 ${
               activeTab === 'security'
-                ? 'border-sky-600 text-sky-600'
+                ? 'border-[#F37021] text-[#F37021]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
@@ -199,9 +199,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
           {activeTab === 'profile' ? (
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               {/* Profile Avatar Upload Section */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50 to-indigo-50/60 border border-sky-200/80 flex flex-col sm:flex-row items-center gap-4">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-orange-50 to-amber-50/60 border border-orange-200/80 flex flex-col sm:flex-row items-center gap-4">
                 <div className="relative group shrink-0">
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center shadow-md border-2 border-white overflow-hidden">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-extrabold text-2xl flex items-center justify-center shadow-md border-2 border-white overflow-hidden">
                     {avatarUrl ? (
                       <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
@@ -217,7 +217,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingAvatar}
-                    className="absolute -bottom-1 -right-1 p-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-md border border-white transition group-hover:scale-110"
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-xl bg-[#F37021] hover:bg-[#DE5F14] text-white shadow-md border border-white transition group-hover:scale-110"
                     title={language === 'en' ? 'Upload new photo' : 'อัปโหลดรูปใหม่'}
                   >
                     <Camera className="w-3.5 h-3.5" />
@@ -233,7 +233,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
 
                 <div className="space-y-1.5 text-center sm:text-left flex-1">
                   <div className="font-bold text-slate-800 text-xs flex items-center justify-center sm:justify-start gap-1.5">
-                    <Camera className="w-4 h-4 text-sky-600" />
+                    <Camera className="w-4 h-4 text-[#F37021]" />
                     <span>{language === 'en' ? 'Profile Avatar (Cloudflare R2)' : 'รูปภาพประจำตัว (Cloudflare R2)'}</span>
                   </div>
                   <p className="text-[11px] text-slate-500 leading-relaxed">
@@ -248,7 +248,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                       disabled={uploadingAvatar}
                       className="px-3 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5 disabled:opacity-50"
                     >
-                      <Upload className="w-3 h-3 text-sky-600" />
+                      <Upload className="w-3 h-3 text-[#F37021]" />
                       <span>{uploadingAvatar ? t.uploadingAvatar : t.changeAvatar}</span>
                     </button>
                     {avatarUrl && (
@@ -275,7 +275,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-slate-500 font-medium">{t.systemRole}</div>
-                  <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded-full text-xs font-bold bg-sky-100 text-sky-800 uppercase">
+                  <span className="inline-block px-2.5 py-0.5 mt-0.5 rounded-full text-xs font-bold bg-orange-100 text-[#F37021] uppercase">
                     {user.role}
                   </span>
                 </div>
@@ -292,7 +292,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                     required
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white"
                   />
                 </div>
                 <div>
@@ -304,7 +304,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                     required
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white"
                   />
                 </div>
               </div>
@@ -371,14 +371,14 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
                   placeholder="เช่น Safety Inspector / Line Leader"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-sm transition shadow mt-2 disabled:opacity-50"
+                className="w-full py-2.5 px-4 bg-[#F37021] hover:bg-[#DE5F14] text-white font-semibold rounded-xl text-sm transition shadow mt-2 disabled:opacity-50"
               >
                 {loading ? (language === 'en' ? 'Saving...' : 'กำลังบันทึก...') : t.saveChanges}
               </button>
@@ -395,7 +395,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white"
                 />
               </div>
 
@@ -423,14 +423,14 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-sm transition shadow mt-2 disabled:opacity-50"
+                className="w-full py-2.5 px-4 bg-[#F37021] hover:bg-[#DE5F14] text-white font-semibold rounded-xl text-sm transition shadow mt-2 disabled:opacity-50"
               >
                 {loading ? (language === 'en' ? 'Changing Password...' : 'กำลังเปลี่ยนรหัสผ่าน...') : t.changePassword}
               </button>

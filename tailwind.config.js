@@ -9,13 +9,27 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#f0f7ff',
-          100: '#e0effe',
-          500: '#0284c7',
-          600: '#0369a1',
-          700: '#075985',
-          800: '#0c4a6e',
-          900: '#082f49',
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#F37021', // Official TE Connectivity Orange
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+        },
+        te: {
+          orange: '#F37021',
+          orangeHover: '#DE5F14',
+          orangeDark: '#C84E06',
+          orangeLight: '#FFF5EE',
+          charcoal: '#1E2229',
+          dark: '#14171C',
+          slate: '#2C323D',
+          gray: '#5C6577',
+          light: '#F4F5F8',
         },
         safety: {
           green: '#10b981',

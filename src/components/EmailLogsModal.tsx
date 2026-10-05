@@ -72,14 +72,14 @@ export const EmailLogsModal: React.FC<EmailLogsModalProps> = ({ isOpen, onClose 
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 to-sky-900 p-6 text-white flex items-center justify-between shrink-0">
+        <div className="bg-[#1E2229] p-6 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-sky-400" />
+            <div className="w-10 h-10 rounded-xl bg-[#F37021]/20 border border-[#F37021]/30 flex items-center justify-center">
+              <Mail className="w-5 h-5 text-[#F37021]" />
             </div>
             <div>
               <h2 className="text-lg font-bold">{t.emailLogsTitle}</h2>
-              <p className="text-xs text-sky-200">
+              <p className="text-xs text-slate-300">
                 {language === 'en' ? 'History of account approval alerts and SBOP defect notifications' : 'ประวัติการส่งอีเมลเตือนการอนุมัติสมาชิกและแจ้งเตือนข้อบกพร่อง SBOP'}
               </p>
             </div>
@@ -87,7 +87,7 @@ export const EmailLogsModal: React.FC<EmailLogsModalProps> = ({ isOpen, onClose 
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowSendForm(!showSendForm)}
-              className="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold flex items-center gap-1.5 transition"
+              className="px-3 py-1.5 rounded-lg bg-[#F37021] hover:bg-[#DE5F14] text-white text-xs font-semibold flex items-center gap-1.5 transition"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{showSendForm ? (language === 'en' ? 'View Email History' : 'ดูประวัติอีเมล') : (language === 'en' ? 'Send Custom Alert' : 'ส่งอีเมลแจ้งเตือน')}</span>
@@ -127,7 +127,7 @@ export const EmailLogsModal: React.FC<EmailLogsModalProps> = ({ isOpen, onClose 
                     value={toEmail}
                     onChange={(e) => setToEmail(e.target.value)}
                     placeholder="user@sbop.com"
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-sky-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#F37021]"
                   />
                 </div>
 
@@ -141,7 +141,7 @@ export const EmailLogsModal: React.FC<EmailLogsModalProps> = ({ isOpen, onClose 
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={language === 'en' ? '[SBOP Notice] Safety Observation Alert' : '[SBOP Notice] แจ้งเตือนรอบการตรวจเช็คความปลอดภัย'}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-sky-500"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-[#F37021]"
                   />
                 </div>
 
@@ -170,7 +170,7 @@ export const EmailLogsModal: React.FC<EmailLogsModalProps> = ({ isOpen, onClose 
                   <button
                     type="submit"
                     disabled={sending}
-                    className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl shadow flex items-center gap-1.5 disabled:opacity-50"
+                    className="px-5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white font-bold rounded-xl shadow flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <Send className="w-3.5 h-3.5" />
                     <span>{sending ? (language === 'en' ? 'Sending...' : 'กำลังส่ง...') : t.sendNow}</span>
@@ -209,7 +209,7 @@ export const EmailLogsModal: React.FC<EmailLogsModalProps> = ({ isOpen, onClose 
                                 ? 'bg-red-100 text-red-800'
                                 : log.type === 'approval_status'
                                 ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-sky-100 text-sky-800'
+                                : 'bg-orange-100 text-[#F37021]'
                             }`}
                           >
                             {log.type}

@@ -139,8 +139,8 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
 
   return (
     <div className="space-y-4 animate-fadeIn">
-      {/* 1. Header Banner styled exactly like image (Dark Navy Score Board) */}
-      <div className="bg-slate-950 text-white rounded-2xl p-5 shadow-lg border border-slate-800">
+      {/* 1. Header Banner styled exactly like image (TE Charcoal Score Board) */}
+      <div className="bg-[#1E2229] text-white rounded-2xl p-5 shadow-lg border border-[#2A2F3A]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           {/* Left stats */}
           <div className="flex flex-wrap items-center gap-6 sm:gap-8">
@@ -201,7 +201,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                   setIsEditing(true);
                   setIsExpanded(true);
                 }}
-                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-xl bg-[#F37021] hover:bg-[#DE5F14] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm"
                 title={language === 'en' ? 'Edit prior layer answers' : 'แก้ไขคำตอบของผลการตรวจนี้'}
               >
                 <Edit3 className="w-3.5 h-3.5" />
@@ -253,14 +253,14 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
             {inspectionCode && (
               <>
                 <span>•</span>
-                <span>{language === 'th' ? 'รหัสรายการ:' : 'Code:'} <strong className="text-sky-300">#{inspectionCode}</strong></span>
+                <span>{language === 'th' ? 'รหัสรายการ:' : 'Code:'} <strong className="text-[#F37021]">#{inspectionCode}</strong></span>
               </>
             )}
           </div>
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="text-sky-400 hover:text-sky-300 text-xs font-semibold underline flex items-center gap-1"
+            className="text-[#F37021] hover:text-[#DE5F14] text-xs font-semibold underline flex items-center gap-1"
           >
             {isExpanded ? t.collapseChecklist : `${t.viewAllAnswers} (${totalCount} ${t.itemsCountUnit})`}
           </button>
@@ -283,9 +283,9 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
               className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
             >
               {/* Category Header */}
-              <div className="bg-sky-50/70 border-b border-sky-100 px-5 py-3 flex items-center justify-between">
+              <div className="bg-orange-50/60 border-b border-orange-100 px-5 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-sky-600 inline-block"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#F37021] inline-block"></span>
                   <h4 className="text-xs font-bold text-slate-800 tracking-wide">
                     {localizeCategory(category, language)}
                   </h4>
@@ -310,7 +310,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                         {/* Left: Subcategory, Question (Explanation/Method removed as per request 4) */}
                         <div className="space-y-1 flex-1 pr-2">
                           {item.subcategory && (
-                            <span className="inline-block text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded">
+                            <span className="inline-block text-[11px] font-bold text-[#F37021] bg-orange-50 border border-orange-200 px-2 py-0.5 rounded">
                               {localizeSubcategory(item.subcategory, language)}
                             </span>
                           )}
@@ -437,7 +437,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                     {/* 1. แผนกผู้รับผิดชอบ */}
                                     <div>
                                       <label className="block text-[10px] font-bold text-slate-700 mb-0.5 flex items-center gap-1">
-                                        <Building2 className="w-3 h-3 text-sky-600" />
+                                        <Building2 className="w-3 h-3 text-[#F37021]" />
                                         <span>{language === 'en' ? 'Responsible Dept' : 'แผนกผู้รับผิดชอบ'}</span>
                                       </label>
                                       <select
@@ -453,7 +453,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                             handleItemFieldChange(item.id, 'responsible_person', '');
                                           }
                                         }}
-                                        className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                        className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#F37021]"
                                       >
                                         <option value="MOLD">Molding / MM (แผนกฉีด)</option>
                                         <option value="FACILITY">Facility (สาธารณูปโภค)</option>
@@ -470,7 +470,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                     <div>
                                       <div className="flex items-center justify-between mb-0.5">
                                         <label className="text-[10px] font-bold text-slate-700 flex items-center gap-1">
-                                          <User className="w-3 h-3 text-indigo-600" />
+                                          <User className="w-3 h-3 text-[#F37021]" />
                                           <span>{language === 'en' ? 'Responsible User' : 'ผู้รับผิดชอบ (User ในแผนก)'}</span>
                                         </label>
                                         <button
@@ -480,7 +480,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                             handleItemFieldChange(item.id, 'is_custom_responsible', nextCustom);
                                             if (nextCustom) handleItemFieldChange(item.id, 'responsible_person', '');
                                           }}
-                                          className="text-[9px] text-sky-600 hover:text-sky-800 underline font-medium"
+                                          className="text-[9px] text-[#F37021] hover:text-[#DE5F14] underline font-medium"
                                         >
                                           {item.is_custom_responsible
                                             ? (language === 'en' ? '← Select from list' : '← เลือกจากรายชื่อ')
@@ -507,7 +507,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                               handleItemFieldChange(item.id, 'responsible_person', e.target.value);
                                             }
                                           }}
-                                          className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-sky-400"
+                                          className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#F37021]"
                                         >
                                           <option value="">{language === 'en' ? '-- Select User in Dept --' : '-- เลือกผู้รับผิดชอบในแผนก --'}</option>
                                           {usersDirectory
@@ -568,7 +568,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                 href={normalizeImageUrl(item.image_url)}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-[11px] text-sky-600 hover:text-sky-700 font-semibold underline"
+                                className="inline-flex items-center gap-1 text-[11px] text-[#F37021] hover:text-[#DE5F14] font-semibold underline"
                               >
                                 <span>{t.viewFullProofPhoto}</span>
                                 <ExternalLink className="w-3.5 h-3.5" />
@@ -613,7 +613,7 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                 href={selectedImage}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-sky-600 hover:underline font-semibold inline-flex items-center gap-1"
+                className="text-xs text-[#F37021] hover:underline font-semibold inline-flex items-center gap-1"
                 onClick={(e) => e.stopPropagation()}
               >
                 <span>{t.openInNewTab}</span>

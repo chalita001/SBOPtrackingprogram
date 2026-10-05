@@ -134,7 +134,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
       {/* 1. Dashboard Header & Filter Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-800">
+      <div className="bg-[#1E2229] text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-[#2A2F3A]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-2.5">
@@ -145,7 +145,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               <span className="text-xs text-slate-400">Cloudflare D1 & R2 Connected</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3 text-white">
-              <BarChart3 className="w-8 h-8 text-sky-400" />
+              <BarChart3 className="w-8 h-8 text-[#F37021]" />
               <span>{t.dashboardTitle}</span>
             </h1>
             <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
@@ -174,7 +174,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
           <div className="flex flex-wrap items-center gap-3">
             {/* Year Filter */}
             <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
-              <Calendar className="w-3.5 h-3.5 text-sky-400" />
+              <Calendar className="w-3.5 h-3.5 text-[#F37021]" />
               <label className="text-slate-400 font-medium">{t.filterYear}</label>
               <select
                 value={selectedYear}
@@ -231,7 +231,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
           <button
             onClick={fetchDashboardData}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>{t.updateData}</span>
@@ -252,7 +252,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden group hover:shadow-md transition">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{t.totalInspectionsKpi}</span>
-            <div className="p-2.5 rounded-xl bg-sky-50 text-sky-600">
+            <div className="p-2.5 rounded-xl bg-orange-50 text-[#F37021]">
               <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
@@ -312,7 +312,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               <button
                 type="button"
                 onClick={onNavigateToDefects}
-                className="text-sky-600 font-bold hover:underline"
+                className="text-[#F37021] font-bold hover:underline"
               >
                 {t.viewAllLink}
               </button>
@@ -363,7 +363,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-sky-600" />
+              <Building2 className="w-5 h-5 text-[#F37021]" />
               <div>
                 <h3 className="text-sm font-bold text-slate-900">
                   {t.deptMatrixTitle}
@@ -471,13 +471,13 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
             <div className="space-y-3">
               {/* Layer 1 */}
-              <div className="p-3.5 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2">
+              <div className="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-200 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
-                    <strong className="text-xs text-sky-950 font-bold">{t.layer1Header}</strong>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#F37021]"></span>
+                    <strong className="text-xs text-slate-900 font-bold">{t.layer1Header}</strong>
                   </div>
-                  <span className="text-[10px] bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] bg-orange-100 text-[#F37021] font-bold px-2 py-0.5 rounded-full">
                     {t.layer1Subheader}
                   </span>
                 </div>
@@ -584,7 +584,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <button
               type="button"
               onClick={onNavigateToDefects}
-              className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 self-start sm:self-center"
+              className="text-xs font-bold text-[#F37021] hover:text-[#DE5F14] flex items-center gap-1 self-start sm:self-center"
             >
               <span>{t.viewUpdateAllLink}</span>
               <ChevronRight className="w-4 h-4" />
@@ -612,7 +612,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
                   {/* Department & Machine */}
                   <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                    <strong className="text-sky-800 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
+                    <strong className="text-[#F37021] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200">
                       {defect.department_code}
                     </strong>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-bold">
@@ -649,7 +649,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                     <button
                       type="button"
                       onClick={() => setPreviewImage(defect.image_url!)}
-                      className="flex items-center gap-1.5 text-[11px] text-sky-600 hover:text-sky-700 font-bold"
+                      className="flex items-center gap-1.5 text-[11px] text-[#F37021] hover:text-[#DE5F14] font-bold"
                     >
                       <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
                       <span>{t.viewProofPhotoBtn}</span>
@@ -658,7 +658,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                       href={defect.image_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-slate-400 hover:text-sky-600"
+                      className="text-slate-400 hover:text-[#F37021]"
                       title={t.openInNewTab}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -697,7 +697,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 href={previewImage}
                 target="_blank"
                 rel="noreferrer"
-                className="text-xs text-sky-600 hover:underline font-semibold inline-flex items-center gap-1"
+                className="text-xs text-[#F37021] hover:underline font-semibold inline-flex items-center gap-1"
                 onClick={(e) => e.stopPropagation()}
               >
                 <span>{t.openInNewTab}</span>

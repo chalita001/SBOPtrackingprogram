@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, X, AlertCircle, CheckCircle2, Shield, Building2, Phone, Mail, Briefcase, MapPin, Lock } from 'lucide-react';
+import { TELogo } from './TELogo';
 
 interface RegisterModalProps {
   isOpen: boolean;
@@ -82,19 +83,22 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full my-8 overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-900 to-sky-900 p-6 text-white flex items-center justify-between">
+        <div className="bg-[#1E2229] border-b border-slate-800 p-6 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-400/30 flex items-center justify-center">
-              <UserPlus className="w-5 h-5 text-sky-400" />
-            </div>
+            <TELogo variant="mark" height={34} />
             <div>
-              <h2 className="text-lg font-bold">{t.register}</h2>
-              <p className="text-xs text-sky-200">{t.registerSubtitle}</p>
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <span>{t.register}</span>
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
+                  SBOP
+                </span>
+              </h2>
+              <p className="text-xs text-slate-400">{t.registerSubtitle}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -124,7 +128,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                 <button
                   type="button"
                   onClick={onSwitchToLogin}
-                  className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl text-sm transition shadow"
+                  className="px-6 py-2.5 bg-[#F37021] hover:bg-[#DE5F14] text-white font-semibold rounded-xl text-sm transition shadow-md shadow-[#F37021]/30"
                 >
                   {t.backToLogin}
                 </button>
@@ -144,7 +148,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     value={formData.firstName}
                     onChange={handleChange}
                     placeholder={language === 'en' ? 'e.g. Somchai' : 'เช่น สมศักดิ์'}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                   />
                 </div>
                 <div>
@@ -158,7 +162,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     value={formData.lastName}
                     onChange={handleChange}
                     placeholder={language === 'en' ? 'e.g. Jaidee' : 'เช่น มั่นคง'}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                   />
                 </div>
               </div>
@@ -176,7 +180,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     value={formData.username}
                     onChange={handleChange}
                     placeholder={language === 'en' ? 'e.g. somchai.m' : 'เช่น somchai.m หรือ admin'}
-                    className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                    className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                   />
                 </div>
               </div>
@@ -192,7 +196,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       name="department"
                       value={formData.department}
                       onChange={handleChange}
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition font-medium"
+                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition font-medium"
                     >
                       <option value="MOLD">{language === 'en' ? 'Molding / MM' : 'Molding / MM (แผนกฉีด)'}</option>
                       <option value="FACILITY">{language === 'en' ? 'Facility' : 'Facility (สาธารณูปโภค)'}</option>
@@ -218,7 +222,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       value={formData.position}
                       onChange={handleChange}
                       placeholder={language === 'en' ? 'e.g. Safety Officer, Supervisor' : 'เช่น Safety Officer, Supervisor'}
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                     />
                   </div>
                 </div>
@@ -234,7 +238,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     name="role"
                     value={formData.role}
                     onChange={handleChange}
-                    className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition font-medium"
+                    className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition font-medium"
                   >
                     <option value="layer1">1. {t.roleLayer1}</option>
                     <option value="layer2">2. {t.roleLayer2}</option>
@@ -257,7 +261,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                     />
                   </div>
                 </div>
@@ -274,7 +278,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="••••••••"
-                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white transition"
+                      className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                     />
                   </div>
                 </div>
@@ -290,7 +294,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 px-4 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-md shadow-sky-600/20 text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                className="w-full py-2.5 px-4 bg-[#F37021] hover:bg-[#DE5F14] text-white font-semibold rounded-xl shadow-md shadow-[#F37021]/30 text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
               >
                 {loading ? t.submitting : t.register}
               </button>
@@ -300,7 +304,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                 <button
                   type="button"
                   onClick={onSwitchToLogin}
-                  className="text-sky-600 hover:text-sky-700 font-bold underline transition ml-1"
+                  className="text-[#F37021] hover:text-[#DE5F14] font-bold underline transition ml-1"
                 >
                   {t.login}
                 </button>

@@ -96,7 +96,7 @@ export const InspectionHistory: React.FC = () => {
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 text-sky-600">
+            <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-200 text-[#F37021]">
               <History className="w-6 h-6" />
             </div>
             <div>
@@ -122,7 +122,7 @@ export const InspectionHistory: React.FC = () => {
               <span>{t.adminModeDesc}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-2 text-sky-900 bg-sky-50 px-3.5 py-1.5 rounded-xl border border-sky-200">
+            <div className="flex items-center gap-2 text-orange-950 bg-orange-50 px-3.5 py-1.5 rounded-xl border border-orange-200">
               <span className="font-bold">{t.userModeBadge}</span>
               <span>
                 {t.userModeDesc.replace('{0}', user ? `${user.firstName} ${user.lastName}` : '')}
@@ -146,9 +146,9 @@ export const InspectionHistory: React.FC = () => {
               <div className="text-xs text-red-700 font-medium">{t.totalNo}</div>
               <div className="text-2xl font-bold text-red-800 mt-1">{stats.grand_total_no || 0}</div>
             </div>
-            <div className="p-4 rounded-xl bg-sky-50 border border-sky-200">
-              <div className="text-xs text-sky-700 font-medium">{t.avgSafetyScoreKpi}</div>
-              <div className="text-2xl font-bold text-sky-800 mt-1">{stats.average_score || 0}%</div>
+            <div className="p-4 rounded-xl bg-orange-50 border border-orange-200">
+              <div className="text-xs text-[#F37021] font-bold">{t.avgSafetyScoreKpi}</div>
+              <div className="text-2xl font-bold text-[#F37021] mt-1">{stats.average_score || 0}%</div>
             </div>
           </div>
         )}
@@ -165,7 +165,7 @@ export const InspectionHistory: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && loadHistory()}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#F37021]"
           />
         </div>
 
@@ -252,18 +252,18 @@ export const InspectionHistory: React.FC = () => {
                             year: ins.year,
                             month: ins.month,
                           })}
-                          className="px-1.5 py-0.5 rounded-md bg-sky-100 hover:bg-sky-200 text-sky-800 text-[10px] font-bold transition flex items-center gap-0.5 border border-sky-200 cursor-pointer shadow-2xs"
+                          className="px-1.5 py-0.5 rounded-md bg-orange-100 hover:bg-orange-200 text-[#F37021] text-[10px] font-bold transition flex items-center gap-0.5 border border-orange-200 cursor-pointer shadow-2xs"
                           title={language === 'th' ? `คลิกเพื่อดูประวัติสายการตรวจรหัส #${ins.inspection_code || '001'}` : `Click to view audit trail for code #${ins.inspection_code || '001'}`}
                         >
                           <span>#{ins.inspection_code || '001'}</span>
-                          <ExternalLink className="w-2.5 h-2.5 text-sky-600" />
+                          <ExternalLink className="w-2.5 h-2.5 text-[#F37021]" />
                         </button>
                       </div>
                       <div className="text-[11px] text-slate-500">{ins.shift}</div>
                     </td>
 
                     <td className="py-3 px-4">
-                      <div className="font-bold text-sky-700">{ins.department_code}</div>
+                      <div className="font-bold text-[#F37021]">{ins.department_code}</div>
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
                         {ins.layer}
                       </span>
@@ -314,7 +314,7 @@ export const InspectionHistory: React.FC = () => {
                       <div className="flex items-center justify-center gap-1.5">
                         <button
                           onClick={() => handleViewDetails(ins.id)}
-                          className="p-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 transition"
+                          className="p-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#F37021] transition"
                           title={t.viewFullRecord}
                         >
                           <Eye className="w-4 h-4" />
@@ -355,12 +355,12 @@ export const InspectionHistory: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-slate-900 to-sky-900 p-6 text-white flex items-center justify-between shrink-0">
+            <div className="bg-[#1E2229] border-b border-slate-800 p-6 text-white flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-lg font-bold">
                   {t.inspectionDetailTitle} {activeInspection.department_code} ({activeInspection.layer})
                 </h3>
-                <p className="text-xs text-sky-200 mt-0.5">
+                <p className="text-xs text-slate-400 mt-0.5">
                   {t.auditDate}: {activeInspection.audit_date} | {activeInspection.shift} | {t.auditor}: {activeInspection.auditor_name}
                 </p>
               </div>
@@ -392,7 +392,7 @@ export const InspectionHistory: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-slate-500 font-medium">{t.safetyScore}</span>
-                  <div className="font-black text-sky-600 text-sm">{activeInspection.score_percent}%</div>
+                  <div className="font-black text-[#F37021] text-sm">{activeInspection.score_percent}%</div>
                 </div>
               </div>
 
@@ -448,7 +448,7 @@ export const InspectionHistory: React.FC = () => {
                                   alt="Defect photo"
                                   className="h-28 w-auto object-cover rounded-lg border border-red-300 shadow-sm group-hover:opacity-90"
                                 />
-                                <span className="text-[10px] text-sky-600 flex items-center gap-1 mt-0.5">
+                                <span className="text-[10px] text-[#F37021] flex items-center gap-1 mt-0.5">
                                   <span>{t.openFullProofPhoto}</span>
                                   <ExternalLink className="w-3 h-3" />
                                 </span>

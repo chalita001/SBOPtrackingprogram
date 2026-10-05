@@ -139,7 +139,7 @@ export const AccountManager: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600">
+              <div className="p-2 rounded-xl bg-orange-50 border border-orange-200 text-[#F37021]">
                 <Users className="w-6 h-6" />
               </div>
               <div>
@@ -212,7 +212,7 @@ export const AccountManager: React.FC = () => {
             placeholder={t.searchMember}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white"
           />
         </form>
 
@@ -222,7 +222,7 @@ export const AccountManager: React.FC = () => {
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#F37021]"
           >
             <option value="all">{t.allStatus}</option>
             <option value="pending">{t.statusPending}</option>
@@ -234,7 +234,7 @@ export const AccountManager: React.FC = () => {
           <select
             value={selectedDept}
             onChange={(e) => setSelectedDept(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#F37021]"
           >
             <option value="all">{t.allDepartments}</option>
             <option value="MOLD">Molding / MM</option>
@@ -254,7 +254,7 @@ export const AccountManager: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-900 text-white font-semibold border-b border-slate-800">
+              <tr className="bg-[#1E2229] text-white font-semibold border-b border-[#2A2F3A]">
                 <th className="py-3.5 px-4">{t.nameSurname}</th>
                 <th className="py-3.5 px-4">{language === 'th' ? 'ชื่อผู้ใช้งาน (Username)' : 'Username'}</th>
                 <th className="py-3.5 px-4">{t.deptAndPosition}</th>
@@ -288,7 +288,7 @@ export const AccountManager: React.FC = () => {
                       {/* Name & Avatar */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm overflow-hidden shrink-0 border border-slate-200">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#F37021] to-[#DE5F14] text-white font-bold text-xs flex items-center justify-center shadow-sm overflow-hidden shrink-0 border border-slate-200">
                             {u.avatar_url ? (
                               <img src={normalizeImageUrl(u.avatar_url)} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
@@ -299,12 +299,12 @@ export const AccountManager: React.FC = () => {
                             <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
                               <span>{u.first_name} {u.last_name}</span>
                               {u.username && (
-                                <span className="text-[11px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
+                                <span className="text-[11px] font-semibold text-[#F37021] bg-orange-50 px-1.5 py-0.5 rounded border border-orange-200">
                                   @{u.username}
                                 </span>
                               )}
                               {isCurrentUser && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-[#F37021] font-semibold">
                                   {t.you}
                                 </span>
                               )}
@@ -319,7 +319,7 @@ export const AccountManager: React.FC = () => {
                       {/* Username */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5 text-slate-800 font-bold">
-                          <span className="text-sky-600">@</span>
+                          <span className="text-[#F37021]">@</span>
                           <span>{u.username || u.email?.split('@')[0]}</span>
                         </div>
                       </td>
@@ -327,7 +327,7 @@ export const AccountManager: React.FC = () => {
                       {/* Department & Position */}
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-800 flex items-center gap-1.5">
-                          <Building2 className="w-3.5 h-3.5 text-sky-600" />
+                          <Building2 className="w-3.5 h-3.5 text-[#F37021]" />
                           <span>{u.department}</span>
                         </div>
                         <div className="text-slate-500 text-[11px]">{u.position}</div>
@@ -452,7 +452,7 @@ export const AccountManager: React.FC = () => {
                 <select
                   value={newRole}
                   onChange={(e) => setNewRole(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-[#F37021]"
                 >
                   <option value="layer1">1. {t.roleLayer1}</option>
                   <option value="layer2">2. {t.roleLayer2}</option>
@@ -468,7 +468,7 @@ export const AccountManager: React.FC = () => {
                 <select
                   value={newDept}
                   onChange={(e) => setNewDept(e.target.value)}
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-sky-500"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#F37021]"
                 >
                   <option value="MOLD">Molding / MM</option>
                   <option value="FACILITY">Facility</option>
@@ -492,7 +492,7 @@ export const AccountManager: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleSaveRole}
-                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white transition shadow"
+                  className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#F37021] hover:bg-[#DE5F14] text-white transition shadow"
                 >
                   {t.saveChanges}
                 </button>
