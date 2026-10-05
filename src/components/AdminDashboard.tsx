@@ -222,6 +222,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 <option value="QC" className="bg-slate-900 text-white">QC</option>
                 <option value="STAMPING" className="bg-slate-900 text-white">Stamping</option>
                 <option value="TOOL" className="bg-slate-900 text-white">Tooling</option>
+                <option value="SAFETY" className="bg-slate-900 text-white">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
               </select>
             </div>
           </div>

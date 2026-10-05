@@ -305,6 +305,7 @@ export default {
             position: user.position,
             role: user.role,
             status: user.status,
+            avatarUrl: user.avatar_url || null,
           },
         });
       } catch (err: any) {
@@ -377,7 +378,7 @@ export default {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const user: any = await env.DB.prepare(`
         SELECT id, username, first_name, last_name, email, department, position,
-               role, status, created_at, updated_at
+               role, status, avatar_url, created_at, updated_at
         FROM users WHERE id = ?
       `).bind(currentUser.id).first();
 
@@ -391,17 +392,24 @@ export default {
       // Defined monthly quota: Layer 1 = 40, Layer 2 = 4, Layer 3 = 1, Admin = 40
       const normalizedRole = (user.role || '').toLowerCase();
       let targetMonthly = 40;
+      let targetLayer = 'Layer 1';
       if (normalizedRole === 'layer1' || normalizedRole === 'leader') {
         targetMonthly = 40;
+        targetLayer = 'Layer 1';
       } else if (normalizedRole === 'layer2' || normalizedRole === 'supervisor') {
         targetMonthly = 4;
+        targetLayer = 'Layer 2';
       } else if (normalizedRole === 'layer3' || normalizedRole === 'manager') {
         targetMonthly = 1;
+        targetLayer = 'Layer 3';
       } else {
         targetMonthly = 40;
+        targetLayer = 'Layer 1';
       }
 
-      // 1. Overall lifetime stats
+      const dept = user.department || '';
+
+      // 1. Overall lifetime stats (personal)
       const stats: any = await env.DB.prepare(`
         SELECT 
           COUNT(*) as total_inspections,
@@ -411,34 +419,53 @@ export default {
         WHERE auditor_id = ?
       `).bind(user.id).first();
 
-      // 2. This month stats
-      const thisMonth: any = await env.DB.prepare(`
+      // 2. Department-pooled inspection count for this layer this month
+      // "การตรวจเช็คจะรวมกันเมื่อคุณอยู่แผนกเดียวกัน เช่น QC ใครที่อยู่ Layer1 จะนับจำนวณรวมกัน Layer2-3 ก็ด้วย"
+      let deptMonthQuery = `
         SELECT 
           COUNT(*) as count,
           COALESCE(ROUND(AVG(score_percent), 1), 100.0) as avg_score,
           COALESCE(SUM(total_ok), 0) as total_ok,
           COALESCE(SUM(total_no), 0) as total_no
         FROM inspections
+        WHERE year = ? AND month = ?
+      `;
+      const deptMonthParams: any[] = [currentYear, currentMonth];
+      if (user.role !== 'admin' && dept) {
+        deptMonthQuery += ` AND department_code = ? AND layer = ?`;
+        deptMonthParams.push(dept, targetLayer);
+      }
+      const thisMonthDept: any = await env.DB.prepare(deptMonthQuery).bind(...deptMonthParams).first();
+
+      // 3. User's personal count this month
+      const thisMonthPersonal: any = await env.DB.prepare(`
+        SELECT COUNT(*) as my_count
+        FROM inspections
         WHERE auditor_id = ? AND year = ? AND month = ?
       `).bind(user.id, currentYear, currentMonth).first();
 
-      // 3. Monthly breakdown for current year
-      const { results: monthlyCounts } = await env.DB.prepare(`
+      // 4. Monthly breakdown for current year (Department-pooled)
+      let chartQuery = `
         SELECT month, COUNT(*) as count, ROUND(AVG(score_percent), 1) as avg_score, SUM(total_no) as defects
         FROM inspections
-        WHERE auditor_id = ? AND year = ?
-        GROUP BY month
-        ORDER BY month ASC
-      `).bind(user.id, currentYear).all();
+        WHERE year = ?
+      `;
+      const chartParams: any[] = [currentYear];
+      if (user.role !== 'admin' && dept) {
+        chartQuery += ` AND department_code = ? AND layer = ?`;
+        chartParams.push(dept, targetLayer);
+      }
+      chartQuery += ` GROUP BY month ORDER BY month ASC`;
+      const { results: monthlyCounts } = await env.DB.prepare(chartQuery).bind(...chartParams).all();
 
-      // 4. Recent inspections (last 5)
+      // 5. Recent inspections (last 5 in department/personal)
       const { results: recentList } = await env.DB.prepare(`
         SELECT id, department_code, inspection_code, layer, shift, mc_and_products, audit_date, score_percent, total_ok, total_no
         FROM inspections
-        WHERE auditor_id = ?
+        WHERE department_code = ? OR auditor_id = ?
         ORDER BY audit_date DESC, id DESC
         LIMIT 5
-      `).bind(user.id).all();
+      `).bind(dept, user.id).all();
 
       return jsonResponse({
         user: {
@@ -451,6 +478,7 @@ export default {
           position: user.position,
           role: user.role,
           status: user.status,
+          avatarUrl: user.avatar_url || null,
           createdAt: user.created_at,
         },
         stats: {
@@ -460,28 +488,42 @@ export default {
           currentYear,
           currentMonth,
           targetMonthly,
-          thisMonthCount: thisMonth?.count || 0,
-          thisMonthAvgScore: thisMonth?.avg_score || 100.0,
-          thisMonthOk: thisMonth?.total_ok || 0,
-          thisMonthNo: thisMonth?.total_no || 0,
+          targetLayer,
+          departmentCode: dept,
+          thisMonthCount: thisMonthDept?.count || 0, // Department pooled total
+          myThisMonthCount: thisMonthPersonal?.my_count || 0, // Personal contribution
+          thisMonthAvgScore: thisMonthDept?.avg_score || 100.0,
+          thisMonthOk: thisMonthDept?.total_ok || 0,
+          thisMonthNo: thisMonthDept?.total_no || 0,
           monthlyCounts: monthlyCounts || [],
           recentInspections: recentList || [],
         }
       });
     }
 
-    // Auth: Update Profile
+    // Auth: Update Profile (Supports Avatar and Admin changing Department)
     if (url.pathname === '/api/auth/profile' && request.method === 'PUT') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const body: any = await request.json();
+
+      // Admin can change their own department
+      const newDept = (currentUser.role === 'admin' && body.department) ? body.department : null;
+
       await env.DB.prepare(`
         UPDATE users 
-        SET first_name = ?, last_name = ?, position = ?, updated_at = CURRENT_TIMESTAMP
+        SET first_name = COALESCE(?, first_name),
+            last_name = COALESCE(?, last_name),
+            position = COALESCE(?, position),
+            department = COALESCE(?, department),
+            avatar_url = COALESCE(?, avatar_url),
+            updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
       `).bind(
-        body.firstName?.trim(),
-        body.lastName?.trim(),
-        body.position?.trim(),
+        body.firstName?.trim() || null,
+        body.lastName?.trim() || null,
+        body.position?.trim() || null,
+        newDept,
+        body.avatarUrl || null,
         currentUser.id
       ).run();
 
@@ -1135,6 +1177,18 @@ export default {
       return jsonResponse({ message: 'Notification sent successfully' }, 201);
     }
 
+    // Users Directory: list approved users for responsible person assignment and in-app notifications
+    if (url.pathname === '/api/users/directory' && request.method === 'GET') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const { results } = await env.DB.prepare(`
+        SELECT id, username, first_name, last_name, email, department, position, role, avatar_url
+        FROM users 
+        WHERE status = 'approved'
+        ORDER BY department ASC, first_name ASC
+      `).all();
+      return jsonResponse(results || []);
+    }
+
     // Admin: Users List & Management
     if (url.pathname === '/api/users' && request.method === 'GET') {
       if (!currentUser || currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
@@ -1144,7 +1198,7 @@ export default {
 
       let sql = `
         SELECT id, username, first_name, last_name, phone, email, department, position,
-               responsible_area, role, status, approved_at, created_at, updated_at
+               responsible_area, role, status, approved_at, created_at, updated_at, avatar_url
         FROM users WHERE 1=1
       `;
       const params: any[] = [];

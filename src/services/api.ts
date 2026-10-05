@@ -117,6 +117,7 @@ export const api = {
   markAllNotificationsRead: () => request('/notifications/read-all', { method: 'POST' }),
   sendNotification: (data: { userId?: number; title: string; message: string; type?: string; link?: string }) =>
     request('/notifications', { method: 'POST', body: JSON.stringify(data) }),
+  getUsersDirectory: () => request('/users/directory'),
 
   // Admin Dashboard
   getDashboardStats: (params?: Record<string, string>) => {

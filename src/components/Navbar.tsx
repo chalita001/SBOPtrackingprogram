@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { normalizeImageUrl } from '../services/api';
 import { 
   ShieldCheck, 
   Globe, 
@@ -192,8 +193,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => setActiveTab('profile')}
                   className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left transition"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow">
-                    {user.firstName?.charAt(0) || 'U'}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-sky-500 to-indigo-500 text-white flex items-center justify-center font-bold text-sm shadow overflow-hidden shrink-0 border border-slate-700">
+                    {user.avatarUrl ? (
+                      <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      user.firstName?.charAt(0) || 'U'
+                    )}
                   </div>
                   <div className="hidden sm:block">
                     <div className="text-xs font-semibold text-slate-200 leading-tight">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, normalizeImageUrl } from '../services/api';
 import { 
   Shield, 
   Building2, 
@@ -20,7 +20,8 @@ import {
   Calendar,
   CheckCircle,
   BarChart2,
-  Sparkles
+  Sparkles,
+  Users
 } from 'lucide-react';
 
 interface ProfileViewProps {
@@ -45,6 +46,9 @@ interface ProfileStats {
   currentMonth: number;
   targetMonthly: number;
   thisMonthCount: number;
+  myThisMonthCount?: number;
+  departmentCode?: string;
+  targetLayer?: string;
   thisMonthAvgScore: number;
   thisMonthOk: number;
   thisMonthNo: number;
@@ -75,6 +79,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
     currentMonth: new Date().getMonth() + 1,
     targetMonthly: 40,
     thisMonthCount: 0,
+    myThisMonthCount: 0,
     thisMonthAvgScore: 100.0,
     thisMonthOk: 0,
     thisMonthNo: 0,
@@ -178,8 +183,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0">
-              {user.firstName?.charAt(0) || 'U'}
+            <div className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-extrabold text-2xl sm:text-3xl flex items-center justify-center shadow-lg border-2 border-white/20 shrink-0 overflow-hidden relative group">
+              {user.avatarUrl ? (
+                <img src={normalizeImageUrl(user.avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                user.firstName?.charAt(0) || 'U'
+              )}
             </div>
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -242,15 +251,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <span>{language === 'en' ? 'My Monthly Inspection Dashboard' : 'แดชบอร์ดการตรวจเช็คส่วนบุคคล'}</span>
+                <span>{language === 'en' ? 'Department Team Monthly Dashboard' : 'แดชบอร์ดการตรวจเช็คทีมแผนกประจำเดือน'}</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-sky-100 text-sky-800">
                   {currentMonthName}
                 </span>
               </h2>
               <p className="text-xs text-slate-500">
                 {language === 'en'
-                  ? 'Track your monthly audit target and progress in real-time'
-                  : 'ติดตามจำนวนครั้งการตรวจเช็คของคุณในรอบเดือนปัจจุบันเทียบกับเป้าหมาย'}
+                  ? `Pooled audits for ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}). All members in this layer contribute to the monthly target.`
+                  : `ยอดตรวจรวมของทุกคนในแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) นับสะสมรวมกันสู่เป้าหมายของทีม`}
               </p>
             </div>
           </div>
@@ -260,8 +269,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <Target className="w-3.5 h-3.5 text-indigo-600" />
               <span>
                 {language === 'en' 
-                  ? `Target: ${targetQuota} audits/month`
-                  : `เป้าหมาย: ${targetQuota} ครั้ง/เดือน`}
+                  ? `Team Target: ${targetQuota} audits/month`
+                  : `เป้าหมายทีม: ${targetQuota} ครั้ง/เดือน`}
               </span>
             </span>
           </div>
@@ -279,7 +288,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 {isTargetAchieved ? (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white shadow-sm">
                     <CheckCircle className="w-3.5 h-3.5" />
-                    <span>{language === 'en' ? 'Target Achieved 🎉' : 'บรรลุเป้าหมายของเดือนแล้ว 🎉'}</span>
+                    <span>{language === 'en' ? 'Team Target Achieved 🎉' : 'ทีมบรรลุเป้าหมายของเดือนแล้ว 🎉'}</span>
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-sky-600 text-white shadow-sm">
@@ -287,10 +296,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                     <span>{language === 'en' ? 'In Progress' : 'กำลังดำเนินการ'}</span>
                   </span>
                 )}
-                <span className="text-xs font-bold text-slate-600">
+                <span className="text-xs font-bold text-slate-700">
                   {language === 'en'
-                    ? `${thisMonthDone} of ${targetQuota} audits completed`
-                    : `ตรวจไปแล้ว ${thisMonthDone} จากเป้าหมาย ${targetQuota} ครั้ง`}
+                    ? `Team Total: ${thisMonthDone} of ${targetQuota} audits (Your audits: ${stats.myThisMonthCount || 0})`
+                    : `ยอดรวมทีมแผนก: ${thisMonthDone} จากเป้าหมาย ${targetQuota} ครั้ง (คุณตรวจแล้ว ${stats.myThisMonthCount || 0} ครั้ง)`}
                 </span>
               </div>
 
@@ -298,16 +307,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                 {isTargetAchieved ? (
                   <span className="text-emerald-800 font-semibold">
                     {language === 'en'
-                      ? `Excellent work! You have completed ${thisMonthDone} audits this month, reaching 100% of your target.`
-                      : `ยอดเยี่ยมมาก! คุณทำการตรวจเช็คครบตามเป้าหมายของเดือนนี้แล้ว (${thisMonthDone} ครั้ง)`}
+                      ? `Excellent team work! Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) has completed ${thisMonthDone} audits this month, reaching 100% of the target. (Your contribution: ${stats.myThisMonthCount || 0} audits)`
+                      : `ยอดเยี่ยมมาก! ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ทำการตรวจเช็คครบตามเป้าหมายของเดือนแล้ว (${thisMonthDone} ครั้ง) โดยคุณช่วยตรวจไป ${stats.myThisMonthCount || 0} ครั้ง`}
                   </span>
                 ) : (
                   <span className="text-slate-700">
                     {language === 'en'
-                      ? `You need ${remainingCount} more ${remainingCount === 1 ? 'audit' : 'audits'} this month to achieve your target (${targetQuota} audits/month).`
-                      : `ในเดือนนี้คุณยังต้องทำการตรวจเช็คอีก `}
+                      ? `Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) needs ${remainingCount} more audits this month to achieve the team target (${targetQuota} audits/month). You have personally completed ${stats.myThisMonthCount || 0} audits.`
+                      : `ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ยังต้องทำการตรวจเช็คอีก `}
                     <strong className="text-indigo-600 font-bold">{remainingCount} ครั้ง</strong>
-                    {language === 'th' ? ` เพื่อให้ครบตามเกณฑ์มาตรฐาน (${targetQuota} ครั้ง/เดือน)` : ''}
+                    {language === 'th' ? ` เพื่อให้ครบตามเป้าหมายของแผนก (${targetQuota} ครั้ง/เดือน) • (คุณช่วยตรวจแล้ว ${stats.myThisMonthCount || 0} ครั้ง)` : ''}
                   </span>
                 )}
               </p>
@@ -319,7 +328,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   {progressPercent}%
                 </div>
                 <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                  {language === 'en' ? 'Completion' : 'ความคืบหน้า'}
+                  {language === 'en' ? 'Team Progress' : 'ความคืบหน้าทีม'}
                 </div>
               </div>
 
@@ -348,10 +357,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
         {/* 4 Metric Cards for This Month */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* 1. Monthly Audits Done */}
+          {/* 1. Monthly Audits Done (Department Team) */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
             <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-              <span>{language === 'en' ? 'Audited This Month' : 'ตรวจแล้วเดือนนี้'}</span>
+              <span>{language === 'en' ? 'Team Audits This Month' : 'ยอดรวมแผนกเดือนนี้'}</span>
               <div className="p-1.5 rounded-lg bg-sky-100 text-sky-700">
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </div>
@@ -360,8 +369,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
               <span>{thisMonthDone}</span>
               <span className="text-xs text-slate-400 font-normal">/ {targetQuota} {language === 'th' ? 'ครั้ง' : 'times'}</span>
             </div>
-            <div className="text-[11px] text-sky-600 font-medium mt-1">
-              {language === 'th' ? `เป้าหมาย: ${targetQuota} ครั้ง/เดือน` : `Target: ${targetQuota}/month`}
+            <div className="text-[11px] text-sky-700 font-semibold mt-1">
+              {language === 'th' ? `คุณตรวจแล้ว: ${stats.myThisMonthCount || 0} ครั้ง (ช่วยทีม)` : `You audited: ${stats.myThisMonthCount || 0} times`}
             </div>
           </div>
 

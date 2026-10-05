@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
-import { User, X, Shield, Phone, Mail, Building2, Briefcase, MapPin, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { api, normalizeImageUrl } from '../services/api';
+import { User, X, Shield, Phone, Mail, Building2, Briefcase, MapPin, KeyRound, CheckCircle2, AlertCircle, Camera, Upload, Loader2 } from 'lucide-react';
 
 interface AccountInfoModalProps {
   isOpen: boolean;
@@ -16,6 +16,10 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [position, setPosition] = useState(user?.position || '');
+  const [department, setDepartment] = useState(user?.department || 'MOLD');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Password Change State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -27,6 +31,38 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
 
   if (!isOpen || !user) return null;
 
+  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setMessage({ text: language === 'en' ? 'File too large. Maximum size is 10MB.' : 'ไฟล์ภาพมีขนาดใหญ่เกินไป (จำกัดไม่เกิน 10MB)', type: 'error' });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setMessage(null);
+
+    try {
+      const res = await api.uploadImage(file);
+      setAvatarUrl(res.imageUrl);
+      setMessage({
+        text: language === 'en' 
+          ? 'Profile photo uploaded to Cloudflare R2! Click "Save Changes" to apply.' 
+          : 'อัปโหลดรูปภาพไปยัง Cloudflare R2 แล้ว! กรุณากด "บันทึกการเปลี่ยนแปลง"',
+        type: 'success'
+      });
+    } catch (err: any) {
+      setMessage({
+        text: (language === 'en' ? 'Photo upload failed: ' : 'อัปโหลดรูปภาพไม่สำเร็จ: ') + err.message,
+        type: 'error'
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -37,6 +73,8 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
         firstName,
         lastName,
         position,
+        avatarUrl,
+        department: user.role === 'admin' ? department : undefined,
       });
       await reloadUser();
       setMessage({ text: language === 'en' ? 'Profile updated successfully' : 'อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว', type: 'success' });
@@ -82,8 +120,12 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-900 to-sky-900 p-6 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 text-white font-bold text-xl flex items-center justify-center shadow-lg border border-white/20">
-              {user.firstName.charAt(0)}
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 text-white font-bold text-xl flex items-center justify-center shadow-lg border border-white/20 overflow-hidden shrink-0">
+              {avatarUrl ? (
+                <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                user.firstName.charAt(0)
+              )}
             </div>
             <div>
               <h2 className="text-lg font-bold">{user.firstName} {user.lastName}</h2>
@@ -156,6 +198,72 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
 
           {activeTab === 'profile' ? (
             <form onSubmit={handleUpdateProfile} className="space-y-4">
+              {/* Profile Avatar Upload Section */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-50 to-indigo-50/60 border border-sky-200/80 flex flex-col sm:flex-row items-center gap-4">
+                <div className="relative group shrink-0">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-extrabold text-2xl flex items-center justify-center shadow-md border-2 border-white overflow-hidden">
+                    {avatarUrl ? (
+                      <img src={normalizeImageUrl(avatarUrl)} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      user.firstName?.charAt(0) || 'U'
+                    )}
+                  </div>
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 bg-slate-900/60 rounded-2xl flex items-center justify-center text-white backdrop-blur-[1px]">
+                      <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingAvatar}
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white shadow-md border border-white transition group-hover:scale-110"
+                    title={language === 'en' ? 'Upload new photo' : 'อัปโหลดรูปใหม่'}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarFileSelect}
+                    className="hidden"
+                  />
+                </div>
+
+                <div className="space-y-1.5 text-center sm:text-left flex-1">
+                  <div className="font-bold text-slate-800 text-xs flex items-center justify-center sm:justify-start gap-1.5">
+                    <Camera className="w-4 h-4 text-sky-600" />
+                    <span>{language === 'en' ? 'Profile Avatar (Cloudflare R2)' : 'รูปภาพประจำตัว (Cloudflare R2)'}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    {language === 'en' 
+                      ? 'Upload a profile picture to appear on audits, defect follow-ups, and the system leaderboard.' 
+                      : 'เลือกรูปภาพเพื่อแสดงในบัตรพนักงาน รายการตรวจเช็ค และการติดตามงานแก้ไข'}
+                  </p>
+                  <div className="pt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAvatar}
+                      className="px-3 py-1 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold shadow-sm transition flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      <Upload className="w-3 h-3 text-sky-600" />
+                      <span>{uploadingAvatar ? t.uploadingAvatar : t.changeAvatar}</span>
+                    </button>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl('')}
+                        className="px-2 py-1 text-[11px] text-slate-400 hover:text-red-500 transition"
+                      >
+                        {language === 'en' ? 'Remove Photo' : 'ลบรูปโปรไฟล์'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Account Status Badge */}
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                 <div>
@@ -215,15 +323,41 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    {t.department}
+                  <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>{t.department}</span>
+                    {user.role === 'admin' ? (
+                      <span className="text-[10px] text-purple-600 font-bold bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
+                        👑 {language === 'en' ? 'Admin Editable' : 'แอดมินแก้ไขได้'}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-slate-400">
+                        ({language === 'en' ? 'Read-only' : 'ล็อค'})
+                      </span>
+                    )}
                   </label>
-                  <input
-                    type="text"
-                    disabled
-                    value={user.department}
-                    className="w-full px-3.5 py-2 bg-slate-100 border border-slate-300 rounded-xl text-sm text-slate-700 font-semibold cursor-not-allowed"
-                  />
+                  {user.role === 'admin' ? (
+                    <select
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      className="w-full px-3.5 py-2 bg-purple-50/50 border border-purple-300 rounded-xl text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    >
+                      <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                      <option value="FACILITY">Facility (สาธารณูปโภค)</option>
+                      <option value="ASSY">Assembly (แผนกประกอบ)</option>
+                      <option value="WH">Warehouse (คลังสินค้า)</option>
+                      <option value="QC">QC (ควบคุมคุณภาพ)</option>
+                      <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
+                      <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                      <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      disabled
+                      value={user.department}
+                      className="w-full px-3.5 py-2 bg-slate-100 border border-slate-300 rounded-xl text-sm text-slate-700 font-semibold cursor-not-allowed"
+                    />
+                  )}
                 </div>
               </div>
 

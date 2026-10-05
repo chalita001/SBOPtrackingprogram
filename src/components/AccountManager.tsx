@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, normalizeImageUrl } from '../services/api';
 import { 
   Users, 
   UserCheck, 
@@ -244,6 +244,7 @@ export const AccountManager: React.FC = () => {
             <option value="QC">QC</option>
             <option value="STAMPING">Stamping</option>
             <option value="TOOL">Tooling</option>
+            <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
           </select>
         </div>
       </div>
@@ -284,23 +285,34 @@ export const AccountManager: React.FC = () => {
 
                   return (
                     <tr key={u.id} className="hover:bg-slate-50/80 transition">
-                      {/* Name */}
+                      {/* Name & Avatar */}
                       <td className="py-3 px-4">
-                        <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                          <span>{u.first_name} {u.last_name}</span>
-                          {u.username && (
-                            <span className="text-[11px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
-                              @{u.username}
-                            </span>
-                          )}
-                          {isCurrentUser && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold">
-                              {t.you}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[11px] text-slate-400">
-                          {t.registeredDate} {dateFormatted}
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-sm overflow-hidden shrink-0 border border-slate-200">
+                            {u.avatar_url ? (
+                              <img src={normalizeImageUrl(u.avatar_url)} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                              u.first_name?.charAt(0) || 'U'
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                              <span>{u.first_name} {u.last_name}</span>
+                              {u.username && (
+                                <span className="text-[11px] font-semibold text-sky-700 bg-sky-50 px-1.5 py-0.5 rounded border border-sky-200">
+                                  @{u.username}
+                                </span>
+                              )}
+                              {isCurrentUser && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 font-semibold">
+                                  {t.you}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-slate-400">
+                              {t.registeredDate} {dateFormatted}
+                            </div>
+                          </div>
                         </div>
                       </td>
 
@@ -465,6 +477,7 @@ export const AccountManager: React.FC = () => {
                   <option value="QC">QC</option>
                   <option value="STAMPING">Stamping</option>
                   <option value="TOOL">Tooling</option>
+                  <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
                 </select>
               </div>
 

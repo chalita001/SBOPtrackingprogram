@@ -7,7 +7,7 @@ import {
   ExternalLink, 
   Calendar, 
   User, 
-  Mail, 
+  Bell, 
   CheckCircle, 
   Filter, 
   Send,
@@ -23,13 +23,14 @@ export const DefectTracker: React.FC = () => {
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterDept, setFilterDept] = useState<string>('all');
 
-  // Send Email Modal State
-  const [emailModalDefect, setEmailModalDefect] = useState<any | null>(null);
-  const [recipientEmail, setRecipientEmail] = useState('');
-  const [recipientName, setRecipientName] = useState('');
-  const [emailMessage, setEmailMessage] = useState('');
-  const [sendingEmail, setSendingEmail] = useState(false);
-  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  // In-App Notification Modal State
+  const [notifyModalDefect, setNotifyModalDefect] = useState<any | null>(null);
+  const [usersDirectory, setUsersDirectory] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
+  const [sendingNotif, setSendingNotif] = useState(false);
+  const [notifSuccess, setNotifSuccess] = useState<string | null>(null);
 
   const loadDefects = async () => {
     setLoading(true);
@@ -74,52 +75,102 @@ export const DefectTracker: React.FC = () => {
     return true;
   });
 
-  const handleOpenEmailModal = (defect: any) => {
-    setEmailModalDefect(defect);
-    setRecipientEmail(user?.email || '');
-    setRecipientName(defect.responsible_person || '');
-    setEmailMessage(
-      language === 'en'
-        ? `Safety Issue Follow-up Request:\n` +
-          `- Department: ${defect.departmentCode}\n` +
-          `- Machine/Area: ${defect.mcAndProducts}\n` +
-          `- Finding Topic: ${defect.finding_topic || defect.question}\n` +
-          `- Corrective Action Plan: ${defect.action_plan || 'To be specified'}\n` +
-          `- Target Due Date: ${defect.due_date || 'As agreed'}\n\n` +
-          (defect.image_url ? `Proof photo on Cloudflare R2: ${defect.image_url}` : '')
-        : `ขอความอนุเคราะห์ติดตามการแก้ไขปัญหาความปลอดภัยที่ตรวจพบ:\n` +
-          `- แผนก: ${defect.departmentCode}\n` +
-          `- เครื่องจักร/พื้นที่: ${defect.mcAndProducts}\n` +
-          `- ปัญหาที่พบ: ${defect.finding_topic || defect.question}\n` +
-          `- แผนการแก้ไข: ${defect.action_plan || 'ระบุมาตรการแก้ไข'}\n` +
-          `- กำหนดเสร็จ: ${defect.due_date || 'ตามที่ตกลง'}\n\n` +
-          (defect.image_url ? `ดูภาพหลักฐานจาก Cloudflare R2: ${defect.image_url}` : '')
-    );
-    setEmailSuccess(null);
+  const handleOpenNotifyModal = async (defect: any) => {
+    setNotifyModalDefect(defect);
+    setNotifSuccess(null);
+
+    const defaultTitle = language === 'en'
+      ? `[Action Required] Unsafe Condition at ${defect.departmentCode} (#${defect.inspectionCode || '001'})`
+      : `[แจ้งเตือนการแก้ไขความปลอดภัย] แผนก ${defect.departmentCode} (รหัสตรวจ #${defect.inspectionCode || '001'})`;
+
+    const defaultMsg = language === 'en'
+      ? `Dear Responsible Person,\nAn unsafe condition was detected in SBOP Audit (Inspection #${defect.inspectionCode || '001'}):\n` +
+        `- Department: ${defect.departmentCode}\n` +
+        `- Location/Machine: ${defect.mcAndProducts || '-'}\n` +
+        `- Issue/Topic: ${defect.finding_topic || defect.question}\n` +
+        `- Severity: ${defect.severity || 'Minor'}\n` +
+        `- Action Plan: ${defect.action_plan || 'Please specify plan'}\n` +
+        `- Target Due Date: ${defect.due_date || 'ASAP'}\n` +
+        `- Auditor: ${defect.auditorName || '-'}\n\n` +
+        (defect.image_url ? `Photo evidence: ${defect.image_url}\n\n` : '') +
+        `Please proceed with corrective action and update the SBOP Accountability Board.`
+      : `เรียน ผู้รับผิดชอบ,\nตรวจพบสภาพไม่ปลอดภัยจากการตรวจ SBOP หน้างาน (รหัสตรวจ #${defect.inspectionCode || '001'}):\n` +
+        `- แผนก: ${defect.departmentCode}\n` +
+        `- จุดตรวจ/เครื่องจักร: ${defect.mcAndProducts || '-'}\n` +
+        `- ประเด็นที่พบ: ${defect.finding_topic || defect.question}\n` +
+        `- ระดับความรุนแรง: ${defect.severity || 'Minor'}\n` +
+        `- แผนการแก้ไข: ${defect.action_plan || 'ระบุมาตรการแก้ไข'}\n` +
+        `- กำหนดเสร็จ: ${defect.due_date || 'โดยเร็ว'}\n` +
+        `- ผู้ตรวจประเมิน: ${defect.auditorName || '-'}\n\n` +
+        (defect.image_url ? `รูปถ่ายหลักฐาน: ${defect.image_url}\n\n` : '') +
+        `กรุณาดำเนินการแก้ไขและบันทึกลงในบอร์ด SBOP ตามระเบียบ`;
+
+    setNotifTitle(defaultTitle);
+    setNotifMessage(defaultMsg);
+
+    try {
+      let list = usersDirectory;
+      if (!list || list.length === 0) {
+        list = await api.getUsersDirectory();
+        setUsersDirectory(list || []);
+      }
+
+      // Try auto-matching defect.responsible_person with users
+      const respName = (defect.responsible_person || '').trim().toLowerCase();
+      let matchedUser = null;
+      if (respName && list && list.length > 0) {
+        matchedUser = list.find((u: any) => {
+          const fullName = `${u.first_name} ${u.last_name}`.toLowerCase();
+          const uName = (u.username || '').toLowerCase();
+          return fullName.includes(respName) || respName.includes(u.first_name?.toLowerCase()) || uName === respName;
+        });
+      }
+
+      if (matchedUser) {
+        setSelectedUserId(matchedUser.id.toString());
+      } else {
+        const deptUsers = (list || []).filter((u: any) => u.department === defect.departmentCode);
+        if (deptUsers.length > 0) {
+          setSelectedUserId(deptUsers[0].id.toString());
+        } else if (list && list.length > 0) {
+          setSelectedUserId(list[0].id.toString());
+        } else {
+          setSelectedUserId('');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load user directory:', err);
+    }
   };
 
-  const handleSendEmail = async (e: React.FormEvent) => {
+  const handleSendNotification = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!recipientEmail.trim() || !emailMessage.trim()) return;
+    if (!selectedUserId || !notifTitle.trim() || !notifMessage.trim()) return;
 
-    setSendingEmail(true);
+    setSendingNotif(true);
     try {
-      await api.sendCustomEmail({
-        to: recipientEmail,
-        toName: recipientName,
-        subject: `${t.emailFollowupSubject} ${emailModalDefect.departmentCode}`,
-        message: emailMessage,
-        inspectionId: emailModalDefect.inspectionId,
+      await api.sendNotification({
+        userId: Number(selectedUserId),
+        title: notifTitle,
+        message: notifMessage,
+        type: 'alert',
+        link: '/defects',
       });
 
-      setEmailSuccess(language === 'en' ? `Notification email sent to ${recipientEmail}` : `ส่งอีเมลแจ้งเตือนไปยัง ${recipientEmail} เรียบร้อยแล้ว`);
+      const targetUser = usersDirectory.find((u) => u.id.toString() === selectedUserId);
+      const targetName = targetUser ? `${targetUser.first_name} ${targetUser.last_name} (@${targetUser.username})` : 'ผู้รับผิดชอบ';
+      setNotifSuccess(
+        language === 'en'
+          ? `In-App Notification dispatched to ${targetName} successfully! It will appear on their profile and notification bell.`
+          : `ส่งการแจ้งเตือนไปยัง ${targetName} เรียบร้อยแล้ว! ข้อความจะปรากฏที่กระดิ่งและโปรไฟล์ของผู้รับผิดชอบ`
+      );
       setTimeout(() => {
-        setEmailModalDefect(null);
-      }, 1500);
+        setNotifyModalDefect(null);
+      }, 1800);
     } catch (err: any) {
-      alert((language === 'en' ? 'Failed to send email: ' : 'ส่งอีเมลล้มเหลว: ') + err.message);
+      alert((language === 'en' ? 'Failed to send notification: ' : 'ส่งการแจ้งเตือนล้มเหลว: ') + err.message);
     } finally {
-      setSendingEmail(false);
+      setSendingNotif(false);
     }
   };
 
@@ -193,6 +244,7 @@ export const DefectTracker: React.FC = () => {
           <option value="QC">QC</option>
           <option value="STAMPING">Stamping</option>
           <option value="TOOL">Tooling</option>
+          <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
         </select>
 
         <div className="ml-auto text-xs text-slate-500 font-medium">
@@ -309,13 +361,13 @@ export const DefectTracker: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Email reminder button */}
+                {/* In-app notification reminder button */}
                 <div className="pt-2">
                   <button
-                    onClick={() => handleOpenEmailModal(d)}
-                    className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition"
+                    onClick={() => handleOpenNotifyModal(d)}
+                    className="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm"
                   >
-                    <Mail className="w-3.5 h-3.5 text-sky-600" />
+                    <Bell className="w-3.5 h-3.5 text-amber-600" />
                     <span>{t.sendAlertEmailBtn}</span>
                   </button>
                 </div>
@@ -325,81 +377,117 @@ export const DefectTracker: React.FC = () => {
         )}
       </div>
 
-      {/* Send Email Reminder Modal */}
-      {emailModalDefect && (
+      {/* Send In-App Notification to Responsible Person Modal */}
+      {notifyModalDefect && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6">
             <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-              <Mail className="w-5 h-5 text-sky-600" />
-              <span>{t.emailFollowupModalTitle}</span>
+              <Bell className="w-5 h-5 text-amber-500" />
+              <span>{t.notifyModalTitle}</span>
             </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              {language === 'en' ? 'Send follow-up notice to employee account or task owner' : 'ส่งข้อความแจ้งเตือนไปยังอีเมลของบัญชีพนักงาน หรือผู้รับผิดชอบงาน'}
+            <p className="text-xs text-slate-500 mb-3">
+              {language === 'en' 
+                ? 'Send an in-app notification directly to the responsible person account. It will show on their profile & notification badge.' 
+                : 'ส่งการแจ้งเตือนไปยังบัญชีผู้รับผิดชอบงานโดยตรง ข้อความจะแจ้งเตือนที่กระดิ่งและหน้าโปรไฟล์ของพนักงาน'}
             </p>
 
-            {emailSuccess && (
+            {/* Quick defect summary chip */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1 mb-4">
+              <div className="flex items-center justify-between font-bold text-slate-800">
+                <span>{notifyModalDefect.departmentCode} • #{notifyModalDefect.inspectionCode || '001'}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                  notifyModalDefect.severity === 'Major' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {notifyModalDefect.severity || 'Minor'}
+                </span>
+              </div>
+              <div className="text-slate-600 truncate">
+                <strong>{t.findingTopic}:</strong> {notifyModalDefect.finding_topic || notifyModalDefect.question}
+              </div>
+              <div className="text-slate-500 text-[11px]">
+                {t.responsiblePerson}: <span className="text-slate-800 font-semibold">{notifyModalDefect.responsible_person || '-'}</span> | {t.dueDate}: <span className="text-amber-700 font-semibold">{notifyModalDefect.due_date || '-'}</span>
+              </div>
+            </div>
+
+            {notifSuccess && (
               <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span>{emailSuccess}</span>
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{notifSuccess}</span>
               </div>
             )}
 
-            <form onSubmit={handleSendEmail} className="space-y-4 text-xs">
+            <form onSubmit={handleSendNotification} className="space-y-3.5 text-xs">
+              {/* Recipient User Picker */}
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  {t.recipientEmailLabel}
+                  {t.selectResponsibleUser}
                 </label>
-                <input
-                  type="email"
+                <select
                   required
-                  value={recipientEmail}
-                  onChange={(e) => setRecipientEmail(e.target.value)}
-                  placeholder="maintainer@sbop.com"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-sky-500"
-                />
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white"
+                >
+                  <option value="">{language === 'en' ? '-- Select Recipient User --' : '-- กรุณาเลือกผู้รับผิดชอบ --'}</option>
+                  {usersDirectory.map((u) => {
+                    const isSameDept = u.department === notifyModalDefect.departmentCode;
+                    return (
+                      <option key={u.id} value={u.id.toString()}>
+                        {isSameDept ? '⭐ ' : ''}{u.first_name} {u.last_name} (@{u.username}) — [{u.department}] {u.position || u.role}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {language === 'en' 
+                    ? '⭐ Highlights users in the same department.' 
+                    : '⭐ สัญลักษณ์ดาวระบุผู้ใช้งานที่อยู่ในแผนกเดียวกัน'}
+                </p>
               </div>
 
+              {/* Title */}
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  {t.recipientNameLabel}
+                  {t.notificationTitleLabel}
                 </label>
                 <input
                   type="text"
-                  value={recipientName}
-                  onChange={(e) => setRecipientName(e.target.value)}
-                  placeholder={t.responsiblePlaceholder}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs"
+                  required
+                  value={notifTitle}
+                  onChange={(e) => setNotifTitle(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-amber-500 focus:bg-white"
                 />
               </div>
 
+              {/* Message */}
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  {t.messageContentLabel}
+                  {t.notificationMessageLabel}
                 </label>
                 <textarea
-                  rows={6}
+                  rows={5}
                   required
-                  value={emailMessage}
-                  onChange={(e) => setEmailMessage(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono"
+                  value={notifMessage}
+                  onChange={(e) => setNotifMessage(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:ring-2 focus:ring-amber-500 focus:bg-white"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setEmailModalDefect(null)}
+                  onClick={() => setNotifyModalDefect(null)}
                   className="px-4 py-2 rounded-xl font-semibold text-slate-600 hover:bg-slate-100"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  disabled={sendingEmail}
-                  className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl shadow flex items-center gap-1.5 disabled:opacity-50"
+                  disabled={sendingNotif || !selectedUserId}
+                  className="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow flex items-center gap-1.5 disabled:opacity-50 transition"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>{sendingEmail ? (language === 'en' ? 'Sending...' : 'กำลังส่งเมล...') : t.sendNow}</span>
+                  <span>{sendingNotif ? t.sendingNotification : t.sendNotificationBtn}</span>
                 </button>
               </div>
             </form>
