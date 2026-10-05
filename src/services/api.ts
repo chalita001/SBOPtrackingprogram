@@ -63,6 +63,12 @@ export const api = {
     const query = layer ? `?layer=${encodeURIComponent(layer)}` : '';
     return request(`/checklist/templates/${deptCode}${query}`);
   },
+  createChecklistTemplate: (data: any) =>
+    request('/checklist/templates', { method: 'POST', body: JSON.stringify(data) }),
+  updateChecklistTemplate: (id: number, data: any) =>
+    request(`/checklist/templates/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteChecklistTemplate: (id: number) =>
+    request(`/checklist/templates/${id}`, { method: 'DELETE' }),
 
   // Inspections
   getInspections: (params?: Record<string, string>) => {

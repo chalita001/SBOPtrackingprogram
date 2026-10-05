@@ -74,7 +74,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
         lastName,
         position,
         avatarUrl,
-        department: user.role === 'admin' ? department : undefined,
+        department: (user.role === 'admin' || user.role === 'superadmin') ? department : undefined,
       });
       await reloadUser();
       setMessage({ text: language === 'en' ? 'Profile updated successfully' : 'อัปเดตข้อมูลส่วนตัวเรียบร้อยแล้ว', type: 'success' });
@@ -133,7 +133,9 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                 <span>@{user.username || user.email?.split('@')[0]}</span>
                 <span>•</span>
                 <span className="font-semibold text-emerald-300">
-                  {user.role === 'admin'
+                  {user.role === 'superadmin'
+                    ? '👑 Super Admin'
+                    : user.role === 'admin'
                     ? 'Admin'
                     : user.role === 'layer3' || user.role === 'manager'
                     ? 'Layer 3 (Manager)'
@@ -325,7 +327,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center justify-between">
                     <span>{t.department}</span>
-                    {user.role === 'admin' ? (
+                    {(user.role === 'admin' || user.role === 'superadmin') ? (
                       <span className="text-[10px] text-purple-600 font-bold bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">
                         👑 {language === 'en' ? 'Admin Editable' : 'แอดมินแก้ไขได้'}
                       </span>
@@ -335,7 +337,7 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                       </span>
                     )}
                   </label>
-                  {user.role === 'admin' ? (
+                  {(user.role === 'admin' || user.role === 'superadmin') ? (
                     <select
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}

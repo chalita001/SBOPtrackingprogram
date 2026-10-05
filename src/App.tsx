@@ -12,6 +12,7 @@ import { LoginModal } from './components/LoginModal';
 import { RegisterModal } from './components/RegisterModal';
 import { AccountInfoModal } from './components/AccountInfoModal';
 import { NotificationsModal } from './components/NotificationsModal';
+import { ChecklistManagerModal } from './components/ChecklistManagerModal';
 import { ShieldCheck, AlertCircle, Database, Cloud } from 'lucide-react';
 
 const MainContent: React.FC = () => {
@@ -23,6 +24,7 @@ const MainContent: React.FC = () => {
   const [showRegister, setShowRegister] = useState<boolean>(false);
   const [showAccountInfo, setShowAccountInfo] = useState<boolean>(false);
   const [showNotifications, setShowNotifications] = useState<boolean>(false);
+  const [showChecklistManager, setShowChecklistManager] = useState<boolean>(false);
   const [unreadNotifs, setUnreadNotifs] = useState<number>(0);
 
   // Load unread notification count
@@ -66,6 +68,7 @@ const MainContent: React.FC = () => {
         onOpenRegister={() => setShowRegister(true)}
         onOpenAccountInfo={() => setShowAccountInfo(true)}
         onOpenNotifications={() => setShowNotifications(true)}
+        onOpenChecklistManager={() => setShowChecklistManager(true)}
         unreadNotificationsCount={unreadNotifs}
       />
 
@@ -108,14 +111,14 @@ const MainContent: React.FC = () => {
 
         {activeTab === 'defects' && <DefectTracker />}
 
-        {activeTab === 'dashboard' && user?.role === 'admin' && (
+        {activeTab === 'dashboard' && (user?.role === 'admin' || user?.role === 'superadmin') && (
           <AdminDashboard
             onNavigateToAccounts={() => setActiveTab('accounts')}
             onNavigateToDefects={() => setActiveTab('defects')}
           />
         )}
 
-        {activeTab === 'accounts' && user?.role === 'admin' && <AccountManager />}
+        {activeTab === 'accounts' && (user?.role === 'admin' || user?.role === 'superadmin') && <AccountManager />}
       </main>
 
       {/* Footer */}
@@ -177,6 +180,16 @@ const MainContent: React.FC = () => {
           setActiveTab(tab);
         }}
       />
+
+      {/* Global Checklist Manager Modal for Super Admin */}
+      {(user?.role === 'superadmin') && (
+        <ChecklistManagerModal
+          isOpen={showChecklistManager}
+          onClose={() => setShowChecklistManager(false)}
+          initialDepartment={user?.department || 'QC'}
+          initialLayer="All"
+        />
+      )}
     </div>
   );
 };

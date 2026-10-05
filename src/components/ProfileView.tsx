@@ -151,8 +151,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
   if (!user) return null;
 
   const roleTitle =
-    user.role === 'admin'
-      ? (language === 'en' ? 'System Administrator' : 'ผู้ดูแลระบบสูงสุด (Admin)')
+    user.role === 'superadmin'
+      ? (language === 'en' ? 'Super Administrator (Super Admin)' : 'ผู้ดูแลระบบสูงสุด (Super Admin)')
+      : user.role === 'admin'
+      ? (language === 'en' ? 'System Administrator' : 'ผู้ดูแลระบบ (Admin)')
       : user.role === 'layer3' || user.role === 'manager'
       ? (language === 'en' ? 'Layer 3 — Department Manager (1 time/month)' : 'Layer 3 — ผู้จัดการแผนก (เป้าหมาย 1 ครั้ง/เดือน)')
       : user.role === 'layer2' || user.role === 'supervisor'

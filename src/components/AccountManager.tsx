@@ -326,7 +326,9 @@ export const AccountManager: React.FC = () => {
 
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        u.role === 'admin'
+                        u.role === 'superadmin'
+                          ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white shadow-xs border border-purple-400'
+                          : u.role === 'admin'
                           ? 'bg-purple-100 text-purple-800 border border-purple-200'
                           : u.role === 'layer3' || u.role === 'manager'
                           ? 'bg-amber-100 text-amber-800 border border-amber-200'
@@ -337,7 +339,9 @@ export const AccountManager: React.FC = () => {
                     >
                       <Shield className="w-3 h-3" />
                       <span>
-                        {u.role === 'admin'
+                        {u.role === 'superadmin'
+                          ? '👑 Super Admin'
+                          : u.role === 'admin'
                           ? 'Admin'
                           : u.role === 'layer3' || u.role === 'manager'
                           ? 'Layer 3'
@@ -484,7 +488,9 @@ export const AccountManager: React.FC = () => {
                       <td className="py-3 px-4">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            u.role === 'admin'
+                            u.role === 'superadmin'
+                              ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white shadow-xs border border-purple-400'
+                              : u.role === 'admin'
                               ? 'bg-purple-100 text-purple-800 border border-purple-200'
                               : u.role === 'layer3' || u.role === 'manager'
                               ? 'bg-amber-100 text-amber-800 border border-amber-200'
@@ -495,7 +501,9 @@ export const AccountManager: React.FC = () => {
                         >
                           <Shield className="w-3 h-3" />
                           <span>
-                            {u.role === 'admin'
+                            {u.role === 'superadmin'
+                              ? (language === 'th' ? '👑 ผู้ดูแลระบบสูงสุด (Super Admin)' : '👑 Super Admin')
+                              : u.role === 'admin'
                               ? (language === 'th' ? 'ผู้ดูแลระบบ (Admin)' : 'Admin')
                               : u.role === 'layer3' || u.role === 'manager'
                               ? (language === 'th' ? 'Layer 3 (Manager)' : 'Layer 3 (Manager)')
@@ -605,6 +613,7 @@ export const AccountManager: React.FC = () => {
                   <option value="layer2">2. {t.roleLayer2}</option>
                   <option value="layer3">3. {t.roleLayer3}</option>
                   <option value="admin">{t.roleAdmin}</option>
+                  <option value="superadmin">👑 {t.roleSuperAdmin}</option>
                 </select>
               </div>
 

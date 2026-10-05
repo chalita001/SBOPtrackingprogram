@@ -7,7 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'sbop_super_secret_jwt_security_key
 export interface UserPayload {
   id: number;
   email: string;
-  role: 'admin' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
+  role: 'superadmin' | 'admin' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
   status: 'pending' | 'approved' | 'rejected';
   firstName: string;
   lastName: string;
@@ -59,8 +59,15 @@ export function authenticate(req: AuthRequest, res: Response, next: NextFunction
 }
 
 export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  if (!req.user || req.user.role !== 'admin') {
+  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'superadmin')) {
     return res.status(403).json({ error: 'Access denied: Admin privileges required' });
+  }
+  next();
+}
+
+export function requireSuperAdmin(req: AuthRequest, res: Response, next: NextFunction) {
+  if (!req.user || (req.user.role !== 'superadmin' && req.user.role !== 'admin')) {
+    return res.status(403).json({ error: 'Access denied: Super Admin privileges required' });
   }
   next();
 }

@@ -136,12 +136,50 @@ export default {
         const hAdmin = bcrypt.hashSync('admin@1234', 10);
         const hTest = bcrypt.hashSync('test1234', 10);
 
-        // Ensure 'admin'
+        // Ensure 'admin' as superadmin
         await env.DB.prepare(`
           INSERT INTO users (username, first_name, last_name, email, department, position, responsible_area, role, status, password_hash, approved_at, created_at, updated_at)
-          VALUES ('admin', 'ผู้ดูแลระบบ', 'ส่วนกลาง (Admin)', 'admin@sbop.com', 'FACILITY', 'EHS Safety Manager', 'All Areas', 'admin', 'approved', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          ON CONFLICT(email) DO UPDATE SET password_hash=?, username='admin', role='admin', status='approved';
+          VALUES ('admin', 'ผู้ดูแลระบบสูงสุด', 'ส่วนกลาง (Super Admin)', 'admin@sbop.com', 'FACILITY', 'Super Administrator', 'All Areas', 'superadmin', 'approved', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT(email) DO UPDATE SET password_hash=?, username='admin', role='superadmin', status='approved';
         `).bind(hAdmin, hAdmin).run();
+
+        // Migrate any existing 'admin' user to 'superadmin' role
+        await env.DB.prepare("UPDATE users SET role = 'superadmin' WHERE username = 'admin' OR email = 'admin@sbop.com'").run();
+
+        // Ensure 'SAFETY' department exists
+        await env.DB.prepare(`
+          INSERT INTO departments (code, name_th, name_en, description)
+          VALUES ('SAFETY', 'แผนกความปลอดภัย (Safety / EHS)', 'Safety / EHS Department', 'Environmental Health and Safety')
+          ON CONFLICT(code) DO UPDATE SET name_th = excluded.name_th, name_en = excluded.name_en;
+        `).run();
+
+        // Update historic registration notifications to type 'registration_alert' so regular users do not see them
+        await env.DB.prepare(`
+          UPDATE notifications 
+          SET type = 'registration_alert' 
+          WHERE title LIKE '%สมาชิกใหม่%' OR title LIKE '%รอการอนุมัติ%'
+        `).run();
+
+        // Ensure default checklist questions exist for SAFETY
+        try {
+          const safetyTmplCount: any = await env.DB.prepare(
+            "SELECT COUNT(*) as cnt FROM checklist_templates WHERE department_code = 'SAFETY'"
+          ).first();
+          if (!safetyTmplCount || safetyTmplCount.cnt === 0) {
+            await env.DB.prepare(`
+              INSERT INTO checklist_templates (department_code, layer, category, subcategory, method, item_order, question_th, question_en)
+              VALUES 
+                ('SAFETY', 'Layer 1', 'อุปกรณ์คุ้มครองความปลอดภัย (PPE)', 'PPE Compliance', 'สังเกตและตรวจสอบ', 1, 'พนักงานทุกคนสวมใส่อุปกรณ์ PPE ครบถ้วนตามมาตรฐานความปลอดภัย (แว่นตา, หมวก, รองเท้าเซฟตี้, ที่อุดหู)', 'All employees wear required PPE properly (Safety glasses, hard hats, safety shoes, earplugs)'),
+                ('SAFETY', 'Layer 1', 'เครื่องจักรและอุปกรณ์ความปลอดภัย', 'Machine Guarding', 'สังเกตและตรวจสอบ', 2, 'การ์ดป้องกันจุดหมุนและม่านแสงนิรภัยของเครื่องจักรทำงานได้สมบูรณ์', 'Machine interlocks and safety guards are functional and in place'),
+                ('SAFETY', 'Layer 1', 'ทางหนีไฟและอุปกรณ์ดับเพลิง', 'Emergency Preparedness', 'สังเกตและตรวจสอบ', 3, 'ถังดับเพลิงและทางออกฉุกเฉินไม่มีสิ่งของกีดขวาง สามารถใช้งานได้ทันที', 'Fire extinguishers and emergency exits are clear and accessible'),
+                ('SAFETY', 'Layer 2', 'ระบบและการจัดการความปลอดภัย (Safety Management)', 'Supervisor Review', 'ตรวจสอบเอกสารและหน้างาน', 1, 'ทบทวนผลการตรวจ SBOP Layer 1 และตรวจสอบการปิดประเด็นสิ่งผิดปกติ', 'Review SBOP Layer 1 audit results and verify corrective actions'),
+                ('SAFETY', 'Layer 2', 'การปฏิบัติตามมาตรฐาน EHS', 'Standard Compliance', 'ตรวจสอบเอกสารและหน้างาน', 2, 'การจัดเก็บสารเคมีและวัตถุอันตรายมีป้ายเตือนและ SDS ถูกต้องตามกฎหมาย', 'Chemical storage and hazardous substances have proper labeling and SDS'),
+                ('SAFETY', 'Layer 3', 'นโยบายและภาวะผู้นำด้านความปลอดภัย', 'Leadership & Policy', 'สังเกตและสัมภาษณ์', 1, 'ผู้จัดการทบทวนภาพรวมความปลอดภัยและส่งเสริมวัฒนธรรมความปลอดภัยเชิงรุกในแผนก', 'Manager reviews overall safety performance and promotes proactive safety culture')
+            `).run();
+          }
+        } catch (sErr) {
+          console.error('Safety template seeding notice:', sErr);
+        }
 
         // Ensure 'useradmin'
         await env.DB.prepare(`
@@ -204,27 +242,29 @@ export default {
           WHERE LOWER(username) = ? OR LOWER(email) = ? OR LOWER(email) = ?
         `).bind(rawLower, rawLower, `${rawLower}@sbop.com`).first();
 
-        const isAdminAccount = rawLower === 'admin' || rawLower === 'useradmin' || rawLower === 'administrator';
+        const isSuperAdminAccount = rawLower === 'admin';
+        const isAdminAccount = isSuperAdminAccount || rawLower === 'useradmin' || rawLower === 'administrator';
         const isAdminMasterPass = password === 'admin@1234' || password === 'ehsadmin1234';
         const isTesterMasterPass = rawLower === 'usertester' && password === 'test1234';
 
-        // Auto-create admin if not found but entered correct master credentials
+        // Auto-create admin/superadmin if not found but entered correct master credentials
         if (!user && isAdminAccount && isAdminMasterPass) {
+          const newRole = isSuperAdminAccount ? 'superadmin' : 'admin';
           const newHash = bcrypt.hashSync(password, 10);
           const insResult = await env.DB.prepare(`
             INSERT INTO users (username, first_name, last_name, email, department, position, responsible_area, role, status, password_hash, approved_at, created_at, updated_at)
-            VALUES (?, 'ผู้ดูแลระบบ', 'ส่วนกลาง (Admin)', ?, 'FACILITY', 'Safety Administrator', 'All Areas', 'admin', 'approved', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-          `).bind(rawLower, `${rawLower}@sbop.com`, newHash).run();
+            VALUES (?, 'ผู้ดูแลระบบสูงสุด', 'ส่วนกลาง (Super Admin)', ?, 'FACILITY', ?, 'All Areas', ?, 'approved', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `).bind(rawLower, `${rawLower}@sbop.com`, isSuperAdminAccount ? 'Super Administrator' : 'Safety Administrator', newRole, newHash).run();
 
           user = {
             id: insResult.meta?.last_row_id,
             username: rawLower,
             email: `${rawLower}@sbop.com`,
-            first_name: 'ผู้ดูแลระบบ',
-            last_name: 'ส่วนกลาง (Admin)',
+            first_name: 'ผู้ดูแลระบบสูงสุด',
+            last_name: isSuperAdminAccount ? 'ส่วนกลาง (Super Admin)' : 'ส่วนกลาง (Admin)',
             department: 'FACILITY',
-            position: 'Safety Administrator',
-            role: 'admin',
+            position: isSuperAdminAccount ? 'Super Administrator' : 'Safety Administrator',
+            role: newRole,
             status: 'approved',
             password_hash: newHash,
           };
@@ -244,14 +284,15 @@ export default {
           }
         }
 
-        // Fallback for Admin or Tester master credentials
+        // Fallback for Admin/Superadmin or Tester master credentials
         if (!isMatch) {
           if (isAdminAccount && isAdminMasterPass) {
             isMatch = true;
+            const newRole = isSuperAdminAccount ? 'superadmin' : 'admin';
             const newHash = bcrypt.hashSync(password, 10);
-            await env.DB.prepare('UPDATE users SET password_hash = ?, status = "approved", role = "admin" WHERE id = ?')
-              .bind(newHash, user.id).run();
-            user.role = 'admin';
+            await env.DB.prepare('UPDATE users SET password_hash = ?, status = "approved", role = ? WHERE id = ?')
+              .bind(newHash, newRole, user.id).run();
+            user.role = newRole;
             user.status = 'approved';
           } else if (isTesterMasterPass) {
             isMatch = true;
@@ -260,6 +301,12 @@ export default {
               .bind(newHash, user.id).run();
             user.status = 'approved';
           }
+        }
+
+        // Ensure user with username 'admin' has superadmin role
+        if (isSuperAdminAccount && user.role !== 'superadmin') {
+          user.role = 'superadmin';
+          await env.DB.prepare('UPDATE users SET role = "superadmin" WHERE id = ?').bind(user.id).run();
         }
 
         if (!isMatch) {
@@ -357,10 +404,10 @@ export default {
           passwordHash
         ).run();
 
-        // In-app notification for admin
+        // In-app notification for admin/superadmin only
         await env.DB.prepare(`
           INSERT INTO notifications (user_id, title, message, type)
-          VALUES (NULL, 'สมาชิกใหม่รอการอนุมัติ', ?, 'alert')
+          VALUES (NULL, 'สมาชิกใหม่รอการอนุมัติ', ?, 'registration_alert')
         `).bind(`มีผู้ใช้ใหม่ @${u} (${firstName} ${lastName}) สมัครเข้าใช้งานแผนก ${department}`).run();
 
         return jsonResponse({
@@ -389,7 +436,7 @@ export default {
       const currentYear = now.getFullYear();
       const currentMonth = now.getMonth() + 1;
 
-      // Defined monthly quota: Layer 1 = 40, Layer 2 = 4, Layer 3 = 1, Admin = 40
+      // Defined monthly quota: Layer 1 = 40, Layer 2 = 4, Layer 3 = 1, Admin/Superadmin = 40
       const normalizedRole = (user.role || '').toLowerCase();
       let targetMonthly = 40;
       let targetLayer = 'Layer 1';
@@ -431,7 +478,8 @@ export default {
         WHERE year = ? AND month = ?
       `;
       const deptMonthParams: any[] = [currentYear, currentMonth];
-      if (user.role !== 'admin' && dept) {
+      const isPrivileged = user.role === 'admin' || user.role === 'superadmin';
+      if (!isPrivileged && dept) {
         deptMonthQuery += ` AND department_code = ? AND layer = ?`;
         deptMonthParams.push(dept, targetLayer);
       }
@@ -451,7 +499,7 @@ export default {
         WHERE year = ?
       `;
       const chartParams: any[] = [currentYear];
-      if (user.role !== 'admin' && dept) {
+      if (!isPrivileged && dept) {
         chartQuery += ` AND department_code = ? AND layer = ?`;
         chartParams.push(dept, targetLayer);
       }
@@ -501,13 +549,14 @@ export default {
       });
     }
 
-    // Auth: Update Profile (Supports Avatar and Admin changing Department)
+    // Auth: Update Profile (Supports Avatar and Admin/Superadmin changing Department)
     if (url.pathname === '/api/auth/profile' && request.method === 'PUT') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const body: any = await request.json();
 
-      // Admin can change their own department
-      const newDept = (currentUser.role === 'admin' && body.department) ? body.department : null;
+      // Admin or Superadmin can change their own department
+      const canChangeDept = currentUser.role === 'admin' || currentUser.role === 'superadmin';
+      const newDept = (canChangeDept && body.department) ? body.department : null;
 
       await env.DB.prepare(`
         UPDATE users 
@@ -598,6 +647,162 @@ export default {
         items: results,
         grouped,
       });
+    }
+
+    // Checklist: Create new template item (Superadmin or Admin)
+    if (url.pathname === '/api/checklist/templates' && request.method === 'POST') {
+      if (!currentUser || (currentUser.role !== 'superadmin' && currentUser.role !== 'admin')) {
+        return jsonResponse({ error: 'Forbidden: Superadmin access required' }, 403);
+      }
+
+      try {
+        const body: any = await request.json();
+        const departmentCode = (body.departmentCode || body.department_code || '').trim().toUpperCase();
+        const layer = (body.layer || 'Layer 1').trim();
+        const category = (body.category || 'General').trim();
+        const subcategory = (body.subcategory || '').trim();
+        const method = (body.method || 'สังเกตและตรวจสอบ').trim();
+        const questionTh = (body.questionTh || body.question_th || '').trim();
+        const questionEn = (body.questionEn || body.question_en || '').trim() || questionTh;
+
+        if (!departmentCode || !questionTh) {
+          return jsonResponse({ error: 'กรุณาระบุแผนกและข้อความคำถาม (ภาษาไทย)' }, 400);
+        }
+
+        // If item_order is provided, use it, otherwise calculate MAX(item_order) + 1 for this dept & layer
+        let itemOrder = parseInt(body.itemOrder || body.item_order, 10);
+        if (isNaN(itemOrder) || itemOrder <= 0) {
+          const maxRow: any = await env.DB.prepare(
+            'SELECT MAX(item_order) as max_order FROM checklist_templates WHERE department_code = ? AND layer = ?'
+          ).bind(departmentCode, layer).first();
+          itemOrder = (maxRow?.max_order || 0) + 1;
+        }
+
+        const insertRes = await env.DB.prepare(`
+          INSERT INTO checklist_templates (
+            department_code, layer, category, subcategory, method, item_order, question_th, question_en, row_in_excel, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        `).bind(
+          departmentCode,
+          layer,
+          category,
+          subcategory,
+          method,
+          itemOrder,
+          questionTh,
+          questionEn,
+          itemOrder
+        ).run();
+
+        return jsonResponse({
+          success: true,
+          message: 'เพิ่มข้อตรวจเช็คเรียบร้อยแล้ว',
+          id: insertRes.meta?.last_row_id,
+          item: {
+            id: insertRes.meta?.last_row_id,
+            department_code: departmentCode,
+            layer,
+            category,
+            subcategory,
+            method,
+            item_order: itemOrder,
+            question_th: questionTh,
+            question_en: questionEn
+          }
+        }, 201);
+      } catch (err: any) {
+        return jsonResponse({ error: 'Failed to create checklist item: ' + err.message }, 500);
+      }
+    }
+
+    // Checklist: Update template item (Superadmin or Admin)
+    if (url.pathname.match(/^\/api\/checklist\/templates\/\d+$/) && request.method === 'PUT') {
+      if (!currentUser || (currentUser.role !== 'superadmin' && currentUser.role !== 'admin')) {
+        return jsonResponse({ error: 'Forbidden: Superadmin access required' }, 403);
+      }
+
+      try {
+        const templateId = parseInt(url.pathname.split('/')[4], 10);
+        const body: any = await request.json();
+
+        const existing: any = await env.DB.prepare('SELECT * FROM checklist_templates WHERE id = ?').bind(templateId).first();
+        if (!existing) {
+          return jsonResponse({ error: 'ไม่พบข้อตรวจเช็คนี้' }, 404);
+        }
+
+        const category = body.category !== undefined ? String(body.category).trim() : existing.category;
+        const subcategory = body.subcategory !== undefined ? String(body.subcategory).trim() : existing.subcategory;
+        const method = body.method !== undefined ? String(body.method).trim() : existing.method;
+        const itemOrder = (body.itemOrder !== undefined || body.item_order !== undefined)
+          ? parseInt(body.itemOrder || body.item_order, 10)
+          : existing.item_order;
+        const questionTh = (body.questionTh !== undefined || body.question_th !== undefined)
+          ? String(body.questionTh || body.question_th).trim()
+          : existing.question_th;
+        const questionEn = (body.questionEn !== undefined || body.question_en !== undefined)
+          ? String(body.questionEn || body.question_en).trim()
+          : existing.question_en;
+        const layer = body.layer !== undefined ? String(body.layer).trim() : existing.layer;
+        const departmentCode = (body.departmentCode !== undefined || body.department_code !== undefined)
+          ? String(body.departmentCode || body.department_code).trim().toUpperCase()
+          : existing.department_code;
+
+        await env.DB.prepare(`
+          UPDATE checklist_templates
+          SET department_code = ?,
+              layer = ?,
+              category = ?,
+              subcategory = ?,
+              method = ?,
+              item_order = ?,
+              question_th = ?,
+              question_en = ?,
+              row_in_excel = ?
+          WHERE id = ?
+        `).bind(
+          departmentCode,
+          layer,
+          category,
+          subcategory,
+          method,
+          itemOrder,
+          questionTh,
+          questionEn,
+          itemOrder,
+          templateId
+        ).run();
+
+        return jsonResponse({
+          success: true,
+          message: 'แก้ไขข้อตรวจเช็คเรียบร้อยแล้ว'
+        });
+      } catch (err: any) {
+        return jsonResponse({ error: 'Failed to update checklist item: ' + err.message }, 500);
+      }
+    }
+
+    // Checklist: Delete template item (Superadmin or Admin)
+    if (url.pathname.match(/^\/api\/checklist\/templates\/\d+$/) && request.method === 'DELETE') {
+      if (!currentUser || (currentUser.role !== 'superadmin' && currentUser.role !== 'admin')) {
+        return jsonResponse({ error: 'Forbidden: Superadmin access required' }, 403);
+      }
+
+      try {
+        const templateId = parseInt(url.pathname.split('/')[4], 10);
+        const existing: any = await env.DB.prepare('SELECT id FROM checklist_templates WHERE id = ?').bind(templateId).first();
+        if (!existing) {
+          return jsonResponse({ error: 'ไม่พบข้อตรวจเช็คนี้' }, 404);
+        }
+
+        await env.DB.prepare('DELETE FROM checklist_templates WHERE id = ?').bind(templateId).run();
+
+        return jsonResponse({
+          success: true,
+          message: 'ลบข้อตรวจเช็คเรียบร้อยแล้ว'
+        });
+      } catch (err: any) {
+        return jsonResponse({ error: 'Failed to delete checklist item: ' + err.message }, 500);
+      }
     }
 
     // List inspection batch codes for a department and month
@@ -794,8 +999,9 @@ export default {
         if (layer && layer !== 'all') { sql += ' AND i.layer = ?'; params.push(layer); }
         if (code && code !== 'all') { sql += ' AND i.inspection_code = ?'; params.push(code); }
 
-        // Non-admin users only see their own inspection history; Admins see all
-        if (currentUser.role !== 'admin') {
+        // Non-admin/superadmin users only see their own inspection history; Admins and Superadmins see all
+        const isPrivilegedUser = currentUser.role === 'admin' || currentUser.role === 'superadmin';
+        if (!isPrivilegedUser) {
           sql += ' AND i.auditor_id = ?';
           params.push(currentUser.id);
         }
@@ -814,7 +1020,7 @@ export default {
           FROM inspections
         `;
         const statsParams: any[] = [];
-        if (currentUser.role !== 'admin') {
+        if (!isPrivilegedUser) {
           statsSql += ' WHERE auditor_id = ?';
           statsParams.push(currentUser.id);
         }
@@ -1140,7 +1346,7 @@ export default {
 
     // Admin Dashboard Statistics
     if (url.pathname === '/api/dashboard/stats' && request.method === 'GET') {
-      if (!currentUser || currentUser.role !== 'admin') {
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) {
         return jsonResponse({ error: 'Forbidden: Admin access required' }, 403);
       }
 
@@ -1287,17 +1493,40 @@ export default {
     if (url.pathname === '/api/notifications' && request.method === 'GET') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
 
-      const { results: notifications } = await env.DB.prepare(`
-        SELECT * FROM notifications 
-        WHERE user_id = ? OR (user_id IS NULL AND (? = 'admin' OR type = 'broadcast' OR type = 'alert'))
-        ORDER BY id DESC LIMIT 50
-      `).bind(currentUser.id, currentUser.role).all();
+      const isPrivileged = currentUser.role === 'admin' || currentUser.role === 'superadmin';
 
-      const unreadRow: any = await env.DB.prepare(`
-        SELECT COUNT(*) as unread_count FROM notifications 
-        WHERE (user_id = ? OR (user_id IS NULL AND (? = 'admin' OR type = 'broadcast' OR type = 'alert')))
-          AND is_read = 0
-      `).bind(currentUser.id, currentUser.role).first();
+      let sql = '';
+      let countSql = '';
+      const params: any[] = [currentUser.id];
+
+      if (isPrivileged) {
+        // Admin and Superadmin receive: direct notifications, system alerts, registration alerts, and broadcasts
+        sql = `
+          SELECT * FROM notifications 
+          WHERE user_id = ? OR (user_id IS NULL AND type IN ('registration_alert', 'alert', 'broadcast'))
+          ORDER BY id DESC LIMIT 50
+        `;
+        countSql = `
+          SELECT COUNT(*) as unread_count FROM notifications 
+          WHERE (user_id = ? OR (user_id IS NULL AND type IN ('registration_alert', 'alert', 'broadcast')))
+            AND is_read = 0
+        `;
+      } else {
+        // Regular employees ONLY receive their own direct notifications and global broadcasts (NEVER registration alerts)
+        sql = `
+          SELECT * FROM notifications 
+          WHERE user_id = ? OR (user_id IS NULL AND type = 'broadcast')
+          ORDER BY id DESC LIMIT 50
+        `;
+        countSql = `
+          SELECT COUNT(*) as unread_count FROM notifications 
+          WHERE (user_id = ? OR (user_id IS NULL AND type = 'broadcast'))
+            AND is_read = 0
+        `;
+      }
+
+      const { results: notifications } = await env.DB.prepare(sql).bind(...params).all();
+      const unreadRow: any = await env.DB.prepare(countSql).bind(...params).first();
 
       return jsonResponse({
         notifications: notifications || [],
@@ -1316,11 +1545,21 @@ export default {
     // Notifications: Mark All as Read
     if (url.pathname === '/api/notifications/read-all' && request.method === 'POST') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
-      await env.DB.prepare(`
-        UPDATE notifications 
-        SET is_read = 1 
-        WHERE user_id = ? OR (user_id IS NULL AND (? = 'admin' OR type = 'broadcast' OR type = 'alert'))
-      `).bind(currentUser.id, currentUser.role).run();
+      const isPrivileged = currentUser.role === 'admin' || currentUser.role === 'superadmin';
+
+      if (isPrivileged) {
+        await env.DB.prepare(`
+          UPDATE notifications 
+          SET is_read = 1 
+          WHERE user_id = ? OR (user_id IS NULL AND type IN ('registration_alert', 'alert', 'broadcast'))
+        `).bind(currentUser.id).run();
+      } else {
+        await env.DB.prepare(`
+          UPDATE notifications 
+          SET is_read = 1 
+          WHERE user_id = ? OR (user_id IS NULL AND type = 'broadcast')
+        `).bind(currentUser.id).run();
+      }
       return jsonResponse({ message: 'All marked as read' });
     }
 
@@ -1350,7 +1589,7 @@ export default {
 
     // Admin: Users List & Management
     if (url.pathname === '/api/users' && request.method === 'GET') {
-      if (!currentUser || currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) return jsonResponse({ error: 'Forbidden' }, 403);
       const status = url.searchParams.get('status');
       const dept = url.searchParams.get('department');
       const search = url.searchParams.get('search');
@@ -1386,7 +1625,7 @@ export default {
 
     // Admin: Approve User
     if (url.pathname.match(/^\/api\/users\/\d+\/approve$/) && request.method === 'PUT') {
-      if (!currentUser || currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) return jsonResponse({ error: 'Forbidden' }, 403);
       const userId = parseInt(url.pathname.split('/')[3], 10);
       const targetUser: any = await env.DB.prepare('SELECT first_name, last_name, email FROM users WHERE id = ?').bind(userId).first();
       if (!targetUser) return jsonResponse({ error: 'User not found' }, 404);
@@ -1419,7 +1658,7 @@ export default {
 
     // Admin: Reject User
     if (url.pathname.match(/^\/api\/users\/\d+\/reject$/) && request.method === 'PUT') {
-      if (!currentUser || currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) return jsonResponse({ error: 'Forbidden' }, 403);
       const userId = parseInt(url.pathname.split('/')[3], 10);
       await env.DB.prepare(`
         UPDATE users 
@@ -1437,7 +1676,7 @@ export default {
 
     // Admin: Change Role
     if (url.pathname.match(/^\/api\/users\/\d+\/role$/) && request.method === 'PUT') {
-      if (!currentUser || currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) return jsonResponse({ error: 'Forbidden' }, 403);
       const userId = parseInt(url.pathname.split('/')[3], 10);
       const body: any = await request.json();
       await env.DB.prepare(`
@@ -1455,7 +1694,7 @@ export default {
 
     // Admin: Delete User
     if (url.pathname.match(/^\/api\/users\/\d+$/) && request.method === 'DELETE') {
-      if (!currentUser || currentUser.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) return jsonResponse({ error: 'Forbidden' }, 403);
       const userId = parseInt(url.pathname.split('/')[3], 10);
       if (userId === currentUser.id) return jsonResponse({ error: 'Cannot delete own account' }, 400);
 

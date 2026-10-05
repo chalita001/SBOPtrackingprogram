@@ -249,6 +249,7 @@ export const translations = {
     roleLayer2: 'Layer 2 (Supervisor — หัวหน้างานระดับกุม)',
     roleLayer3: 'Layer 3 (Manager — ผู้จัดการแผนก)',
     roleAdmin: 'ผู้ดูแลระบบ (Admin)',
+    roleSuperAdmin: 'ผู้ดูแลระบบสูงสุด (Super Admin)',
     roleManager: 'Layer 3 (Manager — ผู้จัดการแผนก)',
     roleSupervisor: 'Layer 2 (Supervisor — หัวหน้างานระดับกุม)',
     roleLeader: 'Layer 1 (Leader — หัวหน้างานระดับต้น)',
@@ -263,6 +264,21 @@ export const translations = {
     newPassword: 'รหัสผ่านใหม่',
     confirmPassword: 'ยืนยันรหัสผ่านใหม่',
     saveChanges: 'บันทึกการเปลี่ยนแปลง',
+
+    // Super Admin Checklist Manager
+    tabChecklistManager: 'จัดการหัวข้อตรวจ (Super Admin)',
+    checklistManagerTitle: 'จัดการหัวข้อตรวจเช็ค SBOP (Super Admin)',
+    checklistManagerSubtitle: 'เพิ่ม ลบ แก้ไขหัวข้อการตรวจเช็คแยกตามแผนกและระดับ Layer ได้อย่างอิสระ',
+    addQuestion: 'เพิ่มข้อตรวจเช็คใหม่',
+    editQuestion: 'แก้ไขข้อตรวจเช็ค',
+    deleteQuestion: 'ลบข้อตรวจเช็ค',
+    deleteQuestionConfirm: 'คุณแน่ใจหรือไม่ว่าต้องการลบข้อตรวจเช็คนี้?',
+    questionNumber: 'ข้อที่ / ลำดับ',
+    questionTh: 'ข้อความคำถาม (ภาษาไทย)',
+    questionEn: 'ข้อความคำถาม (ภาษาอังกฤษ)',
+    categoryLabel: 'หมวดหมู่ (Category)',
+    subcategoryLabel: 'หมวดหมู่ย่อย (Subcategory)',
+    methodLabel: 'วิธีการตรวจ (Inspection Method)',
 
     // Admin Account Manager Table
     accountManagerTitle: 'ระบบจัดการสมาชิกและอนุมัติสิทธิ์ (Admin Member Manager)',
@@ -602,6 +618,7 @@ export const translations = {
     roleLayer2: 'Layer 2 (Supervisor)',
     roleLayer3: 'Layer 3 (Manager)',
     roleAdmin: 'Administrator (Admin)',
+    roleSuperAdmin: 'Super Administrator (Super Admin)',
     roleManager: 'Layer 3 (Manager)',
     roleSupervisor: 'Layer 2 (Supervisor)',
     roleLeader: 'Layer 1 (Leader)',
@@ -616,6 +633,21 @@ export const translations = {
     newPassword: 'New Password',
     confirmPassword: 'Confirm New Password',
     saveChanges: 'Save Changes',
+
+    // Super Admin Checklist Manager
+    tabChecklistManager: 'Checklist Editor (Super Admin)',
+    checklistManagerTitle: 'SBOP Checklist Templates Manager (Super Admin)',
+    checklistManagerSubtitle: 'Freely create, edit, and delete inspection questions by department and layer',
+    addQuestion: 'Add New Question',
+    editQuestion: 'Edit Question',
+    deleteQuestion: 'Delete Question',
+    deleteQuestionConfirm: 'Are you sure you want to delete this checklist question?',
+    questionNumber: 'Item Order / #',
+    questionTh: 'Question (Thai)',
+    questionEn: 'Question (English)',
+    categoryLabel: 'Category',
+    subcategoryLabel: 'Subcategory',
+    methodLabel: 'Inspection Method',
 
     // Admin Account Manager Table
     accountManagerTitle: 'Member Account Management & Approval',

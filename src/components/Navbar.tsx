@@ -15,7 +15,8 @@ import {
   Bell,
   Database,
   Cloud,
-  BarChart3
+  BarChart3,
+  Sliders
 } from 'lucide-react';
 import { TELogo } from './TELogo';
 
@@ -26,6 +27,7 @@ interface NavbarProps {
   onOpenRegister: () => void;
   onOpenAccountInfo: () => void;
   onOpenNotifications: () => void;
+  onOpenChecklistManager?: () => void;
   unreadNotificationsCount?: number;
 }
 
@@ -36,9 +38,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRegister,
   onOpenAccountInfo,
   onOpenNotifications,
+  onOpenChecklistManager,
   unreadNotificationsCount = 0,
 }) => {
   const { user, logout, language, toggleLanguage, t } = useAuth();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isSuperAdmin = user?.role === 'superadmin';
 
   return (
     <header className="bg-[#1A1D21] text-white shadow-xl sticky top-0 z-40 border-b border-slate-800">
@@ -144,8 +149,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
             </button>
 
-            {/* Admin only Tabs: Dashboard & Account Manager */}
-            {user?.role === 'admin' && (
+            {/* Admin/Superadmin Tabs: Dashboard, Account Manager & Checklist Editor */}
+            {isAdmin && (
               <>
                 <button
                   onClick={() => setActiveTab('dashboard')}
@@ -170,6 +175,23 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <Users className="w-4 h-4 shrink-0" />
                   <span>{language === 'th' ? 'จัดการสมาชิก' : 'Members'}</span>
                 </button>
+
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => {
+                      if (onOpenChecklistManager) {
+                        onOpenChecklistManager();
+                      } else {
+                        setActiveTab('checklist');
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition bg-purple-950/70 hover:bg-purple-900 text-purple-300 hover:text-white border border-purple-500/40 shadow-xs"
+                    title={language === 'th' ? 'ระบบจัดการหัวข้อตรวจเช็ค (Super Admin)' : 'Checklist Templates Manager (Super Admin)'}
+                  >
+                    <Sliders className="w-4 h-4 text-purple-400 shrink-0" />
+                    <span>{language === 'th' ? 'จัดการเช็คลิสต์' : 'Checklists'}</span>
+                  </button>
+                )}
               </>
             )}
           </nav>
@@ -211,7 +233,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
                       <span>@{user.username || user.email?.split('@')[0]}</span>
                       <span>•</span>
-                      <span className="capitalize font-semibold text-[#F37021]">{user.role}</span>
+                      <span className={`capitalize font-semibold ${user.role === 'superadmin' ? 'text-purple-300 font-bold' : 'text-[#F37021]'}`}>
+                        {user.role === 'superadmin' ? '👑 Super Admin' : user.role}
+                      </span>
                     </div>
                   </div>
                 </button>
@@ -285,7 +309,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <AlertTriangle className="w-4 h-4 text-amber-400" />
             <span className="text-[10px]">{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
           </button>
-          {user?.role === 'admin' && (
+          {isAdmin && (
             <>
               <button
                 onClick={() => setActiveTab('dashboard')}
@@ -305,6 +329,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <Users className="w-4 h-4 text-orange-400" />
                 <span className="text-[10px]">{language === 'th' ? 'สมาชิก' : 'Members'}</span>
               </button>
+              {isSuperAdmin && (
+                <button
+                  onClick={() => {
+                    if (onOpenChecklistManager) {
+                      onOpenChecklistManager();
+                    } else {
+                      setActiveTab('checklist');
+                    }
+                  }}
+                  className="flex flex-col items-center gap-0.5 py-1 px-2 rounded-lg shrink-0 transition text-purple-300 hover:text-white"
+                >
+                  <Sliders className="w-4 h-4 text-purple-400" />
+                  <span className="text-[10px]">{language === 'th' ? 'เช็คลิสต์' : 'Templates'}</span>
+                </button>
+              )}
             </>
           )}
         </div>

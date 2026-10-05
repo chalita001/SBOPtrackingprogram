@@ -26,10 +26,12 @@ import {
   ChevronRight,
   Eye,
   Hash,
-  Tag
+  Tag,
+  Sliders
 } from 'lucide-react';
 import { PriorLayerChecklistView } from './PriorLayerChecklistView';
 import { InspectionCodeHistoryModal } from './InspectionCodeHistoryModal';
+import { ChecklistManagerModal } from './ChecklistManagerModal';
 import { localizeQuestion, localizeCategory, localizeSubcategory, localizeMethod } from '../i18n/translations';
 
 interface ChecklistItemState {
@@ -59,11 +61,11 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const currentMonth = new Date().getMonth() + 1;
   const currentDateStr = new Date().toISOString().split('T')[0];
 
-  // Determine user role layer: Layer 1, Layer 2, Layer 3, or null for admin (Admin can select any)
+  // Determine user role layer: Layer 1, Layer 2, Layer 3, or null for admin/superadmin (Admin/Superadmin can select any)
   const userRoleLayer = React.useMemo<'Layer 1' | 'Layer 2' | 'Layer 3' | null>(() => {
     if (!user) return null;
     const r = (user.role || '').toLowerCase();
-    if (r === 'admin') return null; // Admin can inspect any layer
+    if (r === 'admin' || r === 'superadmin') return null; // Admin and Super Admin can inspect any layer
     if (r === 'layer3' || r === 'manager') return 'Layer 3';
     if (r === 'layer2' || r === 'supervisor') return 'Layer 2';
     return 'Layer 1'; // layer1, leader, inspector, staff, default
@@ -86,6 +88,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [isCustomCode, setIsCustomCode] = useState<boolean>(false);
   const [customCodeInput, setCustomCodeInput] = useState<string>('');
   const [showCodeHistoryModal, setShowCodeHistoryModal] = useState<boolean>(false);
+  const [showChecklistManager, setShowChecklistManager] = useState<boolean>(false);
+  const [checklistVersion, setChecklistVersion] = useState<number>(0);
 
   // Next available numeric code (e.g. 001, 002, 003...)
   const nextAvailableCode = React.useMemo(() => {
@@ -115,8 +119,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [priorLayersData, setPriorLayersData] = useState<{ layer1: any; layer2: any } | null>(null);
   const [loadingPrior, setLoadingPrior] = useState<boolean>(false);
 
-  // Is department locked? (Locked if user has a department and is not admin)
-  const isDeptLocked = Boolean(user?.department && user.role !== 'admin');
+  // Is department locked? (Locked if user has a department and is not admin/superadmin)
+  const isPrivilegedUser = user?.role === 'admin' || user?.role === 'superadmin';
+  const isDeptLocked = Boolean(user?.department && !isPrivilegedUser);
 
   // Enforce layer lock when userRoleLayer is set
   useEffect(() => {
@@ -129,7 +134,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   useEffect(() => {
     api.getDepartments().then((data) => {
       setDepartments(data || []);
-      if (user?.department && user.role !== 'admin') {
+      if (user?.department && !isPrivilegedUser) {
         setDepartmentCode(user.department);
       }
     }).catch(console.error);
@@ -137,7 +142,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     api.getUsersDirectory().then((data) => {
       setUsersDirectory(data || []);
     }).catch(console.error);
-  }, [user]);
+  }, [user, isPrivilegedUser]);
 
   // Load inspection batch codes for department & month
   const fetchCodes = async () => {
@@ -287,7 +292,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     return () => {
       isMounted = false;
     };
-  }, [departmentCode, layer, language]);
+  }, [departmentCode, layer, language, checklistVersion]);
 
   // Handle Result change (OK, NO)
   const handleResultChange = (index: number, result: 'OK' | 'NO') => {
@@ -503,6 +508,17 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               </p>
             </div>
           </div>
+
+          {user?.role === 'superadmin' && (
+            <button
+              type="button"
+              onClick={() => setShowChecklistManager(true)}
+              className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5 self-start lg:self-center shrink-0 border border-purple-400/30"
+            >
+              <Sliders className="w-4 h-4 text-purple-200" />
+              <span>{language === 'th' ? '⚙️ จัดการข้อตรวจเช็ค (Super Admin)' : '⚙️ Checklist Manager (Super Admin)'}</span>
+            </button>
+          )}
         </div>
 
         {/* Feedback Alert */}
@@ -1455,6 +1471,17 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         year={year}
         month={month}
       />
+
+      {/* Super Admin Checklist Templates Manager Modal */}
+      {user?.role === 'superadmin' && (
+        <ChecklistManagerModal
+          isOpen={showChecklistManager}
+          onClose={() => setShowChecklistManager(false)}
+          initialDepartment={departmentCode}
+          initialLayer={layer}
+          onUpdated={() => setChecklistVersion((v) => v + 1)}
+        />
+      )}
     </div>
   );
 };

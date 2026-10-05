@@ -48,7 +48,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
 
-      if (user?.role === 'admin') {
+      if (user?.role === 'admin' || user?.role === 'superadmin') {
         const uData = await api.getUsers({ status: 'approved' });
         setUsersList(uData.users || []);
       }
@@ -179,7 +179,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
               </button>
             )}
 
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <button
                 type="button"
                 onClick={() => setShowSendForm(!showSendForm)}
@@ -192,8 +192,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
           </div>
         </div>
 
-        {/* Send Alert Form (Admin only) */}
-        {showSendForm && user?.role === 'admin' && (
+        {/* Send Alert Form (Admin & Superadmin only) */}
+        {showSendForm && (user?.role === 'admin' || user?.role === 'superadmin') && (
           <form onSubmit={handleSendNotification} className="p-4 bg-orange-50/50 border-b border-orange-100 space-y-3 shrink-0 animate-fadeIn">
             <div className="font-bold text-xs text-slate-800 flex items-center gap-1.5">
               <Send className="w-3.5 h-3.5 text-[#F37021]" />

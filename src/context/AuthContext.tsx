@@ -13,7 +13,7 @@ export interface User {
   position: string;
   responsibleArea?: string;
   avatarUrl?: string;
-  role: 'admin' | 'layer1' | 'layer2' | 'layer3' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
+  role: 'superadmin' | 'admin' | 'layer1' | 'layer2' | 'layer3' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
   status: 'pending' | 'approved' | 'rejected';
 }
 

@@ -116,7 +116,7 @@ export const InspectionHistory: React.FC = () => {
 
         {/* User Scope Indicator: Admin Sees All vs User Sees Own */}
         <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-          {user?.role === 'admin' ? (
+          {(user?.role === 'admin' || user?.role === 'superadmin') ? (
             <div className="flex items-center gap-2 text-purple-900 bg-purple-50 px-3.5 py-1.5 rounded-xl border border-purple-200">
               <span className="font-bold">{t.adminModeBadge}</span>
               <span>{t.adminModeDesc}</span>
@@ -308,7 +308,7 @@ export const InspectionHistory: React.FC = () => {
                     <FileText className="w-3.5 h-3.5" />
                     <span>{language === 'th' ? 'สายตรวจ' : 'Trail'}</span>
                   </button>
-                  {(user?.role === 'admin' || user?.id === ins.auditor_id) && (
+                  {(user?.role === 'admin' || user?.role === 'superadmin' || user?.id === ins.auditor_id) && (
                     <button
                       onClick={() => handleDelete(ins.id)}
                       className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition"
@@ -443,7 +443,7 @@ export const InspectionHistory: React.FC = () => {
                         >
                           <FileText className="w-4 h-4" />
                         </button>
-                        {(user?.role === 'admin' || user?.id === ins.auditor_id) && (
+                        {(user?.role === 'admin' || user?.role === 'superadmin' || user?.id === ins.auditor_id) && (
                           <button
                             onClick={() => handleDelete(ins.id)}
                             className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition"

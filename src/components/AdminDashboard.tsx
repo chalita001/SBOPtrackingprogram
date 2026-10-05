@@ -109,13 +109,15 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
     }
   };
 
+  const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
+
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (isPrivileged) {
       fetchDashboardData();
     }
-  }, [selectedYear, selectedMonth, selectedDept]);
+  }, [selectedYear, selectedMonth, selectedDept, isPrivileged]);
 
-  if (user?.role !== 'admin') {
+  if (!isPrivileged) {
     return (
       <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center max-w-xl mx-auto my-12 shadow-sm animate-fadeIn">
         <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
