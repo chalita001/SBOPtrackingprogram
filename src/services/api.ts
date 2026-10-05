@@ -77,6 +77,10 @@ export const api = {
     if (code) url += `&code=${encodeURIComponent(code)}`;
     return request(url);
   },
+  getCodeHistory: (params: { department?: string; year?: number; month?: number; code: string }) => {
+    const query = new URLSearchParams(params as any).toString();
+    return request(`/inspections/code-history?${query}`);
+  },
   createInspection: (data: any) => request('/inspections', { method: 'POST', body: JSON.stringify(data) }),
   deleteInspection: (id: number) => request(`/inspections/${id}`, { method: 'DELETE' }),
   updateInspectionItems: (id: number, items: any[]) =>

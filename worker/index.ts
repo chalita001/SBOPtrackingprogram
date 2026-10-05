@@ -693,6 +693,82 @@ export default {
       });
     }
 
+    // Inspection Code History (Audit trail of who audited this code across Layer 1, 2, 3)
+    if (url.pathname === '/api/inspections/code-history' && request.method === 'GET') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const dept = url.searchParams.get('department') || '';
+      const year = parseInt(url.searchParams.get('year') || String(new Date().getFullYear()), 10);
+      const month = parseInt(url.searchParams.get('month') || String(new Date().getMonth() + 1), 10);
+      const code = (url.searchParams.get('code') || url.searchParams.get('inspection_code') || '').trim();
+
+      if (!code) {
+        return jsonResponse({ error: 'Inspection code is required' }, 400);
+      }
+
+      let sql = `
+        SELECT i.*, d.name_th as department_name_th, d.name_en as department_name_en,
+               u.username as auditor_username, u.position as auditor_position, u.avatar_url as auditor_avatar,
+               (SELECT COUNT(*) FROM inspection_items WHERE inspection_id = i.id AND result = 'NO') as defects_count
+        FROM inspections i
+        LEFT JOIN departments d ON i.department_code = d.code
+        LEFT JOIN users u ON i.auditor_id = u.id
+        WHERE i.inspection_code = ?
+      `;
+      const params: any[] = [code];
+      if (dept && dept !== 'all') {
+        sql += ' AND i.department_code = ?';
+        params.push(dept);
+      }
+      if (year) {
+        sql += ' AND i.year = ?';
+        params.push(year);
+      }
+      if (month) {
+        sql += ' AND i.month = ?';
+        params.push(month);
+      }
+
+      sql += `
+        ORDER BY CASE 
+          WHEN i.layer = 'Layer 1' THEN 1 
+          WHEN i.layer = 'Layer 2' THEN 2 
+          WHEN i.layer = 'Layer 3' THEN 3 
+          ELSE 4 
+        END ASC, i.id ASC
+      `;
+
+      const { results: inspectionsList } = await env.DB.prepare(sql).bind(...params).all();
+
+      const fullLayers: any[] = [];
+      for (const ins of (inspectionsList || [])) {
+        const { results: items } = await env.DB.prepare(
+          'SELECT * FROM inspection_items WHERE inspection_id = ? ORDER BY id ASC'
+        ).bind(ins.id).all();
+        fullLayers.push({
+          ...ins,
+          items: items || [],
+        });
+      }
+
+      const layer1 = fullLayers.find(l => l.layer === 'Layer 1') || null;
+      const layer2 = fullLayers.find(l => l.layer === 'Layer 2') || null;
+      const layer3 = fullLayers.find(l => l.layer === 'Layer 3') || null;
+
+      return jsonResponse({
+        inspectionCode: code,
+        departmentCode: dept || fullLayers[0]?.department_code || '',
+        year: year || fullLayers[0]?.year || new Date().getFullYear(),
+        month: month || fullLayers[0]?.month || (new Date().getMonth() + 1),
+        mcAndProducts: fullLayers[0]?.mc_and_products || '',
+        shift: fullLayers[0]?.shift || '',
+        totalRounds: fullLayers.length,
+        layers: fullLayers,
+        layer1,
+        layer2,
+        layer3,
+      });
+    }
+
     // Inspections: List & Create
     if (url.pathname === '/api/inspections') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -773,6 +849,23 @@ export default {
         const totalEvaluated = totalOk + totalNo;
         const scorePercent = totalEvaluated > 0 ? Number(((totalOk / totalEvaluated) * 100).toFixed(2)) : 100.0;
         const auditorName = `${currentUser.firstName} ${currentUser.lastName}`;
+
+        // Check: Each inspection_code can only be inspected once by Layer 1!
+        // "แต่ละ Layer1 จะตรวจได้เพียงครั้งเดียว ตัวอย่าง Layer1 ตรวจแล้วจะไม่สามารถ สร้าง 001 ได้อีก"
+        if (layer === 'Layer 1') {
+          const cleanCode = (inspectionCode || '001').trim();
+          const existingL1: any = await env.DB.prepare(`
+            SELECT id, auditor_name, audit_date, mc_and_products 
+            FROM inspections 
+            WHERE department_code = ? AND year = ? AND month = ? AND inspection_code = ? AND layer = 'Layer 1'
+          `).bind(departmentCode.toUpperCase(), parseInt(year, 10), parseInt(month, 10), cleanCode).first();
+
+          if (existingL1) {
+            return jsonResponse({
+              error: `รหัสเอกสาร #${cleanCode} ในแผนก ${departmentCode} ได้รับการตรวจโดย Layer 1 ไปแล้ว (โดย ${existingL1.auditor_name} เมื่อ ${existingL1.audit_date}) แต่ละรหัสเอกสารในระดับ Layer 1 สามารถตรวจได้เพียงครั้งเดียว ไม่สามารถสร้างซ้ำได้ กรุณาใช้รหัสใหม่ เช่น รหัสถัดไป`,
+            }, 400);
+          }
+        }
 
         const insResult = await env.DB.prepare(`
           INSERT INTO inspections (

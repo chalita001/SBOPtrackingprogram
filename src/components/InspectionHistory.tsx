@@ -14,8 +14,10 @@ import {
   RefreshCw, 
   X, 
   ExternalLink,
-  Search
+  Search,
+  FileText
 } from 'lucide-react';
+import { InspectionCodeHistoryModal } from './InspectionCodeHistoryModal';
 
 export const InspectionHistory: React.FC = () => {
   const { user, t, language } = useAuth();
@@ -33,6 +35,14 @@ export const InspectionHistory: React.FC = () => {
   const [activeInspection, setActiveInspection] = useState<any | null>(null);
   const [inspectionItems, setInspectionItems] = useState<any[]>([]);
   const [loadingDetails, setLoadingDetails] = useState<boolean>(false);
+
+  // Inspection code audit trail modal
+  const [codeHistoryTarget, setCodeHistoryTarget] = useState<{
+    code: string;
+    department: string;
+    year?: number;
+    month?: number;
+  } | null>(null);
 
   const loadHistory = async () => {
     setLoading(true);
@@ -234,9 +244,20 @@ export const InspectionHistory: React.FC = () => {
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1.5">
                         <span className="font-bold text-slate-900">{ins.audit_date}</span>
-                        <span className="px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[10px] font-bold">
-                          #{ins.inspection_code || '001'}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setCodeHistoryTarget({
+                            code: ins.inspection_code || '001',
+                            department: ins.department_code,
+                            year: ins.year,
+                            month: ins.month,
+                          })}
+                          className="px-1.5 py-0.5 rounded-md bg-sky-100 hover:bg-sky-200 text-sky-800 text-[10px] font-bold transition flex items-center gap-0.5 border border-sky-200 cursor-pointer shadow-2xs"
+                          title={language === 'th' ? `คลิกเพื่อดูประวัติสายการตรวจรหัส #${ins.inspection_code || '001'}` : `Click to view audit trail for code #${ins.inspection_code || '001'}`}
+                        >
+                          <span>#{ins.inspection_code || '001'}</span>
+                          <ExternalLink className="w-2.5 h-2.5 text-sky-600" />
+                        </button>
                       </div>
                       <div className="text-[11px] text-slate-500">{ins.shift}</div>
                     </td>
@@ -297,6 +318,18 @@ export const InspectionHistory: React.FC = () => {
                           title={t.viewFullRecord}
                         >
                           <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setCodeHistoryTarget({
+                            code: ins.inspection_code || '001',
+                            department: ins.department_code,
+                            year: ins.year,
+                            month: ins.month,
+                          })}
+                          className="p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition"
+                          title={language === 'th' ? `ดูประวัติสายการตรวจรหัส #${ins.inspection_code || '001'}` : `View Code #${ins.inspection_code || '001'} Audit Trail`}
+                        >
+                          <FileText className="w-4 h-4" />
                         </button>
                         {(user?.role === 'admin' || user?.id === ins.auditor_id) && (
                           <button
@@ -439,6 +472,18 @@ export const InspectionHistory: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Multi-Layer Code Audit Trail Modal */}
+      {codeHistoryTarget && (
+        <InspectionCodeHistoryModal
+          isOpen={Boolean(codeHistoryTarget)}
+          onClose={() => setCodeHistoryTarget(null)}
+          departmentCode={codeHistoryTarget.department}
+          inspectionCode={codeHistoryTarget.code}
+          year={codeHistoryTarget.year}
+          month={codeHistoryTarget.month}
+        />
       )}
     </div>
   );

@@ -29,6 +29,7 @@ import {
   Tag
 } from 'lucide-react';
 import { PriorLayerChecklistView } from './PriorLayerChecklistView';
+import { InspectionCodeHistoryModal } from './InspectionCodeHistoryModal';
 import { localizeQuestion, localizeCategory, localizeSubcategory, localizeMethod } from '../i18n/translations';
 
 interface ChecklistItemState {
@@ -84,6 +85,23 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [availableCodes, setAvailableCodes] = useState<any[]>([]);
   const [isCustomCode, setIsCustomCode] = useState<boolean>(false);
   const [customCodeInput, setCustomCodeInput] = useState<string>('');
+  const [showCodeHistoryModal, setShowCodeHistoryModal] = useState<boolean>(false);
+
+  // Next available numeric code (e.g. 001, 002, 003...)
+  const nextAvailableCode = React.useMemo(() => {
+    const usedNums = availableCodes
+      .map((c: any) => parseInt(c.inspection_code, 10))
+      .filter((n: number) => !isNaN(n));
+    let next = 1;
+    while (usedNums.includes(next)) {
+      next++;
+    }
+    return String(next).padStart(3, '0');
+  }, [availableCodes]);
+
+  // Check if selected code was already inspected by Layer 1
+  const selectedCodeObj = availableCodes.find((c: any) => c.inspection_code === inspectionCode);
+  const isL1CodeTaken = layer === 'Layer 1' && Boolean(selectedCodeObj?.has_layer1);
 
   // Items State
   const [items, setItems] = useState<ChecklistItemState[]>([]);
@@ -136,21 +154,48 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   useEffect(() => {
     fetchCodes().then((codes) => {
       if (codes && codes.length > 0) {
-        // If current inspectionCode is not in codes, select first code
-        const exists = codes.some((c: any) => c.inspection_code === inspectionCode);
-        if (!exists) {
-          const first = codes[0];
-          setInspectionCode(first.inspection_code);
-          if (first.mc_and_products && !mcAndProducts) {
-            setMcAndProducts(first.mc_and_products);
+        if (layer === 'Layer 1') {
+          // If current code already has Layer 1, prefer an unused code or the next code
+          const currentItem = codes.find((c: any) => c.inspection_code === inspectionCode);
+          if (currentItem?.has_layer1) {
+            const availableForL1 = codes.find((c: any) => !c.has_layer1);
+            if (availableForL1) {
+              setInspectionCode(availableForL1.inspection_code);
+              if (availableForL1.mc_and_products) setMcAndProducts(availableForL1.mc_and_products);
+              if (availableForL1.shift) setShift(availableForL1.shift);
+            } else {
+              const usedNums = codes.map((c: any) => parseInt(c.inspection_code, 10)).filter((n: number) => !isNaN(n));
+              let next = 1;
+              while (usedNums.includes(next)) next++;
+              const formatted = String(next).padStart(3, '0');
+              setInspectionCode(formatted);
+              setIsCustomCode(true);
+              setCustomCodeInput(formatted);
+            }
+          } else {
+            const exists = codes.some((c: any) => c.inspection_code === inspectionCode);
+            if (!exists) {
+              const availableForL1 = codes.find((c: any) => !c.has_layer1) || codes[0];
+              setInspectionCode(availableForL1.inspection_code);
+              if (availableForL1.mc_and_products && !mcAndProducts) setMcAndProducts(availableForL1.mc_and_products);
+              if (availableForL1.shift) setShift(availableForL1.shift);
+            }
           }
-          if (first.shift) {
-            setShift(first.shift);
+        } else {
+          // Layer 2 / Layer 3: select first code that HAS Layer 1
+          const codeWithL1 = codes.find((c: any) => c.has_layer1);
+          if (codeWithL1) {
+            const currentItem = codes.find((c: any) => c.inspection_code === inspectionCode);
+            if (!currentItem || !currentItem.has_layer1) {
+              setInspectionCode(codeWithL1.inspection_code);
+              if (codeWithL1.mc_and_products && !mcAndProducts) setMcAndProducts(codeWithL1.mc_and_products);
+              if (codeWithL1.shift) setShift(codeWithL1.shift);
+            }
           }
         }
       }
     });
-  }, [departmentCode, year, month]);
+  }, [departmentCode, year, month, layer]);
 
   // Load prior layers data when layer is Layer 2 or Layer 3, filtered by inspectionCode
   useEffect(() => {
@@ -182,10 +227,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const handleSelectCode = (codeVal: string) => {
     if (codeVal === '__NEW__') {
       setIsCustomCode(true);
-      const nextNum = availableCodes.length + 1;
-      const formatted = String(nextNum).padStart(3, '0');
-      setCustomCodeInput(formatted);
-      setInspectionCode(formatted);
+      setCustomCodeInput(nextAvailableCode);
+      setInspectionCode(nextAvailableCode);
     } else {
       setIsCustomCode(false);
       setInspectionCode(codeVal);
@@ -321,6 +364,18 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   // Save Inspection Form
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isL1CodeTaken) {
+      setFeedback({
+        text: language === 'th'
+          ? `รหัสเอกสาร #${inspectionCode} ได้รับการตรวจโดย Layer 1 ไปแล้ว (${selectedCodeObj?.layer1_auditor || ''}) — ใน Layer 1 ตรวจได้เพียงครั้งเดียวต่อรหัส ไม่สามารถสร้างซ้ำได้ กรุณาใช้รหัสใหม่ เช่น #${nextAvailableCode}`
+          : `Document Code #${inspectionCode} has already been inspected by Layer 1. Each code can only be audited once by Layer 1. Please use a new code like #${nextAvailableCode}.`,
+        type: 'error'
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (!mcAndProducts.trim()) {
       setFeedback({
         text: language === 'en' ? 'Please specify machine and product details (M/C and Products)' : 'กรุณากรอกข้อมูลเครื่องจักรและผลิตภัณฑ์ (M/C and Products)',
@@ -645,6 +700,15 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   >
                     {t.newInspectionCode}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCodeHistoryModal(true)}
+                    className="px-2.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs whitespace-nowrap transition border border-indigo-200 shadow-sm flex items-center gap-1"
+                    title={language === 'th' ? `ดูประวัติรหัส #${inspectionCode}` : `View Code #${inspectionCode} History`}
+                  >
+                    <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>{language === 'th' ? 'ประวัติ' : 'History'}</span>
+                  </button>
                 </div>
               ) : (
                 <div className="flex gap-2">
@@ -671,6 +735,50 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       {language === 'th' ? 'เลือกรหัสเดิม' : 'Existing Code'}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => setShowCodeHistoryModal(true)}
+                    className="px-2.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs whitespace-nowrap transition border border-indigo-200 shadow-sm flex items-center gap-1"
+                    title={language === 'th' ? `ดูประวัติรหัส #${inspectionCode}` : `View Code #${inspectionCode} History`}
+                  >
+                    <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>{language === 'th' ? 'ประวัติ' : 'History'}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Warning when code already audited by Layer 1 */}
+              {isL1CodeTaken && (
+                <div className="mt-2.5 p-3 bg-red-50 border border-red-300 rounded-xl text-xs text-red-950 space-y-2 animate-fadeIn shadow-sm">
+                  <div className="flex items-center gap-1.5 font-bold text-red-800">
+                    <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                    <span>{language === 'th' ? `รหัส #${inspectionCode} ตรวจโดย Layer 1 เรียบร้อยแล้ว` : `Code #${inspectionCode} already audited by Layer 1`}</span>
+                  </div>
+                  <p className="text-[11px] text-red-700 leading-relaxed">
+                    {language === 'th'
+                      ? `(ผู้ตรวจ: ${selectedCodeObj?.layer1_auditor || '-'}) แต่ละรหัสสามารถตรวจในระดับ Layer 1 ได้เพียงครั้งเดียว ไม่สามารถสร้างซ้ำได้`
+                      : `(Auditor: ${selectedCodeObj?.layer1_auditor || '-'}) Each code can only be audited once by Layer 1. Duplicate submission is disabled.`}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomCode(true);
+                        setCustomCodeInput(nextAvailableCode);
+                        setInspectionCode(nextAvailableCode);
+                      }}
+                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs transition shadow-sm"
+                    >
+                      {language === 'th' ? `✨ ใช้รหัสใหม่ถัดไป (#${nextAvailableCode})` : `✨ Use Next Code (#${nextAvailableCode})`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowCodeHistoryModal(true)}
+                      className="px-3 py-1.5 bg-white border border-red-300 hover:bg-red-50 text-red-800 font-semibold rounded-lg text-xs transition"
+                    >
+                      {language === 'th' ? `👁️ ดูประวัติรหัส #${inspectionCode}` : `View Code History`}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1298,7 +1406,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               <div className="flex items-center gap-3 w-full sm:w-auto">
                 <button
                   type="submit"
-                  disabled={saving || loading || items.length === 0}
+                  disabled={saving || loading || items.length === 0 || isL1CodeTaken}
+                  title={isL1CodeTaken ? (language === 'th' ? 'รหัสนี้ตรวจโดย Layer 1 ไปแล้ว ไม่สามารถสร้างซ้ำได้' : 'Code already inspected by Layer 1') : undefined}
                   className="w-full sm:w-auto px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl shadow-lg shadow-sky-600/20 text-xs transition flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
@@ -1309,6 +1418,16 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           </div>
         </form>
       </div>
+
+      {/* Inspection Code Multi-Layer History Modal */}
+      <InspectionCodeHistoryModal
+        isOpen={showCodeHistoryModal}
+        onClose={() => setShowCodeHistoryModal(false)}
+        departmentCode={departmentCode}
+        inspectionCode={inspectionCode}
+        year={year}
+        month={month}
+      />
     </div>
   );
 };
