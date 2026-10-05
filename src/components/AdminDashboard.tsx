@@ -16,8 +16,10 @@ import {
   Clock,
   ChevronRight,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  FileSpreadsheet
 } from 'lucide-react';
+import { ExportDataModal } from './ExportDataModal';
 
 interface DashboardStats {
   overall: {
@@ -111,23 +113,13 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
   const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
 
-  useEffect(() => {
-    if (isPrivileged) {
-      fetchDashboardData();
-    }
-  }, [selectedYear, selectedMonth, selectedDept, isPrivileged]);
+  // Export Modal state (Admin & Superadmin)
+  const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [exportModalTab, setExportModalTab] = useState<'excel' | 'images'>('excel');
 
-  if (!isPrivileged) {
-    return (
-      <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center max-w-xl mx-auto my-12 shadow-sm animate-fadeIn">
-        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-        <h2 className="text-lg font-bold text-red-900">{t.accessDeniedTitle}</h2>
-        <p className="text-xs text-red-700 mt-2">
-          {t.accessDeniedDesc}
-        </p>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchDashboardData();
+  }, [selectedYear, selectedMonth, selectedDept]);
 
   const overall = stats?.overall;
   const avgScore = overall?.average_score ?? 100;
@@ -229,15 +221,47 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             </div>
           </div>
 
-          {/* Refresh Button */}
-          <button
-            onClick={fetchDashboardData}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50 w-full sm:w-auto"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>{t.updateData}</span>
-          </button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            {/* Refresh Button */}
+            <button
+              onClick={fetchDashboardData}
+              disabled={loading}
+              className="flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50 flex-1 sm:flex-initial"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>{t.updateData}</span>
+            </button>
+
+            {/* Export Buttons for Admin & Super Admin */}
+            {isPrivileged && (
+              <>
+                <button
+                  onClick={() => {
+                    setExportModalTab('excel');
+                    setShowExportModal(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-900/20 flex-1 sm:flex-initial"
+                  title={language === 'th' ? 'ส่งออกข้อมูลการตรวจและสถิติเป็น Excel / CSV' : 'Export audits and metrics to Excel / CSV'}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>{t.exportExcelBtn || 'Export Excel'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setExportModalTab('images');
+                    setShowExportModal(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-900/20 flex-1 sm:flex-initial"
+                  title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็นไฟล์ ZIP หรือพิมพ์แค็ตตาล็อกรูปภาพ' : 'Export defect photos to ZIP or print catalog'}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -708,6 +732,15 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             </div>
           </div>
         </div>
+      )}
+
+      {/* Export Center Modal (Admin & Super Admin) */}
+      {isPrivileged && (
+        <ExportDataModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          defaultTab={exportModalTab}
+        />
       )}
     </div>
   );

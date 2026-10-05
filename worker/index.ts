@@ -1348,9 +1348,7 @@ export default {
 
     // Admin Dashboard Statistics
     if (url.pathname === '/api/dashboard/stats' && request.method === 'GET') {
-      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) {
-        return jsonResponse({ error: 'Forbidden: Admin access required' }, 403);
-      }
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
 
       const year = url.searchParams.get('year');
       const month = url.searchParams.get('month');
@@ -1435,6 +1433,135 @@ export default {
         layerStats,
         recentDefects,
         userCounts,
+      });
+    }
+
+    // Admin & SuperAdmin: Comprehensive Data Export (Excel & Photos)
+    if (url.pathname === '/api/export/data' && request.method === 'GET') {
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) {
+        return jsonResponse({ error: 'Forbidden: Admin access required for data export' }, 403);
+      }
+
+      const year = url.searchParams.get('year');
+      const month = url.searchParams.get('month');
+      const dept = url.searchParams.get('department');
+      const layer = url.searchParams.get('layer');
+
+      let insSql = 'SELECT i.*, d.name_th as department_name_th FROM inspections i LEFT JOIN departments d ON i.department_code = d.code WHERE 1=1';
+      const insParams: any[] = [];
+      if (year && year !== 'all') { insSql += ' AND i.year = ?'; insParams.push(parseInt(year, 10)); }
+      if (month && month !== 'all') { insSql += ' AND i.month = ?'; insParams.push(parseInt(month, 10)); }
+      if (dept && dept !== 'all') { insSql += ' AND i.department_code = ?'; insParams.push(dept); }
+      if (layer && layer !== 'all') { insSql += ' AND i.layer = ?'; insParams.push(layer); }
+      insSql += ' ORDER BY i.audit_date DESC, i.id DESC';
+
+      const { results: inspections } = await env.DB.prepare(insSql).bind(...insParams).all();
+
+      // Defects with photos
+      let defSql = `
+        SELECT 
+          ii.id, ii.inspection_id, ii.layer, ii.category, ii.subcategory, ii.question,
+          ii.result, ii.finding_topic, ii.severity, ii.action_plan, ii.responsible_person,
+          ii.due_date, ii.image_url, ii.image_key, ii.created_at,
+          i.department_code, i.inspection_code, i.audit_date, i.shift, i.mc_and_products, i.auditor_name
+        FROM inspection_items ii
+        JOIN inspections i ON ii.inspection_id = i.id
+        WHERE ii.result = 'NO'
+      `;
+      const defParams: any[] = [];
+      if (year && year !== 'all') { defSql += ' AND i.year = ?'; defParams.push(parseInt(year, 10)); }
+      if (month && month !== 'all') { defSql += ' AND i.month = ?'; defParams.push(parseInt(month, 10)); }
+      if (dept && dept !== 'all') { defSql += ' AND i.department_code = ?'; defParams.push(dept); }
+      if (layer && layer !== 'all') { defSql += ' AND ii.layer = ?'; defParams.push(layer); }
+      defSql += ' ORDER BY ii.id DESC';
+
+      const { results: defects } = await env.DB.prepare(defSql).bind(...defParams).all();
+
+      // Users directory
+      const { results: users } = await env.DB.prepare(`
+        SELECT id, username, first_name, last_name, email, department, position, role, status, approved_at, created_at
+        FROM users ORDER BY department ASC, first_name ASC
+      `).all();
+
+      // Summary
+      const summary = await env.DB.prepare(`
+        SELECT 
+          COUNT(*) as total_inspections,
+          COALESCE(SUM(total_ok), 0) as grand_total_ok,
+          COALESCE(SUM(total_no), 0) as grand_total_no,
+          COALESCE(ROUND(AVG(score_percent), 2), 100.0) as average_score
+        FROM inspections
+      `).first();
+
+      return jsonResponse({
+        inspections: inspections || [],
+        defects: defects || [],
+        users: users || [],
+        summary,
+      });
+    }
+
+    // Defects: Delete / Resolve Defect Item and Remove Associated Photo from Cloudflare R2
+    if (url.pathname.match(/^\/api\/defects\/\d+$/) && request.method === 'DELETE') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const itemId = parseInt(url.pathname.split('/')[3], 10);
+
+      const item: any = await env.DB.prepare('SELECT * FROM inspection_items WHERE id = ?').bind(itemId).first();
+      if (!item) return jsonResponse({ error: 'Defect item not found' }, 404);
+
+      // Delete photo from Cloudflare R2 if it exists
+      if (item.image_key) {
+        try {
+          await env.R2_BUCKET.delete(item.image_key);
+        } catch (e) {
+          console.warn('Failed to delete image_key from R2:', e);
+        }
+      }
+      if (item.image_url) {
+        try {
+          const rawKey = item.image_url.replace(/^\/api\/r2\//, '').replace(/^r2sbop\//, '').replace(/^\/+/, '');
+          if (rawKey) {
+            await env.R2_BUCKET.delete(rawKey);
+          }
+        } catch (e) {
+          console.warn('Failed to delete image_url from R2:', e);
+        }
+      }
+
+      // Mark defect as resolved ('OK') and clear defect fields
+      await env.DB.prepare(`
+        UPDATE inspection_items
+        SET result = 'OK', finding_topic = NULL, severity = NULL, action_plan = NULL, responsible_person = NULL, due_date = NULL, image_url = NULL, image_key = NULL
+        WHERE id = ?
+      `).bind(itemId).run();
+
+      // Recalculate parent inspection counts and score
+      const inspectionId = item.inspection_id;
+      const counts: any = await env.DB.prepare(`
+        SELECT 
+          SUM(CASE WHEN result = 'OK' THEN 1 ELSE 0 END) as total_ok,
+          SUM(CASE WHEN result = 'NO' THEN 1 ELSE 0 END) as total_no,
+          SUM(CASE WHEN result = 'N/A' THEN 1 ELSE 0 END) as total_na
+        FROM inspection_items WHERE inspection_id = ?
+      `).bind(inspectionId).first();
+
+      const pOk = counts?.total_ok || 0;
+      const pNo = counts?.total_no || 0;
+      const pNa = counts?.total_na || 0;
+      const pTotal = pOk + pNo;
+      const pScore = pTotal > 0 ? Number(((pOk / pTotal) * 100).toFixed(2)) : 100.0;
+
+      await env.DB.prepare(`
+        UPDATE inspections 
+        SET total_ok = ?, total_no = ?, total_na = ?, score_percent = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(pOk, pNo, pNa, pScore, inspectionId).run();
+
+      return jsonResponse({
+        message: 'ลบข้อผิดพลาดที่ได้รับการแก้ไขแล้ว และลบรูปภาพหลักฐานออกจากระบบจัดเก็บเรียบร้อยแล้ว',
+        inspectionId,
+        newScore: pScore,
+        totalNo: pNo,
       });
     }
 

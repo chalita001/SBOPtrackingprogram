@@ -13,8 +13,12 @@ import {
   Send,
   Building2,
   RefreshCw,
-  Camera
+  Camera,
+  Trash2,
+  FileSpreadsheet,
+  Image as ImageIcon
 } from 'lucide-react';
+import { ExportDataModal } from './ExportDataModal';
 
 export const DefectTracker: React.FC = () => {
   const { user, t, language } = useAuth();
@@ -22,6 +26,14 @@ export const DefectTracker: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterDept, setFilterDept] = useState<string>('all');
+
+  // Deletion state
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Export Modal state (Admin & Superadmin)
+  const [showExportModal, setShowExportModal] = useState<boolean>(false);
+  const [exportModalTab, setExportModalTab] = useState<'excel' | 'images'>('excel');
 
   // In-App Notification Modal State
   const [notifyModalDefect, setNotifyModalDefect] = useState<any | null>(null);
@@ -81,6 +93,40 @@ export const DefectTracker: React.FC = () => {
     if (filterDept !== 'all' && d.departmentCode !== filterDept) return false;
     return true;
   });
+
+  const handleDeleteResolvedDefect = async (defect: any) => {
+    const confirmMsg = language === 'en'
+      ? `Are you sure you want to remove this resolved defect (#${defect.inspectionCode || '001'} - ${defect.finding_topic || defect.question})?\nThis will permanently delete any associated photo evidence from Cloudflare R2 storage and recalculate the compliance score.`
+      : `คุณต้องการลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว (รหัสตรวจ #${defect.inspectionCode || '001'} - ${defect.finding_topic || defect.question}) ใช่หรือไม่?\nระบบจะลบรูปภาพหลักฐานออกจาก Cloudflare R2 อย่างถาวร และปรับปรุงคะแนนความปลอดภัยของรอบตรวจให้ถูกต้อง`;
+
+    if (!window.confirm(confirmMsg)) {
+      return;
+    }
+
+    setDeletingId(defect.id);
+    setActionMessage(null);
+    try {
+      await api.deleteDefect(defect.id);
+      setActionMessage({
+        type: 'success',
+        text: language === 'en'
+          ? 'Defect resolved and photo evidence permanently deleted from Cloudflare R2 successfully.'
+          : 'ลบข้อผิดพลาดและรูปภาพหลักฐานออกจากระบบจัดเก็บเรียบร้อยแล้ว (อัปเดตสถานะเป็นผ่าน/OK และคำนวณคะแนนใหม่สำเร็จ)',
+      });
+      await loadDefects();
+    } catch (err: any) {
+      console.error('Failed to delete resolved defect:', err);
+      setActionMessage({
+        type: 'error',
+        text: (language === 'en' ? 'Failed to delete defect: ' : 'ไม่สามารถลบข้อผิดพลาดได้: ') + (err.message || 'Unknown error'),
+      });
+    } finally {
+      setDeletingId(null);
+      setTimeout(() => {
+        setActionMessage(null);
+      }, 5000);
+    }
+  };
 
   const handleOpenNotifyModal = async (defect: any) => {
     setNotifyModalDefect(defect);
@@ -203,14 +249,59 @@ export const DefectTracker: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={loadDefects}
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition self-start md:self-center"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>{t.refresh}</span>
-          </button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2 self-start md:self-center">
+            <button
+              onClick={loadDefects}
+              className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>{t.refresh}</span>
+            </button>
+
+            {isPrivileged && (
+              <>
+                <button
+                  onClick={() => {
+                    setExportModalTab('excel');
+                    setShowExportModal(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                  title={language === 'th' ? 'ส่งออกข้อมูลสิ่งผิดปกติเป็น Excel' : 'Export defects to Excel'}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>{t.exportExcelBtn || 'Export Excel'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setExportModalTab('images');
+                    setShowExportModal(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-xs"
+                  title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็น ZIP' : 'Export defect photos to ZIP'}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
+
+        {/* Action Message Banner */}
+        {actionMessage && (
+          <div className={`mt-4 p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2 border animate-fadeIn ${
+            actionMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {actionMessage.type === 'success' ? (
+              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+            )}
+            <span>{actionMessage.text}</span>
+          </div>
+        )}
 
         {/* Criteria Note from TE-EHS-053 */}
         <div className="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1.5">
@@ -384,14 +475,24 @@ export const DefectTracker: React.FC = () => {
                   </div>
                 </div>
 
-                {/* In-app notification reminder button */}
-                <div className="pt-2">
+                {/* Actions: In-app notification & Delete resolved defect */}
+                <div className="pt-2 flex flex-col sm:flex-row items-center gap-2">
                   <button
                     onClick={() => handleOpenNotifyModal(d)}
-                    className="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm"
+                    className="flex-1 w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/80 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs"
                   >
-                    <Bell className="w-3.5 h-3.5 text-amber-600" />
-                    <span>{t.sendAlertEmailBtn}</span>
+                    <Bell className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span className="truncate">{t.sendAlertEmailBtn}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteResolvedDefect(d)}
+                    disabled={deletingId === d.id}
+                    className="w-full sm:w-auto py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-xs disabled:opacity-50 shrink-0"
+                    title={language === 'th' ? 'ลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว พร้อมลบรูปภาพหลักฐานออกจากระบบจัดเก็บ' : 'Delete this defect that has been resolved and permanently delete its photo'}
+                  >
+                    <Trash2 className={`w-3.5 h-3.5 shrink-0 ${deletingId === d.id ? 'animate-spin' : 'text-rose-600'}`} />
+                    <span>{deletingId === d.id ? (language === 'th' ? 'กำลังลบ...' : 'Deleting...') : (t.deleteResolvedDefect || 'ลบข้อผิดพลาด (แก้ไขแล้ว)')}</span>
                   </button>
                 </div>
               </div>
@@ -553,6 +654,15 @@ export const DefectTracker: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Export Center Modal (Admin & Super Admin) */}
+      {isPrivileged && (
+        <ExportDataModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          defaultTab={exportModalTab}
+        />
       )}
     </div>
   );

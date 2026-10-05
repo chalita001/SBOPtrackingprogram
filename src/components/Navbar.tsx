@@ -149,21 +149,22 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
             </button>
 
-            {/* Admin/Superadmin Tabs: Dashboard, Account Manager & Checklist Editor */}
+            {/* Dashboard available to all users */}
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                activeTab === 'dashboard'
+                  ? 'bg-[#F37021] text-white shadow-xs font-bold'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
+              }`}
+            >
+              <BarChart3 className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>{language === 'th' ? 'แดชบอร์ด' : 'Dashboard'}</span>
+            </button>
+
+            {/* Admin/Superadmin Tabs: Account Manager & Checklist Editor */}
             {isAdmin && (
               <>
-                <button
-                  onClick={() => setActiveTab('dashboard')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
-                    activeTab === 'dashboard'
-                      ? 'bg-[#F37021] text-white shadow-xs font-bold'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/70 font-medium'
-                  }`}
-                >
-                  <BarChart3 className="w-4 h-4 shrink-0" />
-                  <span>{language === 'th' ? 'แดชบอร์ด' : 'Dashboard'}</span>
-                </button>
-
                 <button
                   onClick={() => setActiveTab('accounts')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
@@ -309,17 +310,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             <AlertTriangle className="w-4 h-4 text-amber-400" />
             <span className="text-[10px]">{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
           </button>
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
+              activeTab === 'dashboard' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4 text-emerald-400" />
+            <span className="text-[10px]">{t.tabDashboard}</span>
+          </button>
           {isAdmin && (
             <>
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
-                  activeTab === 'dashboard' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <BarChart3 className="w-4 h-4 text-emerald-400" />
-                <span className="text-[10px]">{t.tabDashboard}</span>
-              </button>
               <button
                 onClick={() => setActiveTab('accounts')}
                 className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${

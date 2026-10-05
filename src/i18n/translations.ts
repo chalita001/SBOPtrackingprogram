@@ -230,6 +230,13 @@ export const translations = {
     zeroDefectsBanner: 'ไม่พบประเด็นข้อบกพร่องตามตัวกรองที่เลือก (Zero Defects Found)',
     accessDeniedTitle: 'การเข้าถึงถูกจำกัด (Access Denied)',
     accessDeniedDesc: 'หน้านี้สงวนไว้สำหรับผู้ดูแลระบบ (Admin) เท่านั้น บัญชีของคุณไม่มีสิทธิ์ในการดูข้อมูลแดชบอร์ดบริหารนี้',
+    exportExcelBtn: 'Export Excel',
+    exportImagesBtn: 'Export รูปภาพ',
+    exportDataTitle: 'ส่งออกข้อมูลและรูปภาพ (Export Center)',
+    deleteResolvedDefect: 'ลบข้อผิดพลาด (แก้ไขแล้ว)',
+    deleteResolvedDefectConfirm: 'คุณต้องการลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว พร้อมลบรูปภาพหลักฐานออกจากระบบจัดเก็บ ใช่หรือไม่?',
+    deleteDefectSuccess: 'ลบข้อผิดพลาดและรูปภาพหลักฐานเรียบร้อยแล้ว',
+    deleteDefectError: 'ไม่สามารถลบข้อผิดพลาดได้: ',
 
     // User & Account Manager
     userInfoTitle: 'ข้อมูลพนักงาน (Account Info)',
@@ -599,6 +606,13 @@ export const translations = {
     zeroDefectsBanner: 'Zero defects found matching the selected criteria',
     accessDeniedTitle: 'Access Denied',
     accessDeniedDesc: 'This page is restricted to administrators. Your account does not have permission to view the executive dashboard.',
+    exportExcelBtn: 'Export Excel',
+    exportImagesBtn: 'Export Photos',
+    exportDataTitle: 'Export Center (Excel & Photos)',
+    deleteResolvedDefect: 'Delete Defect (Resolved)',
+    deleteResolvedDefectConfirm: 'Are you sure you want to remove this resolved defect and permanently delete its photo from storage?',
+    deleteDefectSuccess: 'Defect and photo evidence removed successfully.',
+    deleteDefectError: 'Failed to remove defect: ',
 
     // User & Account Manager
     userInfoTitle: 'Employee Account Information',

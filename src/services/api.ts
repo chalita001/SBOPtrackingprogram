@@ -131,11 +131,16 @@ export const api = {
     request('/notifications', { method: 'POST', body: JSON.stringify(data) }),
   getUsersDirectory: () => request('/users/directory'),
 
-  // Admin Dashboard
+  // Admin Dashboard & Export
   getDashboardStats: (params?: Record<string, string>) => {
     const query = new URLSearchParams(params).toString();
     return request(`/dashboard/stats${query ? `?${query}` : ''}`);
   },
+  getExportData: (params?: Record<string, string>) => {
+    const query = new URLSearchParams(params).toString();
+    return request(`/export/data${query ? `?${query}` : ''}`);
+  },
+  deleteDefect: (id: number) => request(`/defects/${id}`, { method: 'DELETE' }),
 };
 
 export function normalizeImageUrl(url?: string | null): string {

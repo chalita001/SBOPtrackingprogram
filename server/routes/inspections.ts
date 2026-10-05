@@ -343,4 +343,43 @@ router.delete('/:id', (req: AuthRequest, res: Response) => {
   }
 });
 
+// Delete resolved defect item and recalculate parent inspection
+router.delete('/defects/:id', (req: AuthRequest, res: Response) => {
+  try {
+    const itemId = parseInt(req.params.id, 10);
+    const item = db.prepare('SELECT * FROM inspection_items WHERE id = ?').get(itemId) as any;
+    if (!item) return res.status(404).json({ error: 'Defect item not found' });
+
+    db.prepare(`
+      UPDATE inspection_items 
+      SET result = 'OK', finding_topic = NULL, severity = NULL, action_plan = NULL, responsible_person = NULL, due_date = NULL, image_url = NULL, image_key = NULL
+      WHERE id = ?
+    `).run(itemId);
+
+    const counts: any = db.prepare(`
+      SELECT 
+        SUM(CASE WHEN result = 'OK' THEN 1 ELSE 0 END) as total_ok,
+        SUM(CASE WHEN result = 'NO' THEN 1 ELSE 0 END) as total_no,
+        SUM(CASE WHEN result = 'N/A' THEN 1 ELSE 0 END) as total_na
+      FROM inspection_items WHERE inspection_id = ?
+    `).get(item.inspection_id);
+
+    const pOk = counts?.total_ok || 0;
+    const pNo = counts?.total_no || 0;
+    const pNa = counts?.total_na || 0;
+    const pTotal = pOk + pNo;
+    const pScore = pTotal > 0 ? Number(((pOk / pTotal) * 100).toFixed(2)) : 100.0;
+
+    db.prepare(`
+      UPDATE inspections 
+      SET total_ok = ?, total_no = ?, total_na = ?, score_percent = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(pOk, pNo, pNa, pScore, item.inspection_id);
+
+    return res.json({ message: 'Defect resolved and deleted successfully', newScore: pScore, totalNo: pNo });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
