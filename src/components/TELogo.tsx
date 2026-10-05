@@ -1,8 +1,11 @@
 import React from 'react';
+import teLogoOrange from '../assets/te-logo.png';
+import teLogoWhite from '../assets/te-logo-white.png';
+import teLogoCard from '../assets/te-logo-card.png';
 
 interface TELogoProps {
   className?: string;
-  variant?: 'full' | 'mark' | 'white-text';
+  variant?: 'full' | 'mark' | 'white-text' | 'card';
   height?: number;
 }
 
@@ -11,44 +14,20 @@ export const TELogo: React.FC<TELogoProps> = ({
   variant = 'full',
   height = 36,
 }) => {
-  // Proportional width based on height (aspect ratio ~ 3.4 for full, 1.25 for mark)
-  const isMarkOnly = variant === 'mark';
-  const width = isMarkOnly ? Math.round(height * 1.25) : Math.round(height * 4.2);
+  let src = teLogoOrange;
+  if (variant === 'white-text') {
+    src = teLogoWhite;
+  } else if (variant === 'card' || variant === 'mark') {
+    src = teLogoCard;
+  }
 
   return (
-    <div className={`inline-flex items-center select-none ${className}`} style={{ height }}>
-      <svg
-        viewBox={isMarkOnly ? '0 0 54 40' : '0 0 190 40'}
-        height={height}
-        width={width}
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0"
-      >
-        {/* TE Orange Badge */}
-        <rect width="52" height="40" rx="8" fill="#F37021" />
-
-        {/* Stylized TE Lettermark */}
-        <g fill="#FFFFFF">
-          {/* T Crossbar & E Top Bar Connected */}
-          <path d="M 9 10 L 45 10 L 45 15.5 L 32.5 15.5 L 32.5 19.5 L 42 19.5 L 42 24.5 L 32.5 24.5 L 32.5 26.5 L 45 26.5 L 45 32 L 26 32 L 26 15.5 L 20 15.5 L 20 32 L 13.5 32 L 13.5 15.5 L 9 15.5 Z" />
-        </g>
-
-        {/* "connectivity" Wordmark if full variant */}
-        {!isMarkOnly && (
-          <text
-            x="60"
-            y="26"
-            fontFamily="'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-            fontSize="18"
-            fontWeight="500"
-            letterSpacing="-0.3px"
-            fill={variant === 'white-text' ? '#FFFFFF' : '#F37021'}
-          >
-            connectivity
-          </text>
-        )}
-      </svg>
-    </div>
+    <img
+      src={src}
+      alt="TE Connectivity"
+      style={{ height: `${height}px` }}
+      className={`w-auto object-contain select-none shrink-0 ${className}`}
+      loading="eager"
+    />
   );
 };

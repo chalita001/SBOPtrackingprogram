@@ -217,41 +217,43 @@ export const DefectTracker: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-slate-400" />
-          <span className="text-xs font-semibold text-slate-700">{t.filterLabel}</span>
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+            <Filter className="w-4 h-4 text-slate-400" />
+            <span>{t.filterLabel}:</span>
+          </div>
+
+          {/* Severity */}
+          <select
+            value={filterSeverity}
+            onChange={(e) => setFilterSeverity(e.target.value)}
+            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
+          >
+            <option value="all">{t.allSeverities}</option>
+            <option value="Major">{t.majorOnly}</option>
+            <option value="Minor">{t.minorOnly}</option>
+          </select>
+
+          {/* Dept */}
+          <select
+            value={filterDept}
+            onChange={(e) => setFilterDept(e.target.value)}
+            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
+          >
+            <option value="all">{t.allDepartments}</option>
+            <option value="MOLD">Molding</option>
+            <option value="FACILITY">Facility</option>
+            <option value="ASSY">Assembly</option>
+            <option value="WH">Warehouse</option>
+            <option value="QC">QC</option>
+            <option value="STAMPING">Stamping</option>
+            <option value="TOOL">Tooling</option>
+            <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
+          </select>
         </div>
 
-        {/* Severity */}
-        <select
-          value={filterSeverity}
-          onChange={(e) => setFilterSeverity(e.target.value)}
-          className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-        >
-          <option value="all">{t.allSeverities}</option>
-          <option value="Major">{t.majorOnly}</option>
-          <option value="Minor">{t.minorOnly}</option>
-        </select>
-
-        {/* Dept */}
-        <select
-          value={filterDept}
-          onChange={(e) => setFilterDept(e.target.value)}
-          className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-        >
-          <option value="all">{t.allDepartments}</option>
-          <option value="MOLD">Molding / MM</option>
-          <option value="FACILITY">Facility</option>
-          <option value="ASSY">Assembly</option>
-          <option value="WH">Warehouse</option>
-          <option value="QC">QC</option>
-          <option value="STAMPING">Stamping</option>
-          <option value="TOOL">Tooling</option>
-          <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
-        </select>
-
-        <div className="ml-auto text-xs text-slate-500 font-medium">
+        <div className="text-xs text-slate-500 font-medium ml-auto">
           {t.foundDefectsCount.replace('{0}', filteredDefects.length.toString())}
         </div>
       </div>
@@ -383,8 +385,8 @@ export const DefectTracker: React.FC = () => {
 
       {/* Send In-App Notification to Responsible Person Modal */}
       {notifyModalDefect && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
               <Bell className="w-5 h-5 text-amber-500" />
               <span>{t.notifyModalTitle}</span>

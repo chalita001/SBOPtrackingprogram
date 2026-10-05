@@ -480,23 +480,23 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   return (
     <div className="space-y-6">
       {/* Top Banner / Form Header */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+      <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 border-b border-slate-100 pb-5">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-[#F37021] text-white flex items-center justify-center shadow-md shadow-[#F37021]/20">
-              <ClipboardCheck className="w-6 h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#F37021] text-white flex items-center justify-center shadow-md shadow-[#F37021]/20 shrink-0">
+              <ClipboardCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-slate-900">{t.tabChecklist}</h1>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h1 className="text-lg sm:text-xl font-bold text-slate-900">{t.tabChecklist}</h1>
+                <span className="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold border border-slate-200">
                   Doc. TE-EHS-053
                 </span>
-                <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-orange-50 text-[#F37021] border border-orange-200">
+                <span className="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-bold bg-orange-50 text-[#F37021] border border-orange-200">
                   {layer === 'Layer 1' ? 'Layer 1 (Leader)' : layer === 'Layer 2' ? 'Layer 2 (Supervisor)' : 'Layer 3 (Manager)'}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5">
                 {language === 'en'
                   ? 'On-site safety observation and verification form (SBOP) with Leader / Supervisor / Manager 3-layer audit'
                   : 'ระบบสังเกตและตรวจประเมินพฤติกรรมความปลอดภัยหน้างาน (SBOP) แยกระดับ Leader / Supervisor / Manager'}
@@ -676,11 +676,11 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               </div>
 
               {!isCustomCode && availableCodes.length > 0 ? (
-                <div className="flex gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <select
                     value={inspectionCode}
                     onChange={(e) => handleSelectCode(e.target.value)}
-                    className="w-full px-3 py-2 bg-orange-50/60 border-2 border-[#F37021] rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#F37021] transition shadow-sm"
+                    className="w-full px-2.5 sm:px-3 py-2 bg-orange-50/60 border-2 border-[#F37021] rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-[#F37021] transition shadow-sm"
                   >
                     {availableCodes.map((c) => (
                       <option key={c.inspection_code} value={c.inspection_code}>
@@ -695,23 +695,23 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   <button
                     type="button"
                     onClick={() => handleSelectCode('__NEW__')}
-                    className="px-2.5 py-2 bg-orange-100 hover:bg-orange-200 text-[#F37021] font-bold rounded-xl text-xs whitespace-nowrap transition shadow-sm"
+                    className="px-2 sm:px-2.5 py-2 bg-orange-100 hover:bg-orange-200 text-[#F37021] font-bold rounded-xl text-xs whitespace-nowrap transition shadow-sm shrink-0"
                     title={t.newInspectionCode}
                   >
-                    {t.newInspectionCode}
+                    <span>+ {t.newInspectionCode}</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowCodeHistoryModal(true)}
-                    className="px-2.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs whitespace-nowrap transition border border-indigo-200 shadow-sm flex items-center gap-1"
+                    className="px-2 sm:px-2.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs whitespace-nowrap transition border border-indigo-200 shadow-sm flex items-center gap-1 shrink-0"
                     title={language === 'th' ? `ดูประวัติรหัส #${inspectionCode}` : `View Code #${inspectionCode} History`}
                   >
                     <Eye className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>{language === 'th' ? 'ประวัติ' : 'History'}</span>
+                    <span className="hidden sm:inline">{language === 'th' ? 'ประวัติ' : 'History'}</span>
                   </button>
                 </div>
               ) : (
-                <div className="flex gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <div className="relative flex-1">
                     <Hash className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
                     <input
@@ -730,19 +730,19 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                         setIsCustomCode(false);
                         if (availableCodes[0]) handleSelectCode(availableCodes[0].inspection_code);
                       }}
-                      className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs whitespace-nowrap transition"
+                      className="px-2 sm:px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs whitespace-nowrap transition shrink-0"
                     >
-                      {language === 'th' ? 'เลือกรหัสเดิม' : 'Existing Code'}
+                      {language === 'th' ? 'รหัสเดิม' : 'Existing'}
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => setShowCodeHistoryModal(true)}
-                    className="px-2.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs whitespace-nowrap transition border border-indigo-200 shadow-sm flex items-center gap-1"
+                    className="px-2 sm:px-2.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-xl text-xs whitespace-nowrap transition border border-indigo-200 shadow-sm flex items-center gap-1 shrink-0"
                     title={language === 'th' ? `ดูประวัติรหัส #${inspectionCode}` : `View Code #${inspectionCode} History`}
                   >
                     <Eye className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>{language === 'th' ? 'ประวัติ' : 'History'}</span>
+                    <span className="hidden sm:inline">{language === 'th' ? 'ประวัติ' : 'History'}</span>
                   </button>
                 </div>
               )}
@@ -1003,39 +1003,39 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           )}
 
           {/* Real-time Score Board */}
-          <div className="bg-gradient-to-r from-[#181B20] to-[#252C37] p-4 rounded-xl text-white flex flex-wrap items-center justify-between gap-4 shadow-sm border border-slate-800">
-            <div className="flex items-center gap-6">
-              <div>
-                <span className="text-[11px] text-slate-400 font-medium block">
-                  {language === 'en' ? `${layer} Checklist Items` : `รายการตรวจระดับ ${layer}`}
+          <div className="bg-gradient-to-r from-[#181B20] to-[#252C37] p-3.5 sm:p-4 rounded-2xl text-white flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 shadow-sm border border-slate-800">
+            <div className="grid grid-cols-4 gap-2 sm:gap-6 divide-x divide-slate-800/80">
+              <div className="text-center sm:text-left">
+                <span className="text-[10px] sm:text-[11px] text-slate-400 font-medium block truncate">
+                  {language === 'en' ? 'Total' : 'ข้อตรวจ'}
                 </span>
-                <span className="text-xl font-bold text-white">{items.length} {t.itemsCountUnit}</span>
+                <span className="text-lg sm:text-xl font-bold text-white">{items.length}</span>
               </div>
-              <div className="border-l border-slate-800 pl-6">
-                <span className="text-[11px] text-emerald-400 font-medium block">{t.totalOk}</span>
-                <span className="text-xl font-bold text-emerald-400">{totalOk}</span>
+              <div className="pl-2 sm:pl-6 text-center sm:text-left">
+                <span className="text-[10px] sm:text-[11px] text-emerald-400 font-medium block truncate">{t.totalOk}</span>
+                <span className="text-lg sm:text-xl font-bold text-emerald-400">{totalOk}</span>
               </div>
-              <div className="border-l border-slate-800 pl-6">
-                <span className="text-[11px] text-red-400 font-medium block">{t.totalNo}</span>
-                <span className="text-xl font-bold text-red-400">{totalNo}</span>
+              <div className="pl-2 sm:pl-6 text-center sm:text-left">
+                <span className="text-[10px] sm:text-[11px] text-red-400 font-medium block truncate">{t.totalNo}</span>
+                <span className="text-lg sm:text-xl font-bold text-red-400">{totalNo}</span>
               </div>
-              <div className="border-l border-slate-800 pl-6">
-                <span className="text-[11px] text-amber-400 font-medium block">
-                  {language === 'en' ? 'Pending' : 'ยังไม่ตรวจ'}
+              <div className="pl-2 sm:pl-6 text-center sm:text-left">
+                <span className="text-[10px] sm:text-[11px] text-amber-400 font-medium block truncate">
+                  {language === 'en' ? 'Wait' : 'ยังไม่ตรวจ'}
                 </span>
-                <span className="text-xl font-bold text-amber-400">{totalPending}</span>
+                <span className="text-lg sm:text-xl font-bold text-amber-400">{totalPending}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-xs text-orange-200 font-semibold">{t.safetyScore}</div>
-                <div className="text-2xl font-black text-white tracking-tight">
+            <div className="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t sm:border-t-0 border-slate-800/80">
+              <div className="text-left sm:text-right">
+                <div className="text-[11px] sm:text-xs text-orange-200 font-semibold">{t.safetyScore}</div>
+                <div className="text-xl sm:text-2xl font-black text-white tracking-tight">
                   {scorePercent}%
                 </div>
               </div>
               <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm shadow ${
+                className={`px-3 py-1.5 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold text-xs sm:text-sm shadow shrink-0 ${
                   parseFloat(scorePercent) >= 95
                     ? 'bg-emerald-500 text-white'
                     : parseFloat(scorePercent) >= 85
@@ -1408,7 +1408,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                   type="submit"
                   disabled={saving || loading || items.length === 0 || isL1CodeTaken}
                   title={isL1CodeTaken ? (language === 'th' ? 'รหัสนี้ตรวจโดย Layer 1 ไปแล้ว ไม่สามารถสร้างซ้ำได้' : 'Code already inspected by Layer 1') : undefined}
-                  className="w-full sm:w-auto px-6 py-2.5 bg-[#F37021] hover:bg-[#DE5F14] text-white font-bold rounded-xl shadow-lg shadow-[#F37021]/30 text-xs transition flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full sm:w-auto px-6 py-3 bg-[#F37021] hover:bg-[#DE5F14] text-white font-bold rounded-xl shadow-lg shadow-[#F37021]/30 text-xs sm:text-sm transition flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{saving ? t.saving : t.saveInspection}</span>
@@ -1418,6 +1418,33 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           </div>
         </form>
       </div>
+
+      {/* Sticky Mobile Floating Action Bar for Quick Save & Real-time Progress */}
+      {items.length > 0 && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#1A1D21]/95 backdrop-blur-md border-t border-slate-800 p-2.5 px-4 z-30 flex items-center justify-between shadow-2xl">
+          <div className="flex items-center gap-2">
+            <div className={`px-2 py-0.5 rounded text-[10px] font-black ${
+              parseFloat(scorePercent) >= 95 ? 'bg-emerald-500 text-white' : parseFloat(scorePercent) >= 85 ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'
+            }`}>
+              {scorePercent}%
+            </div>
+            <div className="text-[11px] text-slate-300 font-semibold">
+              <span className="text-emerald-400">{totalOk} OK</span>
+              <span className="text-slate-500 mx-1">•</span>
+              <span className="text-red-400">{totalNo} NO</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || loading || items.length === 0 || isL1CodeTaken}
+            className="px-4 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white font-bold rounded-xl text-xs transition shadow-md shadow-[#F37021]/30 flex items-center gap-1.5 disabled:opacity-50"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{saving ? t.saving : t.saveInspection}</span>
+          </button>
+        </div>
+      )}
 
       {/* Inspection Code Multi-Layer History Modal */}
       <InspectionCodeHistoryModal

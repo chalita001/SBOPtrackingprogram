@@ -503,48 +503,84 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
           </div>
 
           {stats.recentInspections && stats.recentInspections.length > 0 ? (
-            <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
-                    <th className="py-2.5 px-3">{language === 'th' ? 'วันที่ตรวจ' : 'Date'}</th>
-                    <th className="py-2.5 px-3">{language === 'th' ? 'รหัสรายการ' : 'Code'}</th>
-                    <th className="py-2.5 px-3">{language === 'th' ? 'ระดับ' : 'Layer'}</th>
-                    <th className="py-2.5 px-3">{language === 'th' ? 'กะ' : 'Shift'}</th>
-                    <th className="py-2.5 px-3">{language === 'th' ? 'เครื่องจักร/ผลิตภัณฑ์' : 'M/C & Products'}</th>
-                    <th className="py-2.5 px-3 text-center">{language === 'th' ? 'คะแนน' : 'Score'}</th>
-                    <th className="py-2.5 px-3 text-center">{language === 'th' ? 'ผลตรวจ' : 'Results'}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {stats.recentInspections.map((ins: any) => (
-                    <tr key={ins.id} className="hover:bg-slate-50/80 transition">
-                      <td className="py-2.5 px-3 font-semibold text-slate-900">{ins.audit_date}</td>
-                      <td className="py-2.5 px-3 font-bold text-[#F37021]">#{ins.inspection_code || '001'}</td>
-                      <td className="py-2.5 px-3">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+            <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white">
+              {/* Mobile Card List (< sm) */}
+              <div className="block sm:hidden divide-y divide-slate-100">
+                {stats.recentInspections.map((ins: any) => (
+                  <div key={ins.id} className="p-3.5 space-y-1.5 hover:bg-slate-50/70 transition">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-slate-900 text-xs">{ins.audit_date}</span>
+                          <span className="text-[11px] text-slate-500 font-medium">({ins.shift})</span>
+                          <span className="text-xs font-bold text-[#F37021]">#{ins.inspection_code || '001'}</span>
+                        </div>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           ins.layer === 'Layer 1' ? 'bg-emerald-100 text-emerald-800' :
                           ins.layer === 'Layer 2' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800'
                         }`}>
                           {ins.layer}
                         </span>
-                      </td>
-                      <td className="py-2.5 px-3 font-medium">
-                        {ins.shift === 'เช้า' ? (language === 'th' ? 'กะเช้า' : 'Morning') :
-                         ins.shift === 'ดึก' ? (language === 'th' ? 'กะดึก' : 'Night') : ins.shift}
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-600 truncate max-w-[200px]">{ins.mc_and_products}</td>
-                      <td className="py-2.5 px-3 text-center font-bold text-emerald-600">{ins.score_percent}%</td>
-                      <td className="py-2.5 px-3 text-center font-medium">
-                        <span className="text-emerald-700 font-bold">{ins.total_ok} OK</span>
-                        {ins.total_no > 0 && (
-                          <span className="text-red-600 font-bold ml-1.5">{ins.total_no} NO</span>
-                        )}
-                      </td>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-bold text-emerald-600 text-xs block">{ins.score_percent}%</span>
+                        <div className="text-[11px] font-semibold mt-0.5">
+                          <span className="text-emerald-700">{ins.total_ok} OK</span>
+                          {ins.total_no > 0 && <span className="text-red-600 ml-1">• {ins.total_no} NO</span>}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-slate-600 truncate">
+                      📍 {ins.mc_and_products}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table (>= sm) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                      <th className="py-2.5 px-3">{language === 'th' ? 'วันที่ตรวจ' : 'Date'}</th>
+                      <th className="py-2.5 px-3">{language === 'th' ? 'รหัสรายการ' : 'Code'}</th>
+                      <th className="py-2.5 px-3">{language === 'th' ? 'ระดับ' : 'Layer'}</th>
+                      <th className="py-2.5 px-3">{language === 'th' ? 'กะ' : 'Shift'}</th>
+                      <th className="py-2.5 px-3">{language === 'th' ? 'เครื่องจักร/ผลิตภัณฑ์' : 'M/C & Products'}</th>
+                      <th className="py-2.5 px-3 text-center">{language === 'th' ? 'คะแนน' : 'Score'}</th>
+                      <th className="py-2.5 px-3 text-center">{language === 'th' ? 'ผลตรวจ' : 'Results'}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {stats.recentInspections.map((ins: any) => (
+                      <tr key={ins.id} className="hover:bg-slate-50/80 transition">
+                        <td className="py-2.5 px-3 font-semibold text-slate-900">{ins.audit_date}</td>
+                        <td className="py-2.5 px-3 font-bold text-[#F37021]">#{ins.inspection_code || '001'}</td>
+                        <td className="py-2.5 px-3">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            ins.layer === 'Layer 1' ? 'bg-emerald-100 text-emerald-800' :
+                            ins.layer === 'Layer 2' ? 'bg-indigo-100 text-indigo-800' : 'bg-purple-100 text-purple-800'
+                          }`}>
+                            {ins.layer}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 font-medium">
+                          {ins.shift === 'เช้า' ? (language === 'th' ? 'กะเช้า' : 'Morning') :
+                           ins.shift === 'ดึก' ? (language === 'th' ? 'กะดึก' : 'Night') : ins.shift}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-600 truncate max-w-[200px]">{ins.mc_and_products}</td>
+                        <td className="py-2.5 px-3 text-center font-bold text-emerald-600">{ins.score_percent}%</td>
+                        <td className="py-2.5 px-3 text-center font-medium">
+                          <span className="text-emerald-700 font-bold">{ins.total_ok} OK</span>
+                          {ins.total_no > 0 && (
+                            <span className="text-red-600 font-bold ml-1.5">{ins.total_no} NO</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
             <div className="py-6 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl">

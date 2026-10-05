@@ -72,21 +72,22 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* TE Connectivity Logo & System Title */}
-          <div className="flex items-center gap-3.5 cursor-pointer group" onClick={() => setActiveTab(user ? 'profile' : 'checklist')}>
-            <TELogo variant="white-text" height={36} />
-            <div className="border-l border-slate-700/90 pl-3">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-base tracking-tight text-white group-hover:text-[#F37021] transition">
-                  SBOP System
+          <div className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer group shrink-0" onClick={() => setActiveTab(user ? 'profile' : 'checklist')}>
+            <TELogo variant="white-text" height={28} className="sm:hidden" />
+            <TELogo variant="white-text" height={36} className="hidden sm:block" />
+            <div className="border-l border-slate-700/90 pl-2.5 sm:pl-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-[#F37021] transition">
+                  SBOP
                 </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
+                <span className="text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded font-bold bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
                   Rev. H
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 hidden md:block">
+              <p className="text-[10px] sm:text-[11px] text-slate-400 hidden md:block">
                 {t.appSubtitle}
               </p>
             </div>
@@ -247,64 +248,64 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Mobile Submenu Navigation */}
-        <div className="lg:hidden flex items-center justify-around py-2 border-t border-slate-800 text-xs">
+        <div className="lg:hidden flex items-center gap-1 py-1.5 px-1 border-t border-slate-800 text-xs overflow-x-auto no-scrollbar">
           {user && (
             <button
               onClick={() => setActiveTab('profile')}
-              className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
-                activeTab === 'profile' ? 'text-[#F37021] font-bold' : 'text-slate-400'
+              className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
+                activeTab === 'profile' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
               }`}
             >
               <User className="w-4 h-4" />
-              <span>{language === 'th' ? 'โปรไฟล์' : 'Profile'}</span>
+              <span className="text-[10px]">{language === 'th' ? 'โปรไฟล์' : 'Profile'}</span>
             </button>
           )}
           <button
             onClick={() => setActiveTab('checklist')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
-              activeTab === 'checklist' ? 'text-[#F37021] font-bold' : 'text-slate-400'
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
+              activeTab === 'checklist' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <ClipboardCheck className="w-4 h-4" />
-            <span>{language === 'th' ? 'ตรวจเช็ค' : 'Checklist'}</span>
+            <span className="text-[10px]">{language === 'th' ? 'ตรวจเช็ค' : 'Checklist'}</span>
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
-              activeTab === 'history' ? 'text-[#F37021] font-bold' : 'text-slate-400'
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
+              activeTab === 'history' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <History className="w-4 h-4" />
-            <span>{language === 'th' ? 'ประวัติ' : 'History'}</span>
+            <span className="text-[10px]">{language === 'th' ? 'ประวัติ' : 'History'}</span>
           </button>
           <button
             onClick={() => setActiveTab('defects')}
-            className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
-              activeTab === 'defects' ? 'text-[#F37021] font-bold' : 'text-slate-400'
+            className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
+              activeTab === 'defects' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             <AlertTriangle className="w-4 h-4 text-amber-400" />
-            <span>{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
+            <span className="text-[10px]">{language === 'th' ? 'สิ่งผิดปกติ' : 'Defects'}</span>
           </button>
           {user?.role === 'admin' && (
             <>
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
-                  activeTab === 'dashboard' ? 'text-[#F37021] font-bold' : 'text-slate-400'
+                className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
+                  activeTab === 'dashboard' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <BarChart3 className="w-4 h-4 text-emerald-400" />
-                <span>{t.tabDashboard}</span>
+                <span className="text-[10px]">{t.tabDashboard}</span>
               </button>
               <button
                 onClick={() => setActiveTab('accounts')}
-                className={`flex flex-col items-center gap-1 py-1 px-2 rounded ${
-                  activeTab === 'accounts' ? 'text-[#F37021] font-bold' : 'text-slate-400'
+                className={`flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-lg shrink-0 transition ${
+                  activeTab === 'accounts' ? 'text-[#F37021] bg-orange-500/10 font-bold' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Users className="w-4 h-4 text-orange-400" />
-                <span>{language === 'th' ? 'สมาชิก' : 'Members'}</span>
+                <span className="text-[10px]">{language === 'th' ? 'สมาชิก' : 'Members'}</span>
               </button>
             </>
           )}

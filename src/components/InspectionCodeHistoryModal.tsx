@@ -150,27 +150,27 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
           ) : (
             <>
               {/* Document Info Card */}
-              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4 text-xs">
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 sm:gap-6">
                   <div>
                     <span className="text-[10px] text-slate-400 block font-semibold">{language === 'th' ? 'แผนก' : 'Department'}</span>
                     <strong className="text-slate-800 text-sm">{data.departmentCode}</strong>
                   </div>
-                  <div className="border-l border-slate-200 pl-4 sm:pl-6">
+                  <div className="border-l border-slate-200 pl-3 sm:pl-6">
                     <span className="text-[10px] text-slate-400 block font-semibold">{language === 'th' ? 'เครื่องจักร/สายการผลิต' : 'Machine / Line'}</span>
-                    <strong className="text-slate-800 text-sm">{data.mcAndProducts || '-'}</strong>
+                    <strong className="text-slate-800 text-sm truncate max-w-[140px] sm:max-w-none block">{data.mcAndProducts || '-'}</strong>
                   </div>
-                  <div className="border-l border-slate-200 pl-4 sm:pl-6">
+                  <div className="border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-6">
                     <span className="text-[10px] text-slate-400 block font-semibold">{language === 'th' ? 'กะการทำงาน' : 'Shift'}</span>
                     <strong className="text-slate-800 text-sm">{data.shift || '-'}</strong>
                   </div>
-                  <div className="border-l border-slate-200 pl-4 sm:pl-6">
+                  <div className="border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-6 pl-3 sm:pl-6">
                     <span className="text-[10px] text-slate-400 block font-semibold">{language === 'th' ? 'จำนวนรอบที่ตรวจ' : 'Total Audits'}</span>
                     <span className="font-bold text-[#F37021] text-sm">{data.totalRounds} / 3 Layers</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-start sm:self-center">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                     layer1 && layer2 && layer3 
                       ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
@@ -378,7 +378,7 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
               </div>
 
               {/* Navigation Tabs */}
-              <div className="flex border-b border-slate-200 gap-1 overflow-x-auto">
+              <div className="flex border-b border-slate-200 gap-1 overflow-x-auto no-scrollbar py-0.5">
                 <button
                   type="button"
                   onClick={() => setActiveTab('timeline')}

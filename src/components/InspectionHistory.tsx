@@ -155,9 +155,9 @@ export const InspectionHistory: React.FC = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center gap-3">
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
             type="text"
@@ -169,50 +169,162 @@ export const InspectionHistory: React.FC = () => {
           />
         </div>
 
-        {/* Dept Filter */}
-        <select
-          value={selectedDept}
-          onChange={(e) => setSelectedDept(e.target.value)}
-          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-        >
-          <option value="all">{t.allDepartments}</option>
-          <option value="MOLD">Molding / MM</option>
-          <option value="FACILITY">Facility</option>
-          <option value="ASSY">Assembly</option>
-          <option value="WH">Warehouse</option>
-          <option value="QC">QC</option>
-          <option value="STAMPING">Stamping</option>
-          <option value="TOOL">Tooling</option>
-          <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
-        </select>
+        {/* Filters: 3-column grid on mobile, flex row on sm */}
+        <div className="grid grid-cols-3 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-3">
+          {/* Dept Filter */}
+          <select
+            value={selectedDept}
+            onChange={(e) => setSelectedDept(e.target.value)}
+            className="px-2.5 sm:px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
+          >
+            <option value="all">{t.allDepartments}</option>
+            <option value="MOLD">Molding</option>
+            <option value="FACILITY">Facility</option>
+            <option value="ASSY">Assembly</option>
+            <option value="WH">Warehouse</option>
+            <option value="QC">QC</option>
+            <option value="STAMPING">Stamping</option>
+            <option value="TOOL">Tooling</option>
+            <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
+          </select>
 
-        {/* Year Filter */}
-        <select
-          value={selectedYear}
-          onChange={(e) => setSelectedYear(e.target.value)}
-          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-        >
-          <option value="all">{t.allYears}</option>
-          <option value="2026">2026</option>
-          <option value="2025">2025</option>
-        </select>
+          {/* Year Filter */}
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="px-2.5 sm:px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
+          >
+            <option value="all">{t.allYears}</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+          </select>
 
-        {/* Month Filter */}
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-        >
-          <option value="all">{t.allMonths}</option>
-          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-            <option key={m} value={m}>{language === 'en' ? `Month ${m}` : `เดือน ${m}`}</option>
-          ))}
-        </select>
+          {/* Month Filter */}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-2.5 sm:px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
+          >
+            <option value="all">{t.allMonths}</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <option key={m} value={m}>{language === 'en' ? `M${m}` : `ด.${m}`}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Inspections Table */}
+      {/* Inspections Container: Desktop Table + Mobile Card View */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* 1. Mobile Cards View (< md) */}
+        <div className="block md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <div className="text-center py-12 text-slate-400 text-xs">
+              {t.loadingHistory}
+            </div>
+          ) : inspections.length === 0 ? (
+            <div className="text-center py-12 text-slate-400 text-xs">
+              {t.noHistoryFound}
+            </div>
+          ) : (
+            inspections.map((ins) => (
+              <div key={ins.id} className="p-4 space-y-2.5 hover:bg-slate-50/70 transition">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-slate-900 text-xs">{ins.audit_date}</span>
+                      <span className="text-[11px] text-slate-500 font-medium">({ins.shift})</span>
+                      <button
+                        type="button"
+                        onClick={() => setCodeHistoryTarget({
+                          code: ins.inspection_code || '001',
+                          department: ins.department_code,
+                          year: ins.year,
+                          month: ins.month,
+                        })}
+                        className="px-1.5 py-0.5 rounded-md bg-orange-100 text-[#F37021] text-[10px] font-bold border border-orange-200 flex items-center gap-0.5"
+                      >
+                        <span>#{ins.inspection_code || '001'}</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
+                    <div className="text-xs text-slate-700 font-semibold mt-1 flex items-center gap-1.5">
+                      <span className="text-[#F37021] font-bold">{ins.department_code}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] font-medium">{ins.layer}</span>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${
+                      ins.score_percent >= 95
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : ins.score_percent >= 85
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}
+                  >
+                    {ins.score_percent}%
+                  </span>
+                </div>
+
+                <div className="text-xs text-slate-600 space-y-1">
+                  <div className="truncate font-medium text-slate-800">
+                    📍 {ins.mc_and_products}
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                    <span>👤 {ins.auditor_name}</span>
+                    <div className="flex items-center gap-2 font-bold">
+                      <span className="text-emerald-600 flex items-center gap-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {ins.total_ok}
+                      </span>
+                      <span>/</span>
+                      <span className="text-red-600 flex items-center gap-0.5">
+                        <XCircle className="w-3.5 h-3.5" />
+                        {ins.total_no}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Card Actions */}
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={() => handleViewDetails(ins.id)}
+                    className="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#F37021] text-xs font-bold transition flex items-center gap-1"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>{t.viewFullRecord}</span>
+                  </button>
+                  <button
+                    onClick={() => setCodeHistoryTarget({
+                      code: ins.inspection_code || '001',
+                      department: ins.department_code,
+                      year: ins.year,
+                      month: ins.month,
+                    })}
+                    className="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold transition flex items-center gap-1"
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>{language === 'th' ? 'สายตรวจ' : 'Trail'}</span>
+                  </button>
+                  {(user?.role === 'admin' || user?.id === ins.auditor_id) && (
+                    <button
+                      onClick={() => handleDelete(ins.id)}
+                      className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition"
+                      title={t.deleteRecord}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* 2. Desktop Table View (>= md) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-900 text-white font-semibold border-b border-slate-800">
@@ -352,10 +464,10 @@ export const InspectionHistory: React.FC = () => {
 
       {/* Details Modal */}
       {activeInspection && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
             {/* Header */}
-            <div className="bg-[#1E2229] border-b border-slate-800 p-6 text-white flex items-center justify-between shrink-0">
+            <div className="bg-[#1E2229] border-b border-slate-800 p-4 sm:p-6 text-white flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-lg font-bold">
                   {t.inspectionDetailTitle} {activeInspection.department_code} ({activeInspection.layer})

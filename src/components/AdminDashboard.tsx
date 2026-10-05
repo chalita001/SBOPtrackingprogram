@@ -170,16 +170,16 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         </div>
 
         {/* Filter Controls Row */}
-        <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
+        <div className="mt-8 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
             {/* Year Filter */}
-            <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
-              <Calendar className="w-3.5 h-3.5 text-[#F37021]" />
+            <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+              <Calendar className="w-3.5 h-3.5 text-[#F37021] shrink-0" />
               <label className="text-slate-400 font-medium">{t.filterYear}</label>
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer text-xs"
               >
                 <option value="all" className="bg-slate-900 text-white">{t.allYears}</option>
                 <option value="2026" className="bg-slate-900 text-white">2026</option>
@@ -188,41 +188,41 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             </div>
 
             {/* Month Filter */}
-            <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
-              <Clock className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="flex items-center gap-1.5 bg-slate-900/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+              <Clock className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
               <label className="text-slate-400 font-medium">{t.filterMonth}</label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer text-xs"
               >
                 <option value="all" className="bg-slate-900 text-white">{t.allMonths}</option>
                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                   <option key={m} value={m.toString()} className="bg-slate-900 text-white">
-                    {language === 'th' ? `เดือน ${m}` : `Month ${m}`}
+                    {language === 'th' ? `ด.${m}` : `M${m}`}
                   </option>
                 ))}
               </select>
             </div>
 
             {/* Department Filter */}
-            <div className="flex items-center gap-1.5 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
-              <Building2 className="w-3.5 h-3.5 text-amber-400" />
+            <div className="col-span-2 sm:col-span-1 flex items-center gap-1.5 bg-slate-900/80 px-2.5 sm:px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+              <Building2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               <label className="text-slate-400 font-medium">{t.filterDept}</label>
               <select
                 value={selectedDept}
                 onChange={(e) => setSelectedDept(e.target.value)}
-                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer text-xs flex-1"
               >
                 <option value="all" className="bg-slate-900 text-white">{t.allDepartments}</option>
-                <option value="MOLD" className="bg-slate-900 text-white">Molding / MM</option>
+                <option value="MOLD" className="bg-slate-900 text-white">Molding</option>
                 <option value="FACILITY" className="bg-slate-900 text-white">Facility</option>
                 <option value="ASSY" className="bg-slate-900 text-white">Assembly</option>
                 <option value="WH" className="bg-slate-900 text-white">Warehouse</option>
                 <option value="QC" className="bg-slate-900 text-white">QC</option>
                 <option value="STAMPING" className="bg-slate-900 text-white">Stamping</option>
                 <option value="TOOL" className="bg-slate-900 text-white">Tooling</option>
-                <option value="SAFETY" className="bg-slate-900 text-white">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
+                <option value="SAFETY" className="bg-slate-900 text-white">{language === 'en' ? 'Safety' : 'Safety'}</option>
               </select>
             </div>
           </div>
@@ -231,7 +231,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
           <button
             onClick={fetchDashboardData}
             disabled={loading}
-            className="flex items-center gap-2 px-4 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-sm disabled:opacity-50 w-full sm:w-auto"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             <span>{t.updateData}</span>

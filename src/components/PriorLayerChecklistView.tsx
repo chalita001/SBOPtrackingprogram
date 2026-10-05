@@ -142,49 +142,49 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
       {/* 1. Header Banner styled exactly like image (TE Charcoal Score Board) */}
       <div className="bg-[#1E2229] text-white rounded-2xl p-5 shadow-lg border border-[#2A2F3A]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Left stats */}
-          <div className="flex flex-wrap items-center gap-6 sm:gap-8">
+          {/* Left stats: 3-column grid on mobile, inline on sm */}
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:items-center sm:gap-8">
             <div>
               <span className="text-xs text-slate-400 font-medium block">
-                {language === 'th' ? `รายการตรวจระดับ ${layerTitle}` : `${layerTitle} Questions`}
+                {language === 'th' ? `ระดับ ${layerTitle}` : `${layerTitle}`}
               </span>
-              <span className="text-2xl font-bold text-white tracking-tight">
+              <span className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 {totalCount} {t.itemsCountUnit}
               </span>
             </div>
 
-            <div className="border-l border-slate-800 pl-6">
+            <div className="border-l border-slate-800 pl-3 sm:pl-6">
               <span className="text-xs text-slate-400 font-medium block">
                 {t.totalOk}
               </span>
-              <span className="text-2xl font-bold text-emerald-400 tracking-tight">
+              <span className="text-xl sm:text-2xl font-bold text-emerald-400 tracking-tight">
                 {currentOk}
               </span>
             </div>
 
-            <div className="border-l border-slate-800 pl-6">
+            <div className="border-l border-slate-800 pl-3 sm:pl-6">
               <span className="text-xs text-slate-400 font-medium block">
                 {t.totalNo}
               </span>
-              <span className="text-2xl font-bold text-red-400 tracking-tight">
+              <span className="text-xl sm:text-2xl font-bold text-red-400 tracking-tight">
                 {currentNo}
               </span>
             </div>
           </div>
 
           {/* Right score & PASS pill */}
-          <div className="flex items-center gap-4 self-end lg:self-center border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
-            <div className="text-right">
+          <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 border-t lg:border-t-0 border-slate-800 pt-3 lg:pt-0">
+            <div className="text-left sm:text-right">
               <span className="text-xs text-slate-400 font-medium block">
                 {t.safetyScore}
               </span>
-              <span className="text-3xl font-extrabold text-white tracking-tight">
+              <span className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 {currentScore}%
               </span>
             </div>
 
             <span
-              className={`px-4 py-2 rounded-xl text-sm font-black tracking-wider uppercase shadow-md flex items-center justify-center min-w-[72px] ${
+              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-black tracking-wider uppercase shadow-md flex items-center justify-center min-w-[64px] sm:min-w-[72px] ${
                 isPassed
                   ? 'bg-emerald-500 text-white'
                   : 'bg-red-500 text-white'
