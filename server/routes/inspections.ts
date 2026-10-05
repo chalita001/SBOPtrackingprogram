@@ -107,11 +107,13 @@ router.get('/', (req: AuthRequest, res: Response) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    // Non-admin users see all inspections within their department; Admins see all
-    if (req.user!.role !== 'admin' && req.user!.role !== 'superadmin') {
-      const userDept = req.user!.department || 'MOLD';
+    // Non-admin users see all inspections within their department; Admins, Superadmins, and Guests see all departments
+    const isPrivilegedUser = req.user?.role === 'admin' || req.user?.role === 'superadmin';
+    const isGuestOrPublic = !req.user || req.user?.role === 'guest';
+    if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
+      const userDept = req.user.department || 'MOLD';
       sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
-      params.push(userDept, req.user!.id);
+      params.push(userDept, req.user.id);
     }
 
     sql += ' ORDER BY i.audit_date DESC, i.id DESC';
@@ -129,10 +131,10 @@ router.get('/', (req: AuthRequest, res: Response) => {
       FROM inspections
     `;
     const statsParams: any[] = [];
-    if (req.user!.role !== 'admin' && req.user!.role !== 'superadmin') {
-      const userDept = req.user!.department || 'MOLD';
+    if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
+      const userDept = req.user.department || 'MOLD';
       statsSql += ' WHERE (department_code = ? OR auditor_id = ?)';
-      statsParams.push(userDept, req.user!.id);
+      statsParams.push(userDept, req.user.id);
     }
 
     const stats = db.prepare(statsSql).get(...statsParams);
@@ -343,12 +345,48 @@ router.delete('/:id', (req: AuthRequest, res: Response) => {
   }
 });
 
+// Update defect status ('resolved' / 'pending')
+router.patch('/defects/:id/status', (req: AuthRequest, res: Response) => {
+  try {
+    if (req.user?.role === 'guest') {
+      return res.status(403).json({ error: 'Guest mode is view-only' });
+    }
+    const itemId = parseInt(req.params.id, 10);
+    const { status } = req.body;
+    const newStatus = status === 'resolved' ? 'resolved' : 'pending';
+
+    try {
+      db.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+    } catch (e) {}
+
+    db.prepare('UPDATE inspection_items SET defect_status = ? WHERE id = ?').run(newStatus, itemId);
+    return res.json({ success: true, defect_status: newStatus });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Delete resolved defect item and recalculate parent inspection
 router.delete('/defects/:id', (req: AuthRequest, res: Response) => {
   try {
+    if (req.user?.role === 'guest') {
+      return res.status(403).json({ error: 'Guest mode is view-only' });
+    }
     const itemId = parseInt(req.params.id, 10);
+
+    try {
+      db.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+    } catch (e) {}
+
     const item = db.prepare('SELECT * FROM inspection_items WHERE id = ?').get(itemId) as any;
     if (!item) return res.status(404).json({ error: 'Defect item not found' });
+
+    // Requirement 1: ถ้าหากยังไม่แก้ จะไม่สามารถลบได้ หากแก้แล้วจึงสามารถลบได้
+    if (item.defect_status !== 'resolved') {
+      return res.status(400).json({
+        error: 'ไม่สามารถลบรายการนี้ได้เนื่องจากสถานะยังเป็น "ยังไม่แก้" — ต้องทำการแก้ไขและเปลี่ยนสถานะเป็น "แก้แล้ว" ก่อน จึงจะสามารถลบออกจากระบบได้'
+      });
+    }
 
     db.prepare(`
       UPDATE inspection_items 

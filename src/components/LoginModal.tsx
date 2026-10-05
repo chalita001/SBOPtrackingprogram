@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogIn, X, Lock, AlertCircle } from 'lucide-react';
+import { LogIn, X, Lock, AlertCircle, Eye } from 'lucide-react';
 import { TELogo } from './TELogo';
 
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSwitchToRegister: () => void;
+  onGuestLoginSuccess?: () => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
   isOpen,
   onClose,
   onSwitchToRegister,
+  onGuestLoginSuccess,
 }) => {
-  const { login, t, language } = useAuth();
+  const { login, loginAsGuest, t, language } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -114,6 +116,35 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               {loading ? t.signingIn : t.login}
             </button>
           </form>
+
+          {/* Divider */}
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white px-2 text-slate-400 font-semibold">
+                {language === 'th' ? 'หรือเข้าชมแบบผู้มาเยือน' : 'or continue as guest'}
+              </span>
+            </div>
+          </div>
+
+          {/* Guest Login Button (User requirement 3) */}
+          <button
+            type="button"
+            onClick={() => {
+              loginAsGuest();
+              if (onGuestLoginSuccess) onGuestLoginSuccess();
+              onClose();
+            }}
+            className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition shadow-sm border border-slate-700 hover:border-slate-600 group"
+          >
+            <Eye className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition" />
+            <span>{language === 'th' ? 'เข้าสู่ระบบสำหรับผู้มาเยือน (ดูข้อมูลได้อย่างเดียว)' : 'Login as Guest (View-Only Mode)'}</span>
+          </button>
+          <p className="text-[11px] text-center text-slate-400 mt-1.5 leading-tight">
+            {language === 'th' ? '*สำหรับผู้มาเยือน: ดูหน้าแดชบอร์ดรวมทุกแผนก และหน้ารายการปัญหาได้ (ไม่สามารถแก้ไขข้อมูลได้)' : '*View-only: Access combined dashboards & defects across all departments.'}
+          </p>
 
           <div className="mt-5 text-center text-xs text-slate-600">
             {t.noAccountYet}{' '}

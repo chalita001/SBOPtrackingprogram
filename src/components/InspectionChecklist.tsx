@@ -370,6 +370,17 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!user || user.role === 'guest') {
+      setFeedback({
+        text: language === 'th'
+          ? 'โหมดผู้มาเยือน (Guest / View Only) สามารถดูข้อมูลได้อย่างเดียว ไม่สามารถส่งผลการตรวจได้ กรุณาเข้าสู่ระบบด้วยบัญชีจริง'
+          : 'Guest mode is view-only. You cannot submit inspection records. Please log in with a registered account.',
+        type: 'error'
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (isL1CodeTaken) {
       setFeedback({
         text: language === 'th'

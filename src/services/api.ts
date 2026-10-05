@@ -141,6 +141,8 @@ export const api = {
     return request(`/export/data${query ? `?${query}` : ''}`);
   },
   deleteDefect: (id: number) => request(`/defects/${id}`, { method: 'DELETE' }),
+  updateDefectStatus: (id: number, status: 'resolved' | 'pending') =>
+    request(`/defects/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 };
 
 export function normalizeImageUrl(url?: string | null): string {

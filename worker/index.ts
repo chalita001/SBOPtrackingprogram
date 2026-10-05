@@ -181,6 +181,11 @@ export default {
           console.error('Safety template seeding notice:', sErr);
         }
 
+        // Ensure defect_status column exists in inspection_items
+        try {
+          await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+        } catch (e) {}
+
         // Ensure 'useradmin'
         await env.DB.prepare(`
           INSERT INTO users (username, first_name, last_name, email, department, position, responsible_area, role, status, password_hash, approved_at, created_at, updated_at)
@@ -1002,8 +1007,10 @@ export default {
         if (code && code !== 'all') { sql += ' AND i.inspection_code = ?'; params.push(code); }
 
         // Non-admin/superadmin users see all inspection data within their own department; Admins and Superadmins see all departments
-        const isPrivilegedUser = currentUser.role === 'admin' || currentUser.role === 'superadmin';
-        if (!isPrivilegedUser) {
+        // Guests or visitors without accounts see all departments
+        const isPrivilegedUser = currentUser?.role === 'admin' || currentUser?.role === 'superadmin';
+        const isGuestOrPublic = !currentUser || currentUser?.role === 'guest';
+        if (!isPrivilegedUser && !isGuestOrPublic && currentUser) {
           const userDept = currentUser.department || 'MOLD';
           sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
           params.push(userDept, currentUser.id);
@@ -1023,7 +1030,7 @@ export default {
           FROM inspections
         `;
         const statsParams: any[] = [];
-        if (!isPrivilegedUser) {
+        if (!isPrivilegedUser && !isGuestOrPublic && currentUser) {
           const userDept = currentUser.department || 'MOLD';
           statsSql += ' WHERE (department_code = ? OR auditor_id = ?)';
           statsParams.push(userDept, currentUser.id);
@@ -1349,6 +1356,10 @@ export default {
 
     // Admin Dashboard Statistics (Publicly viewable by all users & guests)
     if (url.pathname === '/api/dashboard/stats' && request.method === 'GET') {
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+      } catch (e) {}
+
       const year = url.searchParams.get('year');
       const month = url.searchParams.get('month');
       const dept = url.searchParams.get('department');
@@ -1406,6 +1417,7 @@ export default {
         SELECT 
           ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
           ii.action_plan, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
+          COALESCE(ii.defect_status, 'pending') as defect_status,
           i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
         FROM inspection_items ii
         JOIN inspections i ON ii.inspection_id = i.id
@@ -1435,8 +1447,16 @@ export default {
       });
     }
 
-    // Comprehensive Data Export (Excel & Photos)
+    // Comprehensive Data Export (Excel & Photos) - Requirement 2: เฉพาะระดับ Admin ขึ้นไป
     if (url.pathname === '/api/export/data' && request.method === 'GET') {
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) {
+        return jsonResponse({ error: 'Forbidden: เฉพาะระดับ Admin ขึ้นไปเท่านั้นที่สามารถ Export ข้อมูลได้' }, 403);
+      }
+
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+      } catch (e) {}
+
       const year = url.searchParams.get('year');
       const month = url.searchParams.get('month');
       const dept = url.searchParams.get('department');
@@ -1458,6 +1478,7 @@ export default {
           ii.id, ii.inspection_id, ii.layer, ii.category, ii.subcategory, ii.question,
           ii.result, ii.finding_topic, ii.severity, ii.action_plan, ii.responsible_person,
           ii.due_date, ii.image_url, ii.image_key, ii.created_at,
+          COALESCE(ii.defect_status, 'pending') as defect_status,
           i.department_code, i.inspection_code, i.audit_date, i.shift, i.mc_and_products, i.auditor_name
         FROM inspection_items ii
         JOIN inspections i ON ii.inspection_id = i.id
@@ -1496,12 +1517,49 @@ export default {
       });
     }
 
-    // Defects: Delete / Resolve Defect Item and Remove Associated Photo from Cloudflare R2
-    if (url.pathname.match(/^\/api\/defects\/\d+$/) && request.method === 'DELETE') {
+    // Defects: Update Status ('pending' - ยังไม่แก้, 'resolved' - แก้แล้ว)
+    if (url.pathname.match(/^\/api\/defects\/\d+\/status$/) && (request.method === 'PATCH' || request.method === 'PUT')) {
+      if (currentUser?.role === 'guest') {
+        return jsonResponse({ error: 'Guest mode is view-only / โหมดผู้มาเยือนดูข้อมูลได้อย่างเดียว' }, 403);
+      }
       const itemId = parseInt(url.pathname.split('/')[3], 10);
+      const body: any = await request.json().catch(() => ({}));
+      const newStatus = body.status === 'resolved' ? 'resolved' : 'pending';
+
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+      } catch (e) {}
+
+      await env.DB.prepare('UPDATE inspection_items SET defect_status = ? WHERE id = ?').bind(newStatus, itemId).run();
+      return jsonResponse({
+        success: true,
+        message: newStatus === 'resolved' ? 'อัปเดตสถานะเป็น "แก้แล้ว" เรียบร้อย' : 'อัปเดตสถานะเป็น "ยังไม่แก้" เรียบร้อย',
+        id: itemId,
+        defect_status: newStatus
+      });
+    }
+
+    // Defects: Delete / Resolve Defect Item and Remove Associated Photo from Cloudflare R2
+    // Requirement 1: ถ้าหากยังไม่แก้ จะไม่สามารถลบได้ หากแก้แล้วจึงสามารถลบได้
+    if (url.pathname.match(/^\/api\/defects\/\d+$/) && request.method === 'DELETE') {
+      if (currentUser?.role === 'guest') {
+        return jsonResponse({ error: 'Guest mode is view-only / โหมดผู้มาเยือนดูข้อมูลได้อย่างเดียว' }, 403);
+      }
+      const itemId = parseInt(url.pathname.split('/')[3], 10);
+
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+      } catch (e) {}
 
       const item: any = await env.DB.prepare('SELECT * FROM inspection_items WHERE id = ?').bind(itemId).first();
       if (!item) return jsonResponse({ error: 'Defect item not found' }, 404);
+
+      // Check requirement 1: must be 'resolved' to delete!
+      if (item.defect_status !== 'resolved') {
+        return jsonResponse({
+          error: 'ไม่สามารถลบรายการนี้ได้เนื่องจากสถานะยังเป็น "ยังไม่แก้" — ต้องทำการแก้ไขและเปลี่ยนสถานะเป็น "แก้แล้ว" ก่อน จึงจะสามารถลบออกจากระบบได้'
+        }, 400);
+      }
 
       // Delete photo from Cloudflare R2 if it exists
       if (item.image_key) {

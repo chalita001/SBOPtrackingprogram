@@ -13,11 +13,11 @@ import { RegisterModal } from './components/RegisterModal';
 import { AccountInfoModal } from './components/AccountInfoModal';
 import { NotificationsModal } from './components/NotificationsModal';
 import { ChecklistManagerModal } from './components/ChecklistManagerModal';
-import { ShieldCheck, AlertCircle, Database, Cloud } from 'lucide-react';
+import { ShieldCheck, AlertCircle, Database, Cloud, Eye } from 'lucide-react';
 
 const MainContent: React.FC = () => {
-  const { user, loading, t } = useAuth();
-  const [activeTab, setActiveTab] = useState<string>('profile');
+  const { user, logout, loading, language, t } = useAuth();
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
 
   // Modals
   const [showLogin, setShowLogin] = useState<boolean>(false);
@@ -40,13 +40,16 @@ const MainContent: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      refreshUnreadCount();
-      // On fresh load with logged-in user, default to profile landing page
-      setActiveTab('profile');
+      if (user.role === 'guest') {
+        setActiveTab('dashboard');
+      } else {
+        refreshUnreadCount();
+        setActiveTab('profile');
+      }
     } else {
-      setActiveTab('checklist');
+      setActiveTab('dashboard');
     }
-  }, [user?.id]);
+  }, [user?.id, user?.role]);
 
   if (loading) {
     return (
@@ -74,6 +77,36 @@ const MainContent: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        {/* Guest Mode Banner (User requirement 3) */}
+        {user && user.role === 'guest' && (
+          <div className="mb-5 p-3.5 bg-gradient-to-r from-slate-900 via-[#1E2229] to-slate-900 border border-emerald-500/50 rounded-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md animate-fadeIn">
+            <div className="flex items-center gap-2.5 text-xs">
+              <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shrink-0">
+                <Eye className="w-4 h-4" />
+              </span>
+              <div className="leading-snug">
+                <span className="font-extrabold text-emerald-300">
+                  {language === 'th' ? 'โหมดผู้มาเยือน (Guest / View-Only Mode)' : 'Guest / View-Only Mode'}
+                </span>
+                <span className="text-slate-300 ml-1.5 block sm:inline">
+                  {language === 'th' 
+                    ? '— คุณสามารถดูแดชบอร์ดสถิติรวมทุกแผนก และรายการสิ่งผิดปกติได้ทั้งหมด (ดูได้อย่างเดียว ไม่สามารถแก้ไขหรือบันทึกข้อมูลได้)'
+                    : '— View-only access to combined executive dashboard & defects across all departments.'}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                logout();
+                setShowLogin(true);
+              }}
+              className="px-3 py-1.5 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 whitespace-nowrap"
+            >
+              {language === 'th' ? 'เข้าสู่ระบบด้วยบัญชีจริง' : 'Login to Real Account'}
+            </button>
+          </div>
+        )}
+
         {/* User Status Notice if pending approval */}
         {user && user.status === 'pending' && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-center justify-between shadow-sm">
@@ -146,13 +179,13 @@ const MainContent: React.FC = () => {
       {/* Modals */}
       <LoginModal
         isOpen={showLogin}
-        onClose={() => {
-          setShowLogin(false);
-          setActiveTab('profile');
-        }}
+        onClose={() => setShowLogin(false)}
         onSwitchToRegister={() => {
           setShowLogin(false);
           setShowRegister(true);
+        }}
+        onGuestLoginSuccess={() => {
+          setActiveTab('dashboard');
         }}
       />
 

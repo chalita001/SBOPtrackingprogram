@@ -13,7 +13,7 @@ export interface User {
   position: string;
   responsibleArea?: string;
   avatarUrl?: string;
-  role: 'superadmin' | 'admin' | 'layer1' | 'layer2' | 'layer3' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff';
+  role: 'superadmin' | 'admin' | 'layer1' | 'layer2' | 'layer3' | 'manager' | 'supervisor' | 'leader' | 'inspector' | 'staff' | 'guest';
   status: 'pending' | 'approved' | 'rejected';
 }
 
@@ -25,6 +25,7 @@ interface AuthContextType {
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
   login: (credentials: any) => Promise<void>;
+  loginAsGuest: () => void;
   register: (userData: any) => Promise<any>;
   logout: () => void;
   reloadUser: () => Promise<void>;
@@ -51,6 +52,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const reloadUser = async () => {
+    // Check if in guest mode
+    if (localStorage.getItem('sbop_guest_mode') === 'true') {
+      setUser({
+        id: 999999,
+        username: 'guest',
+        firstName: language === 'th' ? 'ผู้มาเยือน' : 'Guest',
+        lastName: language === 'th' ? '(ดูข้อมูลได้อย่างเดียว)' : '(View Only)',
+        email: 'guest@sbop.local',
+        department: 'ALL',
+        position: language === 'th' ? 'ผู้มาเยือน / Visitor' : 'Visitor (View Only)',
+        role: 'guest',
+        status: 'approved',
+      });
+      setLoading(false);
+      return;
+    }
+
     const token = getAuthToken();
     if (!token) {
       setUser(null);
@@ -75,16 +93,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (credentials: any) => {
+    localStorage.removeItem('sbop_guest_mode');
     const res = await api.login(credentials);
     setAuthToken(res.token);
     setUser(res.user);
   };
 
+  const loginAsGuest = () => {
+    localStorage.setItem('sbop_guest_mode', 'true');
+    removeAuthToken();
+    setUser({
+      id: 999999,
+      username: 'guest',
+      firstName: language === 'th' ? 'ผู้มาเยือน' : 'Guest',
+      lastName: language === 'th' ? '(ดูข้อมูลได้อย่างเดียว)' : '(View Only)',
+      email: 'guest@sbop.local',
+      department: 'ALL',
+      position: language === 'th' ? 'ผู้มาเยือน / Visitor' : 'Visitor (View Only)',
+      role: 'guest',
+      status: 'approved',
+    });
+  };
+
   const register = async (userData: any) => {
+    localStorage.removeItem('sbop_guest_mode');
     return await api.register(userData);
   };
 
   const logout = () => {
+    localStorage.removeItem('sbop_guest_mode');
     removeAuthToken();
     setUser(null);
   };
@@ -99,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setLanguage,
         toggleLanguage,
         login,
+        loginAsGuest,
         register,
         logout,
         reloadUser,

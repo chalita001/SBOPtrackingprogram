@@ -65,6 +65,7 @@ interface DashboardStats {
     audit_date: string;
     mc_and_products?: string;
     auditor_name: string;
+    defect_status?: 'pending' | 'resolved' | string;
   }>;
   userCounts: {
     total: number;
@@ -119,10 +120,35 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
   const [showExportModal, setShowExportModal] = useState<boolean>(false);
   const [exportModalTab, setExportModalTab] = useState<'excel' | 'images'>('excel');
 
-  // Deleting defect state
+  // Deleting and updating defect state
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [updatingDefectId, setUpdatingDefectId] = useState<number | null>(null);
+
+  const handleToggleDefectStatus = async (defect: any) => {
+    if (user?.role === 'guest') return;
+    const currentStatus = defect.defect_status === 'resolved' ? 'resolved' : 'pending';
+    const newStatus = currentStatus === 'resolved' ? 'pending' : 'resolved';
+
+    setUpdatingDefectId(defect.id);
+    try {
+      await api.updateDefectStatus(defect.id, newStatus);
+      await fetchDashboardData();
+    } catch (err: any) {
+      alert((language === 'en' ? 'Failed to update defect status: ' : 'ไม่สามารถเปลี่ยนสถานะได้: ') + (err.message || 'Unknown error'));
+    } finally {
+      setUpdatingDefectId(null);
+    }
+  };
 
   const handleDeleteDefectFromDashboard = async (defect: any) => {
+    if (user?.role === 'guest') return;
+    if (defect.defect_status !== 'resolved') {
+      alert(language === 'en'
+        ? 'Cannot delete unresolved defect. Please resolve it first.'
+        : 'ไม่สามารถลบรายการนี้ได้เนื่องจากยังไม่ได้รับการแก้ไข กรุณากด "ทำเครื่องหมายว่าแก้แล้ว" ก่อน จึงจะลบได้');
+      return;
+    }
+
     const confirmMsg = language === 'en'
       ? `Are you sure you want to remove this resolved defect (#${defect.inspection_code || '001'} - ${defect.finding_topic || defect.question})?\nThis will permanently delete any associated photo evidence from Cloudflare R2 storage and recalculate the compliance score.`
       : `คุณต้องการลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว (รหัสตรวจ #${defect.inspection_code || '001'} - ${defect.finding_topic || defect.question}) ใช่หรือไม่?\nระบบจะลบรูปภาพหลักฐานออกจาก Cloudflare R2 อย่างถาวร และปรับปรุงคะแนนความปลอดภัยของรอบตรวจให้ถูกต้อง`;
@@ -256,17 +282,68 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               <span>{t.updateData}</span>
             </button>
 
-            {/* Export Buttons */}
+            {/* Export Buttons (Admin / Superadmin Only) */}
+            {isPrivileged && (
+              <>
+                <button
+                  onClick={() => {
+                    setExportModalTab('excel');
+                    setShowExportModal(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-900/20 flex-1 sm:flex-initial"
+                  title={language === 'th' ? 'ส่งออกข้อมูลการตรวจและสถิติเป็น Excel / CSV' : 'Export audits and metrics to Excel / CSV'}
+                >
+                  <FileSpreadsheet className="w-3.5 h-3.5" />
+                  <span>{t.exportExcelBtn || 'Export Excel'}</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setExportModalTab('images');
+                    setShowExportModal(true);
+                  }}
+                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-900/20 flex-1 sm:flex-initial"
+                  title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็นไฟล์ ZIP หรือพิมพ์แค็ตตาล็อกรูปภาพ' : 'Export defect photos to ZIP or print catalog'}
+                >
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Admin & Management Action Card: ข้อมูลสำหรับ Admin ขึ้นไป (Admin / Superadmin Only) */}
+      {isPrivileged && (
+        <div className="bg-gradient-to-r from-slate-900 via-[#1E2229] to-slate-900 border border-[#F37021]/30 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
+                <ShieldAlert className="w-5 h-5" />
+              </span>
+              <h2 className="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
+                <span>ข้อมูลสำหรับ Admin ขึ้นไป (Admin Controls & Export Center)</span>
+              </h2>
+              <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                Admin Exclusive
+              </span>
+            </div>
+            <p className="text-xs text-slate-300">
+              ระบบส่งออกข้อมูลการตรวจเช็คความปลอดภัย รายการข้อบกพร่อง สถิติ KPI และดาวน์โหลดรูปภาพจาก Cloudflare R2
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               onClick={() => {
                 setExportModalTab('excel');
                 setShowExportModal(true);
               }}
-              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-900/20 flex-1 sm:flex-initial"
-              title={language === 'th' ? 'ส่งออกข้อมูลการตรวจและสถิติเป็น Excel / CSV' : 'Export audits and metrics to Excel / CSV'}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-950/40 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>{t.exportExcelBtn || 'Export Excel'}</span>
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Export Excel</span>
             </button>
 
             <button
@@ -274,59 +351,14 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 setExportModalTab('images');
                 setShowExportModal(true);
               }}
-              className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-900/20 flex-1 sm:flex-initial"
-              title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็นไฟล์ ZIP หรือพิมพ์แค็ตตาล็อกรูปภาพ' : 'Export defect photos to ZIP or print catalog'}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-950/40 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
+              <ImageIcon className="w-4 h-4" />
+              <span>Export รูปภาพ</span>
             </button>
           </div>
         </div>
-      </div>
-
-      {/* 2. Admin & Management Action Card: ข้อมูลสำหรับ Admin ขึ้นไป */}
-      <div className="bg-gradient-to-r from-slate-900 via-[#1E2229] to-slate-900 border border-[#F37021]/30 rounded-2xl p-4 sm:p-5 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-[#F37021]/20 text-[#F37021] border border-[#F37021]/30">
-              <ShieldAlert className="w-5 h-5" />
-            </span>
-            <h2 className="text-sm sm:text-base font-extrabold text-white flex items-center gap-2">
-              <span>ข้อมูลสำหรับ Admin ขึ้นไป (Admin Controls & Export Center)</span>
-            </h2>
-            <span className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-              Active
-            </span>
-          </div>
-          <p className="text-xs text-slate-300">
-            ระบบส่งออกข้อมูลการตรวจเช็คความปลอดภัย รายการข้อบกพร่อง สถิติ KPI และดาวน์โหลดรูปภาพจาก Cloudflare R2
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          <button
-            onClick={() => {
-              setExportModalTab('excel');
-              setShowExportModal(true);
-            }}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-950/40 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Excel</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setExportModalTab('images');
-              setShowExportModal(true);
-            }}
-            className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-950/40 hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <ImageIcon className="w-4 h-4" />
-            <span>Export รูปภาพ</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 flex items-center gap-2">
@@ -691,9 +723,22 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 <div className="space-y-2">
                   {/* Badge Row */}
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200">
-                      {defect.severity || 'Minor'}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200">
+                        {defect.severity || 'Minor'}
+                      </span>
+                      {defect.defect_status === 'resolved' ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                          <span>{language === 'th' ? 'แก้แล้ว' : 'Resolved'}</span>
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          <span>{language === 'th' ? 'ยังไม่แก้' : 'Pending'}</span>
+                        </span>
+                      )}
+                    </div>
                     <span className="text-[10px] font-semibold text-slate-400">
                       {defect.audit_date}
                     </span>
@@ -759,18 +804,63 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                   </div>
                 )}
 
-                {/* Delete Resolved Defect Button */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteDefectFromDashboard(defect)}
-                    disabled={deletingId === defect.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
-                    title={language === 'th' ? 'ลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว พร้อมลบรูปภาพหลักฐาน' : 'Delete resolved defect and photo'}
-                  >
-                    <Trash2 className={`w-3.5 h-3.5 ${deletingId === defect.id ? 'animate-spin' : 'text-rose-500'}`} />
-                    <span>{deletingId === defect.id ? (language === 'th' ? 'กำลังลบ...' : 'Deleting...') : (t.deleteResolvedDefect || 'ลบข้อผิดพลาด (แก้ไขแล้ว)')}</span>
-                  </button>
+                {/* Actions: Status Toggle & Conditional Deletion */}
+                <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                  {/* Status Toggle Button (hidden for guests) */}
+                  {user?.role !== 'guest' ? (
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDefectStatus(defect)}
+                      disabled={updatingDefectId === defect.id}
+                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition border ${
+                        defect.defect_status === 'resolved'
+                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+                          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300'
+                      } disabled:opacity-50`}
+                      title={defect.defect_status === 'resolved'
+                        ? (language === 'th' ? 'เปลี่ยนสถานะกลับเป็นยังไม่แก้' : 'Reopen defect')
+                        : (language === 'th' ? 'เปลี่ยนสถานะเป็นได้รับการแก้ไขแล้ว' : 'Mark as resolved')}
+                    >
+                      <CheckCircle2 className={`w-3.5 h-3.5 ${updatingDefectId === defect.id ? 'animate-spin' : ''}`} />
+                      <span>
+                        {updatingDefectId === defect.id
+                          ? (language === 'th' ? 'กำลังบันทึก...' : 'Saving...')
+                          : defect.defect_status === 'resolved'
+                          ? (language === 'th' ? '↩️ ยังไม่แก้' : 'Reopen')
+                          : (language === 'th' ? '✅ ทำเครื่องหมายแก้แล้ว' : 'Mark Resolved')}
+                      </span>
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-slate-400 italic">
+                      {language === 'th' ? '👁️ ดูได้อย่างเดียว' : '👁️ View Only'}
+                    </span>
+                  )}
+
+                  {/* Delete Button: Enabled ONLY if defect_status === 'resolved' and not guest */}
+                  {user?.role !== 'guest' && (
+                    defect.defect_status === 'resolved' ? (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDefectFromDashboard(defect)}
+                        disabled={deletingId === defect.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
+                        title={language === 'th' ? 'ลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว พร้อมลบรูปภาพหลักฐาน' : 'Delete resolved defect and photo'}
+                      >
+                        <Trash2 className={`w-3.5 h-3.5 ${deletingId === defect.id ? 'animate-spin' : 'text-rose-500'}`} />
+                        <span>{deletingId === defect.id ? (language === 'th' ? 'กำลังลบ...' : 'Deleting...') : (t.deleteResolvedDefect || 'ลบข้อผิดพลาด (แก้ไขแล้ว)')}</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={true}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-semibold cursor-not-allowed opacity-75"
+                        title={language === 'th' ? 'ต้องเปลี่ยนสถานะเป็น "แก้แล้ว" ก่อน จึงจะสามารถลบออกจากระบบได้' : 'Defect must be marked as resolved before it can be deleted'}
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{language === 'th' ? '🔒 ลบไม่ได้ (ยังไม่แก้)' : '🔒 Locked (Unresolved)'}</span>
+                      </button>
+                    )
+                  )}
                 </div>
               </div>
             ))}
