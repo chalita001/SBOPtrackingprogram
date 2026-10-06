@@ -1418,6 +1418,7 @@ export default {
           ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
           ii.action_plan, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
           COALESCE(ii.defect_status, 'pending') as defect_status,
+          COALESCE(ii.fix_image_url, '') as fix_image_url,
           i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
         FROM inspection_items ii
         JOIN inspections i ON ii.inspection_id = i.id
@@ -1479,6 +1480,8 @@ export default {
           ii.result, ii.finding_topic, ii.severity, ii.action_plan, ii.responsible_person,
           ii.due_date, ii.image_url, ii.image_key, ii.created_at,
           COALESCE(ii.defect_status, 'pending') as defect_status,
+          COALESCE(ii.fix_image_url, '') as fix_image_url,
+          COALESCE(ii.fix_image_key, '') as fix_image_key,
           i.department_code, i.inspection_code, i.audit_date, i.shift, i.mc_and_products, i.auditor_name
         FROM inspection_items ii
         JOIN inspections i ON ii.inspection_id = i.id
@@ -1517,14 +1520,98 @@ export default {
       });
     }
 
-    // Defects: Update Status ('pending' - ยังไม่แก้, 'resolved' - แก้แล้ว)
+    // Defects: Submit Fix Photo (User attaches after-fix image → status becomes 'reviewing')
+    if (url.pathname.match(/^\/api\/defects\/\d+\/fix-photo$/) && request.method === 'POST') {
+      if (!currentUser || currentUser.role === 'guest') {
+        return jsonResponse({ error: 'Unauthorized' }, 401);
+      }
+      const itemId = parseInt(url.pathname.split('/')[3], 10);
+
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+      } catch (e) {}
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN fix_image_url TEXT").run();
+      } catch (e) {}
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN fix_image_key TEXT").run();
+      } catch (e) {}
+
+      const formData = await request.formData().catch(() => null);
+      let fixImageUrl = '';
+      let fixImageKey = '';
+
+      if (formData) {
+        const file = formData.get('fix_image') as File | null;
+        if (file && file.size > 0) {
+          const timestamp = Date.now();
+          const random = Math.random().toString(36).substring(2, 8);
+          const ext = file.name.substring(file.name.lastIndexOf('.')) || '.jpg';
+          const key = `fixes/${timestamp}_${random}${ext}`;
+          const buffer = await file.arrayBuffer();
+          await env.R2_BUCKET.put(key, buffer, {
+            httpMetadata: { contentType: file.type || 'image/jpeg' },
+          });
+          fixImageKey = key;
+          fixImageUrl = `/api/r2/${key}`;
+        }
+      }
+
+      if (!fixImageUrl) {
+        return jsonResponse({ error: 'กรุณาแนบรูปภาพการแก้ไข (fix_image)' }, 400);
+      }
+
+      await env.DB.prepare(`
+        UPDATE inspection_items
+        SET defect_status = 'reviewing', fix_image_url = ?, fix_image_key = ?
+        WHERE id = ?
+      `).bind(fixImageUrl, fixImageKey, itemId).run();
+
+      return jsonResponse({
+        success: true,
+        message: 'ส่งรูปภาพการแก้ไขแล้ว สถานะเปลี่ยนเป็น "รอตรวจ" — กรุณารอ Admin ตรวจสอบและอนุมัติ',
+        defect_status: 'reviewing',
+        fix_image_url: fixImageUrl,
+      });
+    }
+
+    // Defects: Admin Approves Fix (Admin verifies before/after photos → status becomes 'resolved')
+    if (url.pathname.match(/^\/api\/defects\/\d+\/approve$/) && request.method === 'PATCH') {
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) {
+        return jsonResponse({ error: 'Admin only / เฉพาะ Admin และ Super Admin เท่านั้น' }, 403);
+      }
+      const itemId = parseInt(url.pathname.split('/')[3], 10);
+
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+      } catch (e) {}
+
+      const body: any = await request.json().catch(() => ({}));
+      // Admin can also reject back to 'pending' (re-open)
+      const newStatus = body.status === 'pending' ? 'pending' : 'resolved';
+
+      await env.DB.prepare(`
+        UPDATE inspection_items SET defect_status = ? WHERE id = ?
+      `).bind(newStatus, itemId).run();
+
+      return jsonResponse({
+        success: true,
+        message: newStatus === 'resolved'
+          ? 'อนุมัติการแก้ไขแล้ว — สถานะเปลี่ยนเป็น "แก้แล้ว" เรียบร้อย'
+          : 'ส่งกลับไปแก้ไขใหม่ — สถานะเปลี่ยนกลับเป็น "ยังไม่แก้"',
+        defect_status: newStatus,
+        id: itemId,
+      });
+    }
+
+    // Defects: Update Status — legacy route kept for compatibility (admin reopen only)
     if (url.pathname.match(/^\/api\/defects\/\d+\/status$/) && (request.method === 'PATCH' || request.method === 'PUT')) {
-      if (currentUser?.role === 'guest') {
-        return jsonResponse({ error: 'Guest mode is view-only / โหมดผู้มาเยือนดูข้อมูลได้อย่างเดียว' }, 403);
+      if (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'superadmin')) {
+        return jsonResponse({ error: 'Admin only' }, 403);
       }
       const itemId = parseInt(url.pathname.split('/')[3], 10);
       const body: any = await request.json().catch(() => ({}));
-      const newStatus = body.status === 'resolved' ? 'resolved' : 'pending';
+      const newStatus = body.status === 'resolved' ? 'resolved' : body.status === 'reviewing' ? 'reviewing' : 'pending';
 
       try {
         await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
@@ -1533,7 +1620,7 @@ export default {
       await env.DB.prepare('UPDATE inspection_items SET defect_status = ? WHERE id = ?').bind(newStatus, itemId).run();
       return jsonResponse({
         success: true,
-        message: newStatus === 'resolved' ? 'อัปเดตสถานะเป็น "แก้แล้ว" เรียบร้อย' : 'อัปเดตสถานะเป็น "ยังไม่แก้" เรียบร้อย',
+        message: `อัปเดตสถานะเป็น "${newStatus}" เรียบร้อย`,
         id: itemId,
         defect_status: newStatus
       });

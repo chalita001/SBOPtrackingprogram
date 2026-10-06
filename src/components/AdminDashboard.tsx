@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { api } from '../services/api';
+import { api, normalizeImageUrl } from '../services/api';
 import {
   BarChart3,
   ShieldCheck,
   AlertTriangle,
   CheckCircle2,
+  CheckCircle,
   Users,
   Building2,
   Layers,
@@ -19,7 +20,10 @@ import {
   AlertCircle,
   FileSpreadsheet,
   Trash2,
-  ShieldAlert
+  ShieldAlert,
+  ThumbsUp,
+  ThumbsDown,
+  Camera
 } from 'lucide-react';
 import { ExportDataModal } from './ExportDataModal';
 
@@ -59,13 +63,14 @@ interface DashboardStats {
     responsible_person?: string;
     due_date?: string;
     image_url?: string;
+    fix_image_url?: string;
     layer: string;
     department_code: string;
     inspection_code?: string;
     audit_date: string;
     mc_and_products?: string;
     auditor_name: string;
-    defect_status?: 'pending' | 'resolved' | string;
+    defect_status?: 'pending' | 'reviewing' | 'resolved' | string;
   }>;
   userCounts: {
     total: number;
@@ -124,17 +129,14 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [updatingDefectId, setUpdatingDefectId] = useState<number | null>(null);
 
-  const handleToggleDefectStatus = async (defect: any) => {
-    if (user?.role === 'guest') return;
-    const currentStatus = defect.defect_status === 'resolved' ? 'resolved' : 'pending';
-    const newStatus = currentStatus === 'resolved' ? 'pending' : 'resolved';
-
+  const handleApproveDefectFromDashboard = async (defect: any, approve: boolean) => {
+    if (!isPrivileged) return;
     setUpdatingDefectId(defect.id);
     try {
-      await api.updateDefectStatus(defect.id, newStatus);
+      await api.approveDefect(defect.id, approve ? 'resolved' : 'pending');
       await fetchDashboardData();
     } catch (err: any) {
-      alert((language === 'en' ? 'Failed to update defect status: ' : 'ไม่สามารถเปลี่ยนสถานะได้: ') + (err.message || 'Unknown error'));
+      alert((language === 'en' ? 'Action failed: ' : 'ดำเนินการไม่สำเร็จ: ') + (err.message || 'Unknown error'));
     } finally {
       setUpdatingDefectId(null);
     }
@@ -281,35 +283,6 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span>{t.updateData}</span>
             </button>
-
-            {/* Export Buttons (Admin / Superadmin Only) */}
-            {isPrivileged && (
-              <>
-                <button
-                  onClick={() => {
-                    setExportModalTab('excel');
-                    setShowExportModal(true);
-                  }}
-                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition shadow-md shadow-emerald-900/20 flex-1 sm:flex-initial"
-                  title={language === 'th' ? 'ส่งออกข้อมูลการตรวจและสถิติเป็น Excel / CSV' : 'Export audits and metrics to Excel / CSV'}
-                >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>{t.exportExcelBtn || 'Export Excel'}</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setExportModalTab('images');
-                    setShowExportModal(true);
-                  }}
-                  className="flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold transition shadow-md shadow-orange-900/20 flex-1 sm:flex-initial"
-                  title={language === 'th' ? 'ส่งออกรูปภาพสิ่งผิดปกติเป็นไฟล์ ZIP หรือพิมพ์แค็ตตาล็อกรูปภาพ' : 'Export defect photos to ZIP or print catalog'}
-                >
-                  <ImageIcon className="w-3.5 h-3.5" />
-                  <span>{t.exportImagesBtn || 'Export รูปภาพ'}</span>
-                </button>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -730,12 +703,17 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                       {defect.defect_status === 'resolved' ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                          <span>{language === 'th' ? 'แก้แล้ว' : 'Resolved'}</span>
+                          <span>{language === 'th' ? '✅ แก้แล้ว' : '✅ Resolved'}</span>
+                        </span>
+                      ) : defect.defect_status === 'reviewing' ? (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-300 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-yellow-600 shrink-0" />
+                          <span>{language === 'th' ? 'รอตรวจสอบ' : 'Reviewing'}</span>
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                          <span>{language === 'th' ? 'ยังไม่แก้' : 'Pending'}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                          <span>{language === 'th' ? '⚠️ ยังไม่แก้' : '⚠️ Pending'}</span>
                         </span>
                       )}
                     </div>
@@ -777,26 +755,57 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                   </div>
                 </div>
 
-                {/* Proof Image on Cloudflare R2 */}
-                {defect.image_url ? (
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewImage(defect.image_url!)}
-                      className="flex items-center gap-1.5 text-[11px] text-[#F37021] hover:text-[#DE5F14] font-bold"
-                    >
-                      <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
-                      <span>{t.viewProofPhotoBtn}</span>
-                    </button>
-                    <a
-                      href={defect.image_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-slate-400 hover:text-[#F37021]"
-                      title={t.openInNewTab}
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                {/* Proof Images: Before / After */}
+                {(defect.image_url || defect.fix_image_url) ? (
+                  <div className="pt-2 border-t border-slate-100 space-y-2">
+                    {defect.fix_image_url && defect.image_url ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-[10px] text-slate-500 font-bold mb-1 flex items-center gap-1">
+                            <Camera className="w-3 h-3 text-red-500" /> BEFORE
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImage(normalizeImageUrl(defect.image_url!))}
+                            className="w-full block rounded-lg overflow-hidden border border-red-200 group text-left"
+                          >
+                            <img src={normalizeImageUrl(defect.image_url)} alt="Before" className="w-full h-20 object-cover group-hover:scale-105 transition" />
+                          </button>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-emerald-600 font-bold mb-1 flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3 text-emerald-500" /> AFTER
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewImage(normalizeImageUrl(defect.fix_image_url!))}
+                            className="w-full block rounded-lg overflow-hidden border border-emerald-200 group text-left"
+                          >
+                            <img src={normalizeImageUrl(defect.fix_image_url)} alt="After" className="w-full h-20 object-cover group-hover:scale-105 transition" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : defect.image_url ? (
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImage(normalizeImageUrl(defect.image_url!))}
+                          className="flex items-center gap-1.5 text-[11px] text-[#F37021] hover:text-[#DE5F14] font-bold"
+                        >
+                          <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
+                          <span>{t.viewProofPhotoBtn} (Before)</span>
+                        </button>
+                        <a
+                          href={normalizeImageUrl(defect.image_url)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-slate-400 hover:text-[#F37021]"
+                          title={t.openInNewTab}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                    ) : null}
                   </div>
                 ) : (
                   <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 italic">
@@ -804,61 +813,75 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                   </div>
                 )}
 
-                {/* Actions: Status Toggle & Conditional Deletion */}
-                <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                  {/* Status Toggle Button (hidden for guests) */}
-                  {user?.role !== 'guest' ? (
-                    <button
-                      type="button"
-                      onClick={() => handleToggleDefectStatus(defect)}
-                      disabled={updatingDefectId === defect.id}
-                      className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold transition border ${
-                        defect.defect_status === 'resolved'
-                          ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
-                          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-300'
-                      } disabled:opacity-50`}
-                      title={defect.defect_status === 'resolved'
-                        ? (language === 'th' ? 'เปลี่ยนสถานะกลับเป็นยังไม่แก้' : 'Reopen defect')
-                        : (language === 'th' ? 'เปลี่ยนสถานะเป็นได้รับการแก้ไขแล้ว' : 'Mark as resolved')}
-                    >
-                      <CheckCircle2 className={`w-3.5 h-3.5 ${updatingDefectId === defect.id ? 'animate-spin' : ''}`} />
-                      <span>
-                        {updatingDefectId === defect.id
-                          ? (language === 'th' ? 'กำลังบันทึก...' : 'Saving...')
-                          : defect.defect_status === 'resolved'
-                          ? (language === 'th' ? '↩️ ยังไม่แก้' : 'Reopen')
-                          : (language === 'th' ? '✅ ทำเครื่องหมายแก้แล้ว' : 'Mark Resolved')}
-                      </span>
-                    </button>
-                  ) : (
-                    <span className="text-[11px] text-slate-400 italic">
-                      {language === 'th' ? '👁️ ดูได้อย่างเดียว' : '👁️ View Only'}
-                    </span>
+                {/* Actions: Review/Approve/Delete Workflow */}
+                <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+                  {/* Status == reviewing: Admin can Approve or Reject */}
+                  {defect.defect_status === 'reviewing' && (
+                    isPrivileged ? (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleApproveDefectFromDashboard(defect, true)}
+                          disabled={updatingDefectId === defect.id}
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition disabled:opacity-50"
+                        >
+                          <ThumbsUp className="w-3 h-3" />
+                          <span>{updatingDefectId === defect.id ? '...' : (language === 'th' ? 'อนุมัติ (แก้แล้ว)' : 'Approve')}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApproveDefectFromDashboard(defect, false)}
+                          disabled={updatingDefectId === defect.id}
+                          className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold transition disabled:opacity-50"
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                          <span>{language === 'th' ? 'ส่งกลับแก้ใหม่' : 'Reject'}</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 p-1.5 bg-yellow-50 border border-yellow-200 rounded-xl text-[10px] text-yellow-800 font-semibold">
+                        <Clock className="w-3 h-3 text-yellow-600 shrink-0" />
+                        <span>{language === 'th' ? 'รอ Admin ตรวจสอบรูปภาพ Before/After' : 'Pending Admin review'}</span>
+                      </div>
+                    )
                   )}
 
-                  {/* Delete Button: Enabled ONLY if defect_status === 'resolved' and not guest */}
-                  {user?.role !== 'guest' && (
-                    defect.defect_status === 'resolved' ? (
+                  {/* Status == pending: navigate to Defects to attach After photo */}
+                  {defect.defect_status === 'pending' && (
+                    user?.role !== 'guest' ? (
+                      <button
+                        type="button"
+                        onClick={() => onNavigateToDefects && onNavigateToDefects()}
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition"
+                      >
+                        <Camera className="w-3.5 h-3.5 text-blue-600" />
+                        <span>{language === 'th' ? '📸 แนบรูปการแก้ไข (ในรายการ)' : 'Attach Fix Photo'}</span>
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">
+                        {language === 'th' ? '👁️ ดูได้อย่างเดียว' : '👁️ View Only'}
+                      </span>
+                    )
+                  )}
+
+                  {/* Status == resolved: Delete button for admin */}
+                  {defect.defect_status === 'resolved' && (
+                    isPrivileged ? (
                       <button
                         type="button"
                         onClick={() => handleDeleteDefectFromDashboard(defect)}
                         disabled={deletingId === defect.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
+                        className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition shadow-xs disabled:opacity-50"
                         title={language === 'th' ? 'ลบข้อผิดพลาดนี้ที่ได้รับการแก้ไขแล้ว พร้อมลบรูปภาพหลักฐาน' : 'Delete resolved defect and photo'}
                       >
                         <Trash2 className={`w-3.5 h-3.5 ${deletingId === defect.id ? 'animate-spin' : 'text-rose-500'}`} />
-                        <span>{deletingId === defect.id ? (language === 'th' ? 'กำลังลบ...' : 'Deleting...') : (t.deleteResolvedDefect || 'ลบข้อผิดพลาด (แก้ไขแล้ว)')}</span>
+                        <span>{deletingId === defect.id ? (language === 'th' ? 'กำลังลบ...' : 'Deleting...') : (t.deleteResolvedDefect || '🗑️ ลบ (แก้ไขแล้ว)')}</span>
                       </button>
                     ) : (
-                      <button
-                        type="button"
-                        disabled={true}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-400 border border-slate-200 rounded-xl text-xs font-semibold cursor-not-allowed opacity-75"
-                        title={language === 'th' ? 'ต้องเปลี่ยนสถานะเป็น "แก้แล้ว" ก่อน จึงจะสามารถลบออกจากระบบได้' : 'Defect must be marked as resolved before it can be deleted'}
-                      >
-                        <ShieldAlert className="w-3.5 h-3.5 text-slate-400" />
-                        <span>{language === 'th' ? '🔒 ลบไม่ได้ (ยังไม่แก้)' : '🔒 Locked (Unresolved)'}</span>
-                      </button>
+                      <div className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{language === 'th' ? 'ได้รับการแก้ไขเรียบร้อยแล้ว' : 'Resolved'}</span>
+                      </div>
                     )
                   )}
                 </div>

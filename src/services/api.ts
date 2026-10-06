@@ -141,8 +141,29 @@ export const api = {
     return request(`/export/data${query ? `?${query}` : ''}`);
   },
   deleteDefect: (id: number) => request(`/defects/${id}`, { method: 'DELETE' }),
-  updateDefectStatus: (id: number, status: 'resolved' | 'pending') =>
+  updateDefectStatus: (id: number, status: 'resolved' | 'pending' | 'reviewing') =>
     request(`/defects/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  // Submit fix photo (user → status becomes 'reviewing')
+  submitDefectFixPhoto: async (id: number, file: File) => {
+    const token = getAuthToken();
+    const formData = new FormData();
+    formData.append('fix_image', file);
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await fetch(`${API_BASE}/defects/${id}/fix-photo`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    });
+    const data: any = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'Failed to submit fix photo');
+    return data;
+  },
+
+  // Admin approves or rejects a fix in 'reviewing' state
+  approveDefect: (id: number, status: 'resolved' | 'pending') =>
+    request(`/defects/${id}/approve`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 };
 
 export function normalizeImageUrl(url?: string | null): string {

@@ -164,8 +164,9 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
       // Defects
       if (includeDefects && data.defects.length > 0) {
         csvContent += '=== รายการสิ่งผิดปกติและข้อบกพร่อง (Defects & Findings) ===\r\n';
-        csvContent += 'ID,รหัสตรวจ,แผนก,Layer,วันที่ตรวจ,หมวดหมู่,คำถาม,อาการผิดปกติที่พบ,ระดับความรุนแรง,แนวทางแก้ไข,ผู้รับผิดชอบ,กำหนดเสร็จ,ลิงก์รูปภาพ\r\n';
+        csvContent += 'ID,รหัสตรวจ,แผนก,Layer,วันที่ตรวจ,หมวดหมู่,คำถาม,อาการผิดปกติที่พบ,ระดับความรุนแรง,สถานะ,แนวทางแก้ไข,ผู้รับผิดชอบ,กำหนดเสร็จ,ลิงก์รูปก่อนแก้(Before),ลิงก์รูปหลังแก้(After)\r\n';
         data.defects.forEach((def) => {
+          const statusText = def.defect_status === 'resolved' ? 'แก้แล้ว' : def.defect_status === 'reviewing' ? 'รอตรวจสอบ' : 'ยังไม่แก้';
           const row = [
             def.id,
             `"${def.inspection_code || '001'}"`,
@@ -176,10 +177,12 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
             `"${(def.question || '').replace(/"/g, '""')}"`,
             `"${(def.finding_topic || '').replace(/"/g, '""')}"`,
             `"${def.severity || 'Minor'}"`,
+            `"${statusText}"`,
             `"${(def.action_plan || '').replace(/"/g, '""')}"`,
             `"${def.responsible_person || ''}"`,
             `"${def.due_date || ''}"`,
             `"${def.image_url || ''}"`,
+            `"${def.fix_image_url || ''}"`,
           ];
           csvContent += row.join(',') + '\r\n';
         });
@@ -290,13 +293,16 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
     <Cell><Data ss:Type="String">คำถาม</Data></Cell>
     <Cell><Data ss:Type="String">อาการผิดปกติที่พบ</Data></Cell>
     <Cell><Data ss:Type="String">ความรุนแรง</Data></Cell>
+    <Cell><Data ss:Type="String">สถานะ</Data></Cell>
     <Cell><Data ss:Type="String">แนวทางแก้ไข</Data></Cell>
     <Cell><Data ss:Type="String">ผู้รับผิดชอบ</Data></Cell>
     <Cell><Data ss:Type="String">กำหนดเสร็จ</Data></Cell>
-    <Cell><Data ss:Type="String">ลิงก์รูปภาพ</Data></Cell>
+    <Cell><Data ss:Type="String">รูปภาพ Before</Data></Cell>
+    <Cell><Data ss:Type="String">รูปภาพ After</Data></Cell>
    </Row>
 `;
         (data.defects || []).forEach((def) => {
+          const statusText = def.defect_status === 'resolved' ? 'แก้แล้ว' : def.defect_status === 'reviewing' ? 'รอตรวจสอบ' : 'ยังไม่แก้';
           xml += `   <Row>
     <Cell><Data ss:Type="String">#${def.inspection_code || '001'}</Data></Cell>
     <Cell><Data ss:Type="String">${def.department_code || ''}</Data></Cell>
@@ -306,10 +312,12 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
     <Cell><Data ss:Type="String">${escapeXml(def.question || '')}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXml(def.finding_topic || '')}</Data></Cell>
     <Cell><Data ss:Type="String">${def.severity || 'Minor'}</Data></Cell>
+    <Cell><Data ss:Type="String">${statusText}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXml(def.action_plan || '')}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXml(def.responsible_person || '')}</Data></Cell>
     <Cell><Data ss:Type="String">${def.due_date || ''}</Data></Cell>
     <Cell><Data ss:Type="String">${escapeXml(def.image_url || '')}</Data></Cell>
+    <Cell><Data ss:Type="String">${escapeXml(def.fix_image_url || '')}</Data></Cell>
    </Row>
 `;
         });
@@ -381,16 +389,34 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
         setZipProgress(`กำลังดึงรูปภาพ ${count}/${itemsToExport.length}...`);
 
         try {
-          const imgUrl = normalizeImageUrl(item.image_url);
-          const response = await fetch(imgUrl);
-          if (response.ok) {
-            const blob = await response.blob();
-            const safeTopic = (item.finding_topic || item.question || 'Defect')
-              .slice(0, 30)
-              .replace(/[/\\?%*:|"<>]/g, '_')
-              .replace(/\s+/g, '_');
-            const fileName = `${item.departmentCode}_#${item.inspectionCode || '001'}_${safeTopic}_id${item.id}.jpg`;
-            folder?.file(fileName, blob);
+          const deptCode = item.department_code || item.departmentCode || 'DEPT';
+          const insCode = item.inspection_code || item.inspectionCode || '001';
+          const safeTopic = (item.finding_topic || item.question || 'Defect')
+            .slice(0, 30)
+            .replace(/[/\\?%*:|"<>]/g, '_')
+            .replace(/\s+/g, '_');
+
+          // 1. Before photo
+          if (item.image_url) {
+            const imgUrl = normalizeImageUrl(item.image_url);
+            const response = await fetch(imgUrl);
+            if (response.ok) {
+              const blob = await response.blob();
+              const suffix = item.fix_image_url ? '_BEFORE.jpg' : '.jpg';
+              const fileName = `${deptCode}_#${insCode}_${safeTopic}_id${item.id}${suffix}`;
+              folder?.file(fileName, blob);
+            }
+          }
+
+          // 2. After photo (if exists)
+          if (item.fix_image_url) {
+            const fixImgUrl = normalizeImageUrl(item.fix_image_url);
+            const fixRes = await fetch(fixImgUrl);
+            if (fixRes.ok) {
+              const fixBlob = await fixRes.blob();
+              const fixFileName = `${deptCode}_#${insCode}_${safeTopic}_id${item.id}_AFTER.jpg`;
+              folder?.file(fixFileName, fixBlob);
+            }
           }
         } catch (fetchErr) {
           console.warn(`Failed to fetch photo for defect #${item.id}:`, fetchErr);
