@@ -442,10 +442,15 @@ export default {
       const currentMonth = now.getMonth() + 1;
 
       // Defined monthly quota: Layer 1 = 40, Layer 2 = 4, Layer 3 = 1, Admin/Superadmin = 40
+      // SAFETY department: No monthly quota — they audit all other departments
       const normalizedRole = (user.role || '').toLowerCase();
+      const isSafetyDept = (user.department || '').toUpperCase() === 'SAFETY';
       let targetMonthly = 40;
       let targetLayer = 'Layer 1';
-      if (normalizedRole === 'layer1' || normalizedRole === 'leader') {
+      if (isSafetyDept) {
+        targetMonthly = 0; // No fixed quota for SAFETY
+        targetLayer = 'Layer 1';
+      } else if (normalizedRole === 'layer1' || normalizedRole === 'leader') {
         targetMonthly = 40;
         targetLayer = 'Layer 1';
       } else if (normalizedRole === 'layer2' || normalizedRole === 'supervisor') {
@@ -473,6 +478,7 @@ export default {
 
       // 2. Department-pooled inspection count for this layer this month
       // "การตรวจเช็คจะรวมกันเมื่อคุณอยู่แผนกเดียวกัน เช่น QC ใครที่อยู่ Layer1 จะนับจำนวณรวมกัน Layer2-3 ก็ด้วย"
+      // SAFETY dept: count all inspections they personally performed (not dept-pooled)
       let deptMonthQuery = `
         SELECT 
           COUNT(*) as count,
@@ -484,7 +490,11 @@ export default {
       `;
       const deptMonthParams: any[] = [currentYear, currentMonth];
       const isPrivileged = user.role === 'admin' || user.role === 'superadmin';
-      if (!isPrivileged && dept) {
+      // SAFETY dept: show only personal stats (they audit cross-department, no team pool)
+      if (isSafetyDept) {
+        deptMonthQuery += ` AND auditor_id = ?`;
+        deptMonthParams.push(user.id);
+      } else if (!isPrivileged && dept) {
         deptMonthQuery += ` AND department_code = ? AND layer = ?`;
         deptMonthParams.push(dept, targetLayer);
       }
@@ -497,14 +507,17 @@ export default {
         WHERE auditor_id = ? AND year = ? AND month = ?
       `).bind(user.id, currentYear, currentMonth).first();
 
-      // 4. Monthly breakdown for current year (Department-pooled)
+      // 4. Monthly breakdown for current year (Personal for SAFETY, dept-pooled for others)
       let chartQuery = `
         SELECT month, COUNT(*) as count, ROUND(AVG(score_percent), 1) as avg_score, SUM(total_no) as defects
         FROM inspections
         WHERE year = ?
       `;
       const chartParams: any[] = [currentYear];
-      if (!isPrivileged && dept) {
+      if (isSafetyDept) {
+        chartQuery += ` AND auditor_id = ?`;
+        chartParams.push(user.id);
+      } else if (!isPrivileged && dept) {
         chartQuery += ` AND department_code = ? AND layer = ?`;
         chartParams.push(dept, targetLayer);
       }

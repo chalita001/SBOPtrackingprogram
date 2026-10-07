@@ -165,11 +165,15 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   if (!user) return null;
 
+  const isSafetyUser = (user.department || '').toUpperCase() === 'SAFETY';
+
   const roleTitle =
     user.role === 'superadmin'
       ? (language === 'en' ? 'Super Administrator (Super Admin)' : 'ผู้ดูแลระบบสูงสุด (Super Admin)')
       : user.role === 'admin'
       ? (language === 'en' ? 'System Administrator' : 'ผู้ดูแลระบบ (Admin)')
+      : isSafetyUser
+      ? (language === 'en' ? 'Safety/EHS — Cross-Department Auditor' : 'Safety/EHS — ผู้ตรวจสอบข้ามแผนก')
       : user.role === 'layer3' || user.role === 'manager'
       ? (language === 'en' ? 'Layer 3 — Department Manager (1 time/month)' : 'Layer 3 — ผู้จัดการแผนก (เป้าหมาย 1 ครั้ง/เดือน)')
       : user.role === 'layer2' || user.role === 'supervisor'
@@ -178,9 +182,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   const targetQuota = stats.targetMonthly || getDefaultTarget(user.role);
   const thisMonthDone = stats.thisMonthCount || 0;
-  const progressPercent = Math.min(100, Math.round((thisMonthDone / targetQuota) * 100));
-  const remainingCount = Math.max(0, targetQuota - thisMonthDone);
-  const isTargetAchieved = thisMonthDone >= targetQuota;
+  const progressPercent = isSafetyUser ? 0 : Math.min(100, Math.round((thisMonthDone / targetQuota) * 100));
+  const remainingCount = isSafetyUser ? 0 : Math.max(0, targetQuota - thisMonthDone);
+  const isTargetAchieved = !isSafetyUser && thisMonthDone >= targetQuota;
 
   const currentMonthName = language === 'th' 
     ? `${THAI_MONTHS[stats.currentMonth - 1]} ${stats.currentYear + 543}`
@@ -268,126 +272,173 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <span>{language === 'en' ? 'Department Team Monthly Dashboard' : 'แดชบอร์ดการตรวจเช็คทีมแผนกประจำเดือน'}</span>
+                <span>{language === 'en' ? (isSafetyUser ? 'Personal Audit Dashboard' : 'Department Team Monthly Dashboard') : (isSafetyUser ? 'แดชบอร์ดการตรวจของฉัน' : 'แดชบอร์ดการตรวจเช็คทีมแผนกประจำเดือน')}</span>
                 <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-orange-100 text-[#F37021]">
                   {currentMonthName}
                 </span>
               </h2>
               <p className="text-xs text-slate-500">
-                {language === 'en'
-                  ? `Pooled audits for ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}). All members in this layer contribute to the monthly target.`
-                  : `ยอดตรวจรวมของทุกคนในแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) นับสะสมรวมกันสู่เป้าหมายของทีม`}
+                {isSafetyUser
+                  ? (language === 'en'
+                    ? 'Safety/EHS auditors have no fixed monthly quota. They audit across all departments as needed.'
+                    : 'ผู้ตรวจ Safety/EHS ไม่มีโควต้าตรวจสอบคงที่ — ทำการตรวจข้ามแผนกตามความจำเป็น')
+                  : (language === 'en'
+                    ? `Pooled audits for ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}). All members in this layer contribute to the monthly target.`
+                    : `ยอดตรวจรวมของทุกคนในแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) นับสะสมรวมกันสู่เป้าหมายของทีม`)}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-center">
-            <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-[#F37021]" />
-              <span>
-                {language === 'en' 
-                  ? `Team Target: ${targetQuota} audits/month`
-                  : `เป้าหมายทีม: ${targetQuota} ครั้ง/เดือน`}
+            {isSafetyUser ? (
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5" />
+                <span>{language === 'en' ? 'Cross-Department Auditor' : 'ตรวจสอบข้ามแผนก'}</span>
               </span>
-            </span>
+            ) : (
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-[#F37021]" />
+                <span>
+                  {language === 'en'
+                    ? `Team Target: ${targetQuota} audits/month`
+                    : `เป้าหมายทีม: ${targetQuota} ครั้ง/เดือน`}
+                </span>
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Progress Bar & Quota Status Card */}
-        <div className={`p-5 sm:p-6 rounded-2xl border transition ${
-          isTargetAchieved 
-            ? 'bg-gradient-to-r from-emerald-500/10 via-emerald-50 to-teal-50 border-emerald-200' 
-            : 'bg-gradient-to-r from-orange-50/70 via-amber-50/40 to-slate-50 border-orange-200'
-        }`}>
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                {isTargetAchieved ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white shadow-sm">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>{language === 'en' ? 'Team Target Achieved 🎉' : 'ทีมบรรลุเป้าหมายของเดือนแล้ว 🎉'}</span>
+        {/* Progress Bar & Quota Status Card — hidden for SAFETY users */}
+        {isSafetyUser ? (
+          <div className="p-5 sm:p-6 rounded-2xl border bg-gradient-to-r from-blue-50 to-slate-50 border-blue-200">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-blue-600 text-white shadow-sm">
+                    <Shield className="w-3.5 h-3.5" />
+                    <span>{language === 'en' ? 'Safety/EHS Auditor' : 'ผู้ตรวจ Safety/EHS'}</span>
                   </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#F37021] text-white shadow-sm">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{language === 'en' ? 'In Progress' : 'กำลังดำเนินการ'}</span>
+                  <span className="text-xs font-bold text-slate-700">
+                    {language === 'en'
+                      ? `You have audited ${thisMonthDone} times this month`
+                      : `เดือนนี้ตรวจสอบแล้ว ${thisMonthDone} ครั้ง`}
                   </span>
-                )}
-                <span className="text-xs font-bold text-slate-700">
+                </div>
+                <p className="text-xs text-slate-600 pt-1">
                   {language === 'en'
-                    ? `Team Total: ${thisMonthDone} of ${targetQuota} audits (Your audits: ${stats.myThisMonthCount || 0})`
-                    : `ยอดรวมทีมแผนก: ${thisMonthDone} จากเป้าหมาย ${targetQuota} ครั้ง (คุณตรวจแล้ว ${stats.myThisMonthCount || 0} ครั้ง)`}
-                </span>
+                    ? 'As a Safety/EHS auditor, you can inspect any department at any layer without a fixed monthly quota.'
+                    : 'ในฐานะผู้ตรวจ Safety/EHS คุณสามารถตรวจสอบแผนกใดก็ได้ ทุก Layer โดยไม่มีโควต้าการตรวจคงที่'}
+                </p>
               </div>
-
-              <p className="text-xs text-slate-600 pt-1">
-                {isTargetAchieved ? (
-                  <span className="text-emerald-800 font-semibold">
-                    {language === 'en'
-                      ? `Excellent team work! Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) has completed ${thisMonthDone} audits this month, reaching 100% of the target. (Your contribution: ${stats.myThisMonthCount || 0} audits)`
-                      : `ยอดเยี่ยมมาก! ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ทำการตรวจเช็คครบตามเป้าหมายของเดือนแล้ว (${thisMonthDone} ครั้ง) โดยคุณช่วยตรวจไป ${stats.myThisMonthCount || 0} ครั้ง`}
-                  </span>
-                ) : (
-                  <span className="text-slate-700">
-                    {language === 'en'
-                      ? `Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) needs ${remainingCount} more audits this month to achieve the team target (${targetQuota} audits/month). You have personally completed ${stats.myThisMonthCount || 0} audits.`
-                      : `ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ยังต้องทำการตรวจเช็คอีก `}
-                    <strong className="text-[#F37021] font-bold">{remainingCount} ครั้ง</strong>
-                    {language === 'th' ? ` เพื่อให้ครบตามเป้าหมายของแผนก (${targetQuota} ครั้ง/เดือน) • (คุณช่วยตรวจแล้ว ${stats.myThisMonthCount || 0} ครั้ง)` : ''}
-                  </span>
-                )}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right shrink-0">
-                <div className="text-2xl sm:text-3xl font-black text-slate-900">
-                  {progressPercent}%
-                </div>
-                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                  {language === 'en' ? 'Team Progress' : 'ความคืบหน้าทีม'}
-                </div>
-              </div>
-
               <button
                 onClick={onGoToChecklist}
                 className="px-4 py-2.5 rounded-xl bg-[#F37021] hover:bg-[#DE5F14] text-white font-bold text-xs shadow-md shadow-[#F37021]/30 transition flex items-center gap-1.5 shrink-0"
               >
-                <span>{language === 'en' ? 'Start Audit (+1)' : 'เริ่มตรวจเช็ค (+1 ครั้ง)'}</span>
+                <span>{language === 'en' ? 'Start Audit' : 'เริ่มตรวจเช็ค'}</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
+        ) : (
+          <div className={`p-5 sm:p-6 rounded-2xl border transition ${
+            isTargetAchieved
+              ? 'bg-gradient-to-r from-emerald-500/10 via-emerald-50 to-teal-50 border-emerald-200'
+              : 'bg-gradient-to-r from-orange-50/70 via-amber-50/40 to-slate-50 border-orange-200'
+          }`}>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {isTargetAchieved ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-600 text-white shadow-sm">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                      <span>{language === 'en' ? 'Team Target Achieved 🎉' : 'ทีมบรรลุเป้าหมายของเดือนแล้ว 🎉'}</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-[#F37021] text-white shadow-sm">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{language === 'en' ? 'In Progress' : 'กำลังดำเนินการ'}</span>
+                    </span>
+                  )}
+                  <span className="text-xs font-bold text-slate-700">
+                    {language === 'en'
+                      ? `Team Total: ${thisMonthDone} of ${targetQuota} audits (Your audits: ${stats.myThisMonthCount || 0})`
+                      : `ยอดรวมทีมแผนก: ${thisMonthDone} จากเป้าหมาย ${targetQuota} ครั้ง (คุณตรวจแล้ว ${stats.myThisMonthCount || 0} ครั้ง)`}
+                  </span>
+                </div>
 
-          {/* Linear Progress Bar */}
-          <div className="w-full bg-slate-200/80 rounded-full h-3.5 mt-4 overflow-hidden p-0.5 border border-slate-300/40">
-            <div
-              className={`h-full rounded-full transition-all duration-700 ${
-                isTargetAchieved
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
-                  : 'bg-gradient-to-r from-[#F37021] to-[#DE5F14]'
-              }`}
-              style={{ width: `${progressPercent}%` }}
-            ></div>
+                <p className="text-xs text-slate-600 pt-1">
+                  {isTargetAchieved ? (
+                    <span className="text-emerald-800 font-semibold">
+                      {language === 'en'
+                        ? `Excellent team work! Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) has completed ${thisMonthDone} audits this month, reaching 100% of the target. (Your contribution: ${stats.myThisMonthCount || 0} audits)`
+                        : `ยอดเยี่ยมมาก! ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ทำการตรวจเช็คครบตามเป้าหมายของเดือนแล้ว (${thisMonthDone} ครั้ง) โดยคุณช่วยตรวจไป ${stats.myThisMonthCount || 0} ครั้ง`}
+                    </span>
+                  ) : (
+                    <span className="text-slate-700">
+                      {language === 'en'
+                        ? `Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) needs ${remainingCount} more audits this month to achieve the team target (${targetQuota} audits/month). You have personally completed ${stats.myThisMonthCount || 0} audits.`
+                        : `ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ยังต้องทำการตรวจเช็คอีก `}
+                      <strong className="text-[#F37021] font-bold">{remainingCount} ครั้ง</strong>
+                      {language === 'th' ? ` เพื่อให้ครบตามเป้าหมายของแผนก (${targetQuota} ครั้ง/เดือน) • (คุณช่วยตรวจแล้ว ${stats.myThisMonthCount || 0} ครั้ง)` : ''}
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="text-right shrink-0">
+                  <div className="text-2xl sm:text-3xl font-black text-slate-900">
+                    {progressPercent}%
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                    {language === 'en' ? 'Team Progress' : 'ความคืบหน้าทีม'}
+                  </div>
+                </div>
+
+                <button
+                  onClick={onGoToChecklist}
+                  className="px-4 py-2.5 rounded-xl bg-[#F37021] hover:bg-[#DE5F14] text-white font-bold text-xs shadow-md shadow-[#F37021]/30 transition flex items-center gap-1.5 shrink-0"
+                >
+                  <span>{language === 'en' ? 'Start Audit (+1)' : 'เริ่มตรวจเช็ค (+1 ครั้ง)'}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Linear Progress Bar */}
+            <div className="w-full bg-slate-200/80 rounded-full h-3.5 mt-4 overflow-hidden p-0.5 border border-slate-300/40">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${
+                  isTargetAchieved
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                    : 'bg-gradient-to-r from-[#F37021] to-[#DE5F14]'
+                }`}
+                style={{ width: `${progressPercent}%` }}
+              ></div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 4 Metric Cards for This Month */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {/* 1. Monthly Audits Done (Department Team) */}
+          {/* 1. Monthly Audits Done */}
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
             <div className="flex items-center justify-between text-slate-500 text-xs font-semibold">
-              <span>{language === 'en' ? 'Team Audits This Month' : 'ยอดรวมแผนกเดือนนี้'}</span>
+              <span>{language === 'en' ? (isSafetyUser ? 'My Audits This Month' : 'Team Audits This Month') : (isSafetyUser ? 'ฉันตรวจเดือนนี้' : 'ยอดรวมแผนกเดือนนี้')}</span>
               <div className="p-1.5 rounded-lg bg-orange-100 text-[#F37021]">
                 <ClipboardCheck className="w-3.5 h-3.5" />
               </div>
             </div>
             <div className="text-2xl font-black text-slate-900 mt-2 flex items-baseline gap-1">
               <span>{thisMonthDone}</span>
-              <span className="text-xs text-slate-400 font-normal">/ {targetQuota} {language === 'th' ? 'ครั้ง' : 'times'}</span>
+              {!isSafetyUser && (
+                <span className="text-xs text-slate-400 font-normal">/ {targetQuota} {language === 'th' ? 'ครั้ง' : 'times'}</span>
+              )}
             </div>
             <div className="text-[11px] text-[#F37021] font-bold mt-1">
-              {language === 'th' ? `คุณตรวจแล้ว: ${stats.myThisMonthCount || 0} ครั้ง (ช่วยทีม)` : `You audited: ${stats.myThisMonthCount || 0} times`}
+              {isSafetyUser
+                ? (language === 'th' ? 'ตรวจข้ามแผนก (ไม่มีโควต้า)' : 'Cross-dept audits (no quota)')
+                : (language === 'th' ? `คุณตรวจแล้ว: ${stats.myThisMonthCount || 0} ครั้ง (ช่วยทีม)` : `You audited: ${stats.myThisMonthCount || 0} times`)}
             </div>
           </div>
 

@@ -61,11 +61,12 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const currentMonth = new Date().getMonth() + 1;
   const currentDateStr = new Date().toISOString().split('T')[0];
 
-  // Determine user role layer: Layer 1, Layer 2, Layer 3, or null for admin/superadmin (Admin/Superadmin can select any)
+  // Determine user role layer: Layer 1, Layer 2, Layer 3, or null for admin/superadmin/SAFETY (can select any)
   const userRoleLayer = React.useMemo<'Layer 1' | 'Layer 2' | 'Layer 3' | null>(() => {
     if (!user) return null;
     const r = (user.role || '').toLowerCase();
     if (r === 'admin' || r === 'superadmin') return null; // Admin and Super Admin can inspect any layer
+    if ((user.department || '').toUpperCase() === 'SAFETY') return null; // SAFETY can inspect any layer
     if (r === 'layer3' || r === 'manager') return 'Layer 3';
     if (r === 'layer2' || r === 'supervisor') return 'Layer 2';
     return 'Layer 1'; // layer1, leader, inspector, staff, default
@@ -119,8 +120,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [priorLayersData, setPriorLayersData] = useState<{ layer1: any; layer2: any } | null>(null);
   const [loadingPrior, setLoadingPrior] = useState<boolean>(false);
 
-  // Is department locked? (Locked if user has a department and is not admin/superadmin)
-  const isPrivilegedUser = user?.role === 'admin' || user?.role === 'superadmin';
+  // Is department locked? (Locked if user has a department and is not admin/superadmin/SAFETY)
+  // SAFETY dept users can inspect any department — they are cross-department auditors
+  const isSafetyUser = (user?.department || '').toUpperCase() === 'SAFETY';
+  const isPrivilegedUser = user?.role === 'admin' || user?.role === 'superadmin' || isSafetyUser;
   const isDeptLocked = Boolean(user?.department && !isPrivilegedUser);
 
   // Enforce layer lock when userRoleLayer is set
