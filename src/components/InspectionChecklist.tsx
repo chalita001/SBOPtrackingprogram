@@ -77,7 +77,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [month] = useState<number>(currentMonth); // Locked to current month
   const [auditDate] = useState<string>(currentDateStr); // Locked to current date
   const [layer, setLayer] = useState<string>(userRoleLayer || 'Layer 1');
-  const [shift, setShift] = useState<string>('เช้า');
+  const [shift, setShift] = useState<string>('');
   const [mcAndProducts, setMcAndProducts] = useState<string>('');
   const [comments, setComments] = useState<string>('');
   const [previousFindings, setPreviousFindings] = useState<string>('');
@@ -167,7 +167,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             if (availableForL1) {
               setInspectionCode(availableForL1.inspection_code);
               if (availableForL1.mc_and_products) setMcAndProducts(availableForL1.mc_and_products);
-              if (availableForL1.shift) setShift(availableForL1.shift);
             } else {
               const usedNums = codes.map((c: any) => parseInt(c.inspection_code, 10)).filter((n: number) => !isNaN(n));
               let next = 1;
@@ -183,7 +182,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               const availableForL1 = codes.find((c: any) => !c.has_layer1) || codes[0];
               setInspectionCode(availableForL1.inspection_code);
               if (availableForL1.mc_and_products && !mcAndProducts) setMcAndProducts(availableForL1.mc_and_products);
-              if (availableForL1.shift) setShift(availableForL1.shift);
             }
           }
         } else {
@@ -392,6 +390,17 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       return;
     }
 
+    if (!shift || !shift.trim()) {
+      setFeedback({
+        text: language === 'th'
+          ? 'กรุณาเลือกกะการทำงาน (กะเช้า หรือ กะดึก) ก่อนทำการบันทึก'
+          : 'Please select a shift (Morning or Night) before saving',
+        type: 'error'
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (!mcAndProducts.trim()) {
       setFeedback({
         text: language === 'en' ? 'Please specify machine and product details (M/C and Products)' : 'กรุณากรอกข้อมูลเครื่องจักรและผลิตภัณฑ์ (M/C and Products)',
@@ -423,6 +432,18 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       return;
     }
 
+    // Requirement 3: ถ้าเจอปัญหาให้แนบรูปและระบุรายละเอียด
+    const noPhotoDefect = items.find((i) => i.result === 'NO' && !i.imageUrl);
+    if (noPhotoDefect) {
+      setFeedback({
+        text: language === 'en'
+          ? `Please attach a photo evidence for defect item: "${noPhotoDefect.question.substring(0, 40)}..."`
+          : `กรุณาถ่ายภาพหรือแนบรูปภาพหลักฐานสำหรับข้อที่พบปัญหา: "${noPhotoDefect.question.substring(0, 40)}..."`,
+        type: 'error'
+      });
+      return;
+    }
+
     setSaving(true);
     setFeedback(null);
 
@@ -447,7 +468,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
           result: i.result,
           findingTopic: i.result === 'NO' ? i.findingTopic : null,
           severity: i.result === 'NO' ? i.severity : null,
-          actionPlan: i.result === 'NO' ? i.actionPlan : null,
+          actionPlan: null, // Requirement 3: ในส่วนของแนวทาง/มาตรการให้ใส่ตอนแก้ไขปัญหา
           responsiblePerson: i.result === 'NO' ? i.responsiblePerson : null,
           dueDate: i.result === 'NO' ? i.dueDate : null,
           imageUrl: i.result === 'NO' ? i.imageUrl : null,
@@ -672,18 +693,32 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               )}
             </div>
 
-            {/* 4. Shift: เช้า / ดึก */}
+            {/* 4. Shift: เช้า / ดึก (บังคับเลือก ไม่เลือกค่าเริ่มต้น เพื่อป้องกันการลืมเปลี่ยน) */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                {t.shift}
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-[#F37021]" />
+                  <span>{t.shift}</span>
+                  <span className="text-red-500 font-bold">*</span>
+                </span>
+                {!shift && (
+                  <span className="text-[10px] text-amber-600 font-bold animate-pulse">
+                    {language === 'th' ? '⚠️ ต้องเลือกกะ' : '⚠️ Required'}
+                  </span>
+                )}
               </label>
               <select
                 value={shift}
                 onChange={(e) => setShift(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#F37021] focus:bg-white"
+                className={`w-full px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#F37021] focus:bg-white transition ${
+                  !shift
+                    ? 'bg-amber-50 border-2 border-amber-400 text-amber-900 shadow-sm'
+                    : 'bg-slate-50 border border-slate-300'
+                }`}
               >
-                <option value="เช้า">{language === 'th' ? 'กะเช้า' : 'Morning Shift (เช้า)'}</option>
-                <option value="ดึก">{language === 'th' ? 'กะดึก' : 'Night Shift (ดึก)'}</option>
+                <option value="">{language === 'th' ? '-- กรุณาเลือกกะการทำงาน --' : '-- Please select shift --'}</option>
+                <option value="เช้า">{language === 'th' ? '☀️ กะเช้า' : 'Morning Shift (เช้า)'}</option>
+                <option value="ดึก">{language === 'th' ? '🌙 กะดึก' : 'Night Shift (ดึก)'}</option>
               </select>
             </div>
           </div>
@@ -1194,18 +1229,19 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                 />
                               </div>
 
-                              {/* Action Plan */}
-                              <div>
-                                <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                                  {t.actionPlan}
-                                </label>
-                                <input
-                                  type="text"
-                                  value={item.actionPlan}
-                                  onChange={(e) => handleItemFieldChange(itemIndex, 'actionPlan', e.target.value)}
-                                  placeholder={t.actionPlaceholder}
-                                  className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-[#F37021]"
-                                />
+                              {/* Notice: Requirement 3 — Action plan and preventive measures are entered when fixing/resolving the defect */}
+                              <div className="p-2.5 bg-amber-50 border border-amber-200/80 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
+                                <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                <div>
+                                  <span className="font-bold text-amber-950">
+                                    {language === 'th' ? 'แนวทางแก้ไข & มาตรการป้องกัน:' : 'Action Plan / Preventive Measures:'}
+                                  </span>
+                                  <p className="text-[11px] text-amber-800 mt-0.5 leading-relaxed">
+                                    {language === 'th'
+                                      ? 'จะระบุโดยผู้รับผิดชอบเมื่อทำการแก้ไขปัญหาหน้างาน (พร้อมแนบรูปภาพหลังแก้ไข After Fix ในหน้ารายการข้อผิดปกติ)'
+                                      : 'To be filled by the responsible person during corrective action with an After-Fix photo.'}
+                                  </p>
+                                </div>
                               </div>
 
                               {/* ผู้รับผิดชอบ: แผนก > userในแผนก */}

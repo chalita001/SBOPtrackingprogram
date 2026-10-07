@@ -144,11 +144,13 @@ export const api = {
   updateDefectStatus: (id: number, status: 'resolved' | 'pending' | 'reviewing') =>
     request(`/defects/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
-  // Submit fix photo (user → status becomes 'reviewing')
-  submitDefectFixPhoto: async (id: number, file: File) => {
+  // Submit fix photo and action details (user → status becomes 'reviewing')
+  submitDefectFixPhoto: async (id: number, file: File, data: { fixDetail: string; actionPlan: string }) => {
     const token = getAuthToken();
     const formData = new FormData();
     formData.append('fix_image', file);
+    formData.append('fix_detail', data.fixDetail);
+    formData.append('action_plan', data.actionPlan);
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
     const response = await fetch(`${API_BASE}/defects/${id}/fix-photo`, {
@@ -156,9 +158,9 @@ export const api = {
       headers,
       body: formData,
     });
-    const data: any = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.error || 'Failed to submit fix photo');
-    return data;
+    const resData: any = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(resData.error || 'Failed to submit fix photo');
+    return resData;
   },
 
   // Admin approves or rejects a fix in 'reviewing' state

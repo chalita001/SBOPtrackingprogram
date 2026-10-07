@@ -1416,7 +1416,7 @@ export default {
       const { results: recentDefects } = await env.DB.prepare(`
         SELECT 
           ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
-          ii.action_plan, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
+          ii.action_plan, COALESCE(ii.fix_detail, '') as fix_detail, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
           COALESCE(ii.defect_status, 'pending') as defect_status,
           COALESCE(ii.fix_image_url, '') as fix_image_url,
           i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
@@ -1477,7 +1477,7 @@ export default {
       let defSql = `
         SELECT 
           ii.id, ii.inspection_id, ii.layer, ii.category, ii.subcategory, ii.question,
-          ii.result, ii.finding_topic, ii.severity, ii.action_plan, ii.responsible_person,
+          ii.result, ii.finding_topic, ii.severity, ii.action_plan, COALESCE(ii.fix_detail, '') as fix_detail, ii.responsible_person,
           ii.due_date, ii.image_url, ii.image_key, ii.created_at,
           COALESCE(ii.defect_status, 'pending') as defect_status,
           COALESCE(ii.fix_image_url, '') as fix_image_url,
@@ -1520,7 +1520,7 @@ export default {
       });
     }
 
-    // Defects: Submit Fix Photo (User attaches after-fix image → status becomes 'reviewing')
+    // Defects: Submit Fix Photo & Action Details (User attaches after-fix image, fix details & action plan → status becomes 'reviewing')
     if (url.pathname.match(/^\/api\/defects\/\d+\/fix-photo$/) && request.method === 'POST') {
       if (!currentUser || currentUser.role === 'guest') {
         return jsonResponse({ error: 'Unauthorized' }, 401);
@@ -1536,10 +1536,15 @@ export default {
       try {
         await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN fix_image_key TEXT").run();
       } catch (e) {}
+      try {
+        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN fix_detail TEXT").run();
+      } catch (e) {}
 
       const formData = await request.formData().catch(() => null);
       let fixImageUrl = '';
       let fixImageKey = '';
+      const fixDetail = (formData?.get('fix_detail') as string || '').trim();
+      const actionPlan = (formData?.get('action_plan') as string || '').trim();
 
       if (formData) {
         const file = formData.get('fix_image') as File | null;
@@ -1558,20 +1563,32 @@ export default {
       }
 
       if (!fixImageUrl) {
-        return jsonResponse({ error: 'กรุณาแนบรูปภาพการแก้ไข (fix_image)' }, 400);
+        return jsonResponse({ error: 'กรุณาแนบรูปภาพหลังการแก้ไข (fix_image)' }, 400);
+      }
+      if (!fixDetail) {
+        return jsonResponse({ error: 'กรุณาระบุรายละเอียดการแก้ไข (สิ่งที่ได้ดำเนินการ)' }, 400);
+      }
+      if (!actionPlan) {
+        return jsonResponse({ error: 'กรุณาระบุแนวทางแก้ไข / มาตรการป้องกันการเกิดซ้ำ' }, 400);
       }
 
       await env.DB.prepare(`
         UPDATE inspection_items
-        SET defect_status = 'reviewing', fix_image_url = ?, fix_image_key = ?
+        SET defect_status = 'reviewing',
+            fix_image_url = ?,
+            fix_image_key = ?,
+            fix_detail = ?,
+            action_plan = ?
         WHERE id = ?
-      `).bind(fixImageUrl, fixImageKey, itemId).run();
+      `).bind(fixImageUrl, fixImageKey, fixDetail, actionPlan, itemId).run();
 
       return jsonResponse({
         success: true,
-        message: 'ส่งรูปภาพการแก้ไขแล้ว สถานะเปลี่ยนเป็น "รอตรวจ" — กรุณารอ Admin ตรวจสอบและอนุมัติ',
+        message: 'ส่งข้อมูลและรูปภาพการแก้ไขแล้ว สถานะเปลี่ยนเป็น "รอตรวจ" — กรุณารอ Admin ตรวจสอบและอนุมัติ',
         defect_status: 'reviewing',
         fix_image_url: fixImageUrl,
+        fix_detail: fixDetail,
+        action_plan: actionPlan,
       });
     }
 
@@ -1666,11 +1683,28 @@ export default {
           console.warn('Failed to delete image_url from R2:', e);
         }
       }
+      if (item.fix_image_key) {
+        try {
+          await env.R2_BUCKET.delete(item.fix_image_key);
+        } catch (e) {
+          console.warn('Failed to delete fix_image_key from R2:', e);
+        }
+      }
+      if (item.fix_image_url) {
+        try {
+          const rawKey = item.fix_image_url.replace(/^\/api\/r2\//, '').replace(/^r2sbop\//, '').replace(/^\/+/, '');
+          if (rawKey) {
+            await env.R2_BUCKET.delete(rawKey);
+          }
+        } catch (e) {
+          console.warn('Failed to delete fix_image_url from R2:', e);
+        }
+      }
 
       // Mark defect as resolved ('OK') and clear defect fields
       await env.DB.prepare(`
         UPDATE inspection_items
-        SET result = 'OK', finding_topic = NULL, severity = NULL, action_plan = NULL, responsible_person = NULL, due_date = NULL, image_url = NULL, image_key = NULL
+        SET result = 'OK', finding_topic = NULL, severity = NULL, action_plan = NULL, fix_detail = NULL, responsible_person = NULL, due_date = NULL, image_url = NULL, image_key = NULL, fix_image_url = NULL, fix_image_key = NULL
         WHERE id = ?
       `).bind(itemId).run();
 

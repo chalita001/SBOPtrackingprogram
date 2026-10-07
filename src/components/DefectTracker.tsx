@@ -39,6 +39,14 @@ export const DefectTracker: React.FC = () => {
   const [uploadingFixId, setUploadingFixId] = useState<number | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
 
+  // Fix defect modal state (Requirement 2: ระบุรายละเอียดการแก้ไข + แนวทางแก้ไข/มาตรการป้องกัน + แนบรูป After Fix)
+  const [fixModalDefect, setFixModalDefect] = useState<any | null>(null);
+  const [fixPhotoFile, setFixPhotoFile] = useState<File | null>(null);
+  const [fixPhotoPreview, setFixPhotoPreview] = useState<string | null>(null);
+  const [fixDetail, setFixDetail] = useState<string>('');
+  const [fixActionPlan, setFixActionPlan] = useState<string>('');
+  const [submittingFix, setSubmittingFix] = useState<boolean>(false);
+
   // In-App Notification Modal State
   const [notifyModalDefect, setNotifyModalDefect] = useState<any | null>(null);
   const [usersDirectory, setUsersDirectory] = useState<any[]>([]);
@@ -104,29 +112,72 @@ export const DefectTracker: React.FC = () => {
     return true;
   });
 
-  // User submits a "After Fix" photo → status becomes 'reviewing'
-  const handleSubmitFixPhoto = async (defect: any, file: File) => {
-    if (!user || user.role === 'guest') return;
-    setUploadingFixId(defect.id);
+  // Requirement 2: Open modal to input fix details, action plan, and attach After photo
+  const handleOpenFixModal = (defect: any) => {
+    setFixModalDefect(defect);
+    setFixPhotoFile(null);
+    setFixPhotoPreview(null);
+    setFixDetail(defect.fix_detail || '');
+    setFixActionPlan(defect.action_plan || '');
+  };
+
+  const handleFixFileChange = (file: File | undefined) => {
+    if (!file) return;
+    setFixPhotoFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setFixPhotoPreview(previewUrl);
+  };
+
+  const handleSubmitFixModal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fixModalDefect) return;
+    if (!fixPhotoFile) {
+      alert(language === 'th' ? 'กรุณาแนบรูปภาพหลังการแก้ไข (After Fix)' : 'Please attach an After-Fix photo');
+      return;
+    }
+    if (!fixDetail.trim()) {
+      alert(language === 'th' ? 'กรุณาระบุรายละเอียดการแก้ไข (สิ่งที่ได้ดำเนินการ)' : 'Please describe fix details');
+      return;
+    }
+    if (!fixActionPlan.trim()) {
+      alert(language === 'th' ? 'กรุณาระบุแนวทางแก้ไข / มาตรการป้องกันการเกิดซ้ำ' : 'Please provide corrective & preventive action plan');
+      return;
+    }
+
+    setSubmittingFix(true);
     setActionMessage(null);
     try {
-      await api.submitDefectFixPhoto(defect.id, file);
+      const res = await api.submitDefectFixPhoto(fixModalDefect.id, fixPhotoFile, {
+        fixDetail: fixDetail.trim(),
+        actionPlan: fixActionPlan.trim()
+      });
       setDefects((prev) =>
-        prev.map((d) => (d.id === defect.id ? { ...d, defect_status: 'reviewing' } : d))
+        prev.map((d) =>
+          d.id === fixModalDefect.id
+            ? {
+                ...d,
+                defect_status: 'reviewing',
+                fix_detail: fixDetail.trim(),
+                action_plan: fixActionPlan.trim(),
+                fix_image_url: res.fix_image_url || fixPhotoPreview,
+              }
+            : d
+        )
       );
       setActionMessage({
         type: 'success',
         text: language === 'th'
-          ? '✅ ส่งรูปภาพการแก้ไขสำเร็จ สถานะเปลี่ยนเป็น "รอตรวจสอบ" — Admin จะตรวจสอบและอนุมัติให้เสร็จสิ้น'
-          : '✅ Fix photo submitted. Status is now "Pending Review" — Admin will verify and approve.',
+          ? '✅ ส่งข้อมูลและรูปภาพการแก้ไขสำเร็จ สถานะเปลี่ยนเป็น "รอตรวจสอบ" — Admin จะตรวจสอบ Before/After และอนุมัติ'
+          : '✅ Fix submitted. Status is now "Pending Review" — Admin will review Before/After and approve.',
       });
+      setFixModalDefect(null);
     } catch (err: any) {
       setActionMessage({
         type: 'error',
-        text: (language === 'th' ? 'ส่งรูปภาพไม่สำเร็จ: ' : 'Failed to submit photo: ') + err.message,
+        text: (language === 'th' ? 'ส่งข้อมูลไม่สำเร็จ: ' : 'Failed to submit: ') + err.message,
       });
     } finally {
-      setUploadingFixId(null);
+      setSubmittingFix(false);
       setTimeout(() => setActionMessage(null), 6000);
     }
   };
@@ -541,9 +592,23 @@ export const DefectTracker: React.FC = () => {
 
                 {/* Action plan & Responsible person */}
                 <div className="text-xs space-y-1.5 border-t border-slate-100 pt-3 text-slate-600">
+                  {d.fix_detail && (
+                    <div className="p-2 bg-blue-50/80 border border-blue-200/80 rounded-xl text-blue-950">
+                      <span className="font-bold text-blue-900">🛠️ {language === 'th' ? 'รายละเอียดการแก้ไข:' : 'Fix Details:'} </span>
+                      <span>{d.fix_detail}</span>
+                    </div>
+                  )}
                   <div>
                     <span className="font-semibold text-slate-700">{t.actionPlan}: </span>
-                    <span>{d.action_plan || '-'}</span>
+                    <span>
+                      {d.action_plan ? (
+                        <span>{d.action_plan}</span>
+                      ) : (
+                        <span className="text-slate-400 italic">
+                          {language === 'th' ? '(จะระบุเมื่อดำเนินการแก้ไขปัญหา)' : '(To be specified when fixing)'}
+                        </span>
+                      )}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between text-[11px] pt-1">
                     <span className="flex items-center gap-1 text-slate-700 font-medium">
@@ -560,31 +625,17 @@ export const DefectTracker: React.FC = () => {
                 {/* Actions: Fix-Photo Workflow */}
                 <div className="pt-2 border-t border-slate-100 flex flex-col gap-3">
 
-                  {/* === STATE: pending — User can attach after-fix photo === */}
+                  {/* === STATE: pending — User can click to open Fix Modal === */}
                   {d.defect_status === 'pending' && user?.role !== 'guest' && (
                     <div className="space-y-2">
-                      <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5">
-                        <Camera className="w-3.5 h-3.5 text-[#F37021]" />
-                        {language === 'th' ? 'แนบรูปภาพหลังการแก้ไข เพื่อส่งให้ Admin ตรวจสอบ:' : 'Attach after-fix photo to send for Admin review:'}
-                      </p>
-                      <label className={`flex items-center justify-center gap-2 w-full py-2 px-3 rounded-xl text-xs font-bold cursor-pointer transition border-2 border-dashed ${uploadingFixId === d.id ? 'border-slate-300 bg-slate-50 text-slate-400 cursor-not-allowed' : 'border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700'}`}>
-                        {uploadingFixId === d.id ? (
-                          <><RefreshCw className="w-3.5 h-3.5 animate-spin" /><span>{language === 'th' ? 'กำลังส่ง...' : 'Uploading...'}</span></>
-                        ) : (
-                          <><Upload className="w-3.5 h-3.5" /><span>{language === 'th' ? '📸 เลือกรูปภาพ After Fix' : '📸 Select After-Fix Photo'}</span></>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={uploadingFixId === d.id}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleSubmitFixPhoto(d, file);
-                            e.target.value = '';
-                          }}
-                        />
-                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenFixModal(d)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-sm hover:shadow active:scale-[0.99]"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        <span>{language === 'th' ? '📸 แก้ไขปัญหา & แนบรูป After Fix' : '📸 Fix Defect & Attach After Photo'}</span>
+                      </button>
                     </div>
                   )}
 
@@ -854,6 +905,142 @@ export const DefectTracker: React.FC = () => {
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>{sendingNotif ? t.sendingNotification : t.sendNotificationBtn}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Fix Defect Modal ===== */}
+      {fixModalDefect && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={() => setFixModalDefect(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-200">
+              <h2 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                📸 แก้ไขปัญหา &amp; แนบรูป After Fix
+              </h2>
+              <button
+                type="button"
+                onClick={() => setFixModalDefect(null)}
+                className="text-slate-400 hover:text-slate-600 text-xl font-bold leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Defect context */}
+            <div className="px-5 py-3 bg-red-50 border-b border-red-100">
+              <p className="text-xs font-semibold text-red-700 mb-0.5">ปัญหาที่พบ</p>
+              <p className="text-sm font-bold text-slate-800">
+                {fixModalDefect.finding_topic || fixModalDefect.question || '—'}
+              </p>
+              {fixModalDefect.question && fixModalDefect.finding_topic && (
+                <p className="text-xs text-slate-500 mt-0.5">{fixModalDefect.question}</p>
+              )}
+              {fixModalDefect.image_url && (
+                <div className="mt-2">
+                  <p className="text-xs text-slate-500 mb-1">📷 รูปก่อนแก้ไข (Before)</p>
+                  <img
+                    src={fixModalDefect.image_url}
+                    alt="Before fix"
+                    className="w-full max-h-40 object-cover rounded-lg border border-red-200"
+                  />
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={handleSubmitFixModal} className="px-5 py-4 space-y-4">
+              {/* 1. Fix Detail */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  รายละเอียดการแก้ไข <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={fixDetail}
+                  onChange={(e) => setFixDetail(e.target.value)}
+                  placeholder="อธิบายสิ่งที่ดำเนินการแก้ไขไปแล้ว..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white resize-none"
+                />
+              </div>
+
+              {/* 2. Action Plan / Preventive Measure */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  แนวทางแก้ไข / มาตรการป้องกัน <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={fixActionPlan}
+                  onChange={(e) => setFixActionPlan(e.target.value)}
+                  placeholder="ระบุแนวทางป้องกันไม่ให้เกิดปัญหาซ้ำ..."
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white resize-none"
+                />
+              </div>
+
+              {/* 3. After Photo */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">
+                  รูปหลังแก้ไข (After Fix) <span className="text-red-500">*</span>
+                </label>
+                {fixPhotoPreview ? (
+                  <div className="relative">
+                    <img
+                      src={fixPhotoPreview}
+                      alt="After fix preview"
+                      className="w-full max-h-48 object-cover rounded-xl border-2 border-blue-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setFixPhotoFile(null); setFixPhotoPreview(null); }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold shadow"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer bg-blue-50 hover:bg-blue-100 transition">
+                    <span className="text-2xl">📷</span>
+                    <span className="text-xs text-blue-600 font-semibold mt-1">คลิกเพื่อแนบรูปหลังแก้ไข</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleFixFileChange(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setFixModalDefect(null)}
+                  className="px-4 py-2 rounded-xl font-semibold text-slate-600 hover:bg-slate-100 transition"
+                >
+                  ยกเลิก
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingFix || !fixPhotoFile || !fixDetail.trim() || !fixActionPlan.trim()}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow flex items-center gap-2 disabled:opacity-50 transition"
+                >
+                  {submittingFix ? (
+                    <>⏳ กำลังส่ง...</>
+                  ) : (
+                    <>✅ ส่งเพื่อตรวจสอบ</>
+                  )}
                 </button>
               </div>
             </form>
