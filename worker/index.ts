@@ -824,15 +824,18 @@ export default {
     }
 
     // List inspection batch codes for a department and month
+    // Also returns globalNextCode — the next code globally across ALL departments (for global running number)
     if (url.pathname === '/api/inspections/codes' && request.method === 'GET') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
       const dept = url.searchParams.get('department') || '';
       const year = parseInt(url.searchParams.get('year') || String(new Date().getFullYear()), 10);
       const month = parseInt(url.searchParams.get('month') || String(new Date().getMonth() + 1), 10);
 
+      // Dept-specific codes for this month (to list existing codes for this dept)
       const sql = `
         SELECT 
           inspection_code,
+          department_code,
           mc_and_products,
           shift,
           MAX(audit_date) as latest_audit_date,
@@ -853,8 +856,60 @@ export default {
         GROUP BY inspection_code
         ORDER BY inspection_code ASC
       `;
-
       const { results } = await env.DB.prepare(sql).bind(dept, year, month).all();
+
+      // Global next code: max numeric inspection_code across ALL departments for this year+month
+      const globalMax: any = await env.DB.prepare(`
+        SELECT MAX(CAST(inspection_code AS INTEGER)) as max_code
+        FROM inspections
+        WHERE year = ? AND month = ? AND inspection_code IS NOT NULL AND inspection_code GLOB '[0-9]*'
+      `).bind(year, month).first();
+      const nextNum = (globalMax?.max_code || 0) + 1;
+      const globalNextCode = String(nextNum).padStart(3, '0');
+
+      return jsonResponse({ codes: results || [], globalNextCode });
+    }
+
+    // Global inspection code list (for history page document viewer dropdown)
+    // Returns all unique inspection codes across ALL departments (with optional year/month/dept filters)
+    if (url.pathname === '/api/inspections/code-list' && request.method === 'GET') {
+      if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);
+      const rawYear = url.searchParams.get('year');
+      const rawMonth = url.searchParams.get('month');
+      const dept = url.searchParams.get('department') || '';
+
+      let sql = `
+        SELECT 
+          inspection_code,
+          department_code,
+          year,
+          month,
+          MAX(audit_date) as latest_audit_date,
+          MAX(mc_and_products) as mc_and_products,
+          MAX(shift) as shift,
+          COUNT(*) as total_rounds,
+          MAX(CASE WHEN layer = 'Layer 1' THEN score_percent ELSE NULL END) as layer1_score,
+          MAX(CASE WHEN layer = 'Layer 2' THEN score_percent ELSE NULL END) as layer2_score,
+          MAX(CASE WHEN layer = 'Layer 3' THEN score_percent ELSE NULL END) as layer3_score
+        FROM inspections
+        WHERE inspection_code IS NOT NULL
+      `;
+      const params: any[] = [];
+      if (rawYear && rawYear !== 'all') {
+        sql += ` AND year = ?`;
+        params.push(parseInt(rawYear, 10));
+      }
+      if (rawMonth && rawMonth !== 'all') {
+        sql += ` AND month = ?`;
+        params.push(parseInt(rawMonth, 10));
+      }
+      if (dept && dept !== 'all') {
+        sql += ` AND department_code = ?`;
+        params.push(dept);
+      }
+      sql += ` GROUP BY inspection_code, department_code, year, month ORDER BY year DESC, month DESC, CAST(inspection_code AS INTEGER) DESC`;
+
+      const { results } = await env.DB.prepare(sql).bind(...params).all();
       return jsonResponse(results || []);
     }
 
@@ -1080,19 +1135,19 @@ export default {
         const scorePercent = totalEvaluated > 0 ? Number(((totalOk / totalEvaluated) * 100).toFixed(2)) : 100.0;
         const auditorName = `${currentUser.firstName} ${currentUser.lastName}`;
 
-        // Check: Each inspection_code can only be inspected once by Layer 1!
-        // "แต่ละ Layer1 จะตรวจได้เพียงครั้งเดียว ตัวอย่าง Layer1 ตรวจแล้วจะไม่สามารถ สร้าง 001 ได้อีก"
+        // Check: Each inspection_code is globally unique per year+month (across ALL departments)!
+        // Since running numbers are global, #001 used by QC cannot be reused by MOLD or any other dept.
         if (layer === 'Layer 1') {
           const cleanCode = (inspectionCode || '001').trim();
           const existingL1: any = await env.DB.prepare(`
-            SELECT id, auditor_name, audit_date, mc_and_products 
+            SELECT id, department_code, auditor_name, audit_date, mc_and_products 
             FROM inspections 
-            WHERE department_code = ? AND year = ? AND month = ? AND inspection_code = ? AND layer = 'Layer 1'
-          `).bind(departmentCode.toUpperCase(), parseInt(year, 10), parseInt(month, 10), cleanCode).first();
+            WHERE year = ? AND month = ? AND inspection_code = ? AND layer = 'Layer 1'
+          `).bind(parseInt(year, 10), parseInt(month, 10), cleanCode).first();
 
           if (existingL1) {
             return jsonResponse({
-              error: `รหัสเอกสาร #${cleanCode} ในแผนก ${departmentCode} ได้รับการตรวจโดย Layer 1 ไปแล้ว (โดย ${existingL1.auditor_name} เมื่อ ${existingL1.audit_date}) แต่ละรหัสเอกสารในระดับ Layer 1 สามารถตรวจได้เพียงครั้งเดียว ไม่สามารถสร้างซ้ำได้ กรุณาใช้รหัสใหม่ เช่น รหัสถัดไป`,
+              error: `รหัสเอกสาร #${cleanCode} ถูกใช้ไปแล้วโดยแผนก ${existingL1.department_code} (โดย ${existingL1.auditor_name} เมื่อ ${existingL1.audit_date}) เลขรหัสเอกสารนับต่อเนื่องทั่วทุกแผนก กรุณาใช้รหัสถัดไปที่ยังไม่มีใครใช้`,
             }, 400);
           }
         }

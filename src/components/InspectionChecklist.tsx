@@ -86,23 +86,13 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   // Inspection Code (รหัสรายการ e.g. 001, 002)
   const [inspectionCode, setInspectionCode] = useState<string>('001');
   const [availableCodes, setAvailableCodes] = useState<any[]>([]);
+  // globalNextCode: next code across ALL departments (global running number)
+  const [globalNextCode, setGlobalNextCode] = useState<string>('001');
   const [isCustomCode, setIsCustomCode] = useState<boolean>(false);
   const [customCodeInput, setCustomCodeInput] = useState<string>('');
   const [showCodeHistoryModal, setShowCodeHistoryModal] = useState<boolean>(false);
   const [showChecklistManager, setShowChecklistManager] = useState<boolean>(false);
   const [checklistVersion, setChecklistVersion] = useState<number>(0);
-
-  // Next available numeric code (e.g. 001, 002, 003...)
-  const nextAvailableCode = React.useMemo(() => {
-    const usedNums = availableCodes
-      .map((c: any) => parseInt(c.inspection_code, 10))
-      .filter((n: number) => !isNaN(n));
-    let next = 1;
-    while (usedNums.includes(next)) {
-      next++;
-    }
-    return String(next).padStart(3, '0');
-  }, [availableCodes]);
 
   // Check if selected code was already inspected by Layer 1
   const selectedCodeObj = availableCodes.find((c: any) => c.inspection_code === inspectionCode);
@@ -148,22 +138,27 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   }, [user, isPrivilegedUser]);
 
   // Load inspection batch codes for department & month
+  // API now returns { codes: [...], globalNextCode: 'NNN' } for global running numbers
   const fetchCodes = async () => {
     try {
-      const data = await api.getInspectionCodes(departmentCode, year, month);
-      setAvailableCodes(data || []);
-      return data || [];
+      const response = await api.getInspectionCodes(departmentCode, year, month);
+      // Handle both old (array) and new (object) response shapes
+      const codes = Array.isArray(response) ? response : (response?.codes || []);
+      const nextCode = response?.globalNextCode || '001';
+      setAvailableCodes(codes);
+      setGlobalNextCode(nextCode);
+      return { codes, globalNextCode: nextCode };
     } catch (err) {
       console.warn('Failed to load inspection codes:', err);
-      return [];
+      return { codes: [], globalNextCode: '001' };
     }
   };
 
   useEffect(() => {
-    fetchCodes().then((codes) => {
+    fetchCodes().then(({ codes, globalNextCode: nextCode }) => {
       if (codes && codes.length > 0) {
         if (layer === 'Layer 1') {
-          // If current code already has Layer 1, prefer an unused code or the next code
+          // If current code already has Layer 1, prefer an unused code or the global next code
           const currentItem = codes.find((c: any) => c.inspection_code === inspectionCode);
           if (currentItem?.has_layer1) {
             const availableForL1 = codes.find((c: any) => !c.has_layer1);
@@ -171,13 +166,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
               setInspectionCode(availableForL1.inspection_code);
               if (availableForL1.mc_and_products) setMcAndProducts(availableForL1.mc_and_products);
             } else {
-              const usedNums = codes.map((c: any) => parseInt(c.inspection_code, 10)).filter((n: number) => !isNaN(n));
-              let next = 1;
-              while (usedNums.includes(next)) next++;
-              const formatted = String(next).padStart(3, '0');
-              setInspectionCode(formatted);
+              // Use global next code (across all departments)
+              setInspectionCode(nextCode);
               setIsCustomCode(true);
-              setCustomCodeInput(formatted);
+              setCustomCodeInput(nextCode);
             }
           } else {
             const exists = codes.some((c: any) => c.inspection_code === inspectionCode);
@@ -199,6 +191,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             }
           }
         }
+      } else if (layer === 'Layer 1') {
+        // No codes for this dept yet — use globalNextCode
+        setInspectionCode(nextCode);
       }
     });
   }, [departmentCode, year, month, layer]);
@@ -233,8 +228,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const handleSelectCode = (codeVal: string) => {
     if (codeVal === '__NEW__') {
       setIsCustomCode(true);
-      setCustomCodeInput(nextAvailableCode);
-      setInspectionCode(nextAvailableCode);
+      setCustomCodeInput(globalNextCode);
+      setInspectionCode(globalNextCode);
     } else {
       setIsCustomCode(false);
       setInspectionCode(codeVal);
@@ -829,12 +824,12 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                       type="button"
                       onClick={() => {
                         setIsCustomCode(true);
-                        setCustomCodeInput(nextAvailableCode);
-                        setInspectionCode(nextAvailableCode);
+                        setCustomCodeInput(globalNextCode);
+                        setInspectionCode(globalNextCode);
                       }}
                       className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs transition shadow-sm"
                     >
-                      {language === 'th' ? `✨ ใช้รหัสใหม่ถัดไป (#${nextAvailableCode})` : `✨ Use Next Code (#${nextAvailableCode})`}
+                      {language === 'th' ? `✨ ใช้รหัสใหม่ถัดไป (#${globalNextCode}) — ทั้งระบบ` : `✨ Use Next Global Code (#${globalNextCode})`}
                     </button>
                     <button
                       type="button"

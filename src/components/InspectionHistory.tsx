@@ -46,6 +46,32 @@ export const InspectionHistory: React.FC = () => {
 
   const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
 
+  // Available inspection codes list for Quick Document Viewer dropdown
+  const [codeList, setCodeList] = useState<any[]>([]);
+  const [loadingCodeList, setLoadingCodeList] = useState<boolean>(false);
+  const [selectedQuickCode, setSelectedQuickCode] = useState<string>('');
+
+  const loadCodeList = async () => {
+    setLoadingCodeList(true);
+    try {
+      const params: any = {};
+      if (selectedYear !== 'all') params.year = selectedYear;
+      if (selectedMonth !== 'all') params.month = selectedMonth;
+      if (!isPrivileged) {
+        params.department = user?.department || 'MOLD';
+      } else if (selectedDept !== 'all') {
+        params.department = selectedDept;
+      }
+      const data = await api.getCodeList(params);
+      setCodeList(data || []);
+    } catch (err) {
+      console.warn('Failed to load code list for history dropdown:', err);
+      setCodeList([]);
+    } finally {
+      setLoadingCodeList(false);
+    }
+  };
+
   const loadHistory = async () => {
     setLoading(true);
     try {
@@ -71,6 +97,7 @@ export const InspectionHistory: React.FC = () => {
 
   useEffect(() => {
     loadHistory();
+    loadCodeList();
   }, [selectedDept, selectedYear, selectedMonth]);
 
   const handleViewDetails = async (id: number) => {
@@ -226,6 +253,60 @@ export const InspectionHistory: React.FC = () => {
               <option key={m} value={m}>{language === 'en' ? `M${m}` : `ด.${m}`}</option>
             ))}
           </select>
+        </div>
+
+        {/* Quick Document Viewer Dropdown (เรียกดูเอกสารการตรวจสอบตามรหัสใบตรวจ) */}
+        <div className="w-full pt-2 sm:pt-0 sm:w-auto flex items-center gap-2 border-t sm:border-t-0 sm:border-l border-slate-200 sm:pl-3">
+          <div className="flex-1 sm:w-60">
+            <select
+              value={selectedQuickCode}
+              onChange={(e) => {
+                const codeVal = e.target.value;
+                setSelectedQuickCode(codeVal);
+                if (codeVal) {
+                  const found = codeList.find((c: any) => c.inspection_code === codeVal);
+                  setCodeHistoryTarget({
+                    code: codeVal,
+                    department: found?.department_code || (selectedDept !== 'all' ? selectedDept : (user?.department || 'MOLD')),
+                    year: found?.year || (selectedYear !== 'all' ? parseInt(selectedYear, 10) : undefined),
+                    month: found?.month || (selectedMonth !== 'all' ? parseInt(selectedMonth, 10) : undefined),
+                  });
+                }
+              }}
+              className="w-full px-3 py-2 bg-orange-50/80 hover:bg-orange-50 border border-orange-200 text-slate-800 rounded-xl text-xs font-bold focus:ring-2 focus:ring-[#F37021] transition"
+            >
+              <option value="">
+                {loadingCodeList 
+                  ? (language === 'th' ? '⏳ กำลังโหลดรหัสใบตรวจ...' : '⏳ Loading codes...')
+                  : (language === 'th' ? '📑 เลือกเรียกดูใบตรวจ (รหัส 001, 002...)' : '📑 View Document (001, 002...)')}
+              </option>
+              {codeList.map((item: any) => (
+                <option key={`${item.department_code}-${item.inspection_code}-${item.year}-${item.month}`} value={item.inspection_code}>
+                  ใบตรวจ #{item.inspection_code} — {item.department_code} ({item.shift ? `${item.shift}` : ''} {item.latest_audit_date || ''}) {item.total_rounds ? `[${item.total_rounds} รอบ]` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedQuickCode && (
+            <button
+              type="button"
+              onClick={() => {
+                const found = codeList.find((c: any) => c.inspection_code === selectedQuickCode);
+                setCodeHistoryTarget({
+                  code: selectedQuickCode,
+                  department: found?.department_code || (selectedDept !== 'all' ? selectedDept : (user?.department || 'MOLD')),
+                  year: found?.year || (selectedYear !== 'all' ? parseInt(selectedYear, 10) : undefined),
+                  month: found?.month || (selectedMonth !== 'all' ? parseInt(selectedMonth, 10) : undefined),
+                });
+              }}
+              className="px-3 py-2 bg-[#F37021] hover:bg-[#DE5F14] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shrink-0 shadow-sm"
+              title={language === 'th' ? 'เปิดดูรายละเอียดทั้งหมดของใบตรวจนี้' : 'Open full document inspection audit trail'}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>{language === 'th' ? 'แสดงทั้งหมด' : 'View All'}</span>
+            </button>
+          )}
         </div>
       </div>
 
