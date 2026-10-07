@@ -115,6 +115,21 @@ function jsonResponse(data: any, status = 200, headers: Record<string, string> =
   });
 }
 
+async function ensureDbColumns(db: any) {
+  try {
+    await db.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+  } catch (e) {}
+  try {
+    await db.prepare("ALTER TABLE inspection_items ADD COLUMN fix_image_url TEXT").run();
+  } catch (e) {}
+  try {
+    await db.prepare("ALTER TABLE inspection_items ADD COLUMN fix_image_key TEXT").run();
+  } catch (e) {}
+  try {
+    await db.prepare("ALTER TABLE inspection_items ADD COLUMN fix_detail TEXT").run();
+  } catch (e) {}
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -181,10 +196,8 @@ export default {
           console.error('Safety template seeding notice:', sErr);
         }
 
-        // Ensure defect_status column exists in inspection_items
-        try {
-          await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
-        } catch (e) {}
+        // Ensure defect tracking columns exist in inspection_items
+        await ensureDbColumns(env.DB);
 
         // Ensure 'useradmin'
         await env.DB.prepare(`
@@ -1425,95 +1438,187 @@ export default {
     // Admin Dashboard Statistics (Publicly viewable by all users & guests)
     if (url.pathname === '/api/dashboard/stats' && request.method === 'GET') {
       try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+        await ensureDbColumns(env.DB);
       } catch (e) {}
 
-      const year = url.searchParams.get('year');
-      const month = url.searchParams.get('month');
-      const dept = url.searchParams.get('department');
+      try {
+        const year = url.searchParams.get('year');
+        const month = url.searchParams.get('month');
+        const dept = url.searchParams.get('department');
 
-      let filterSql = ' WHERE 1=1';
-      const filterParams: any[] = [];
-      if (year && year !== 'all') { filterSql += ' AND year = ?'; filterParams.push(parseInt(year, 10)); }
-      if (month && month !== 'all') { filterSql += ' AND month = ?'; filterParams.push(parseInt(month, 10)); }
-      if (dept && dept !== 'all') { filterSql += ' AND department_code = ?'; filterParams.push(dept); }
+        let filterSql = ' WHERE 1=1';
+        const filterParams: any[] = [];
+        if (year && year !== 'all') { filterSql += ' AND year = ?'; filterParams.push(parseInt(year, 10)); }
+        if (month && month !== 'all') { filterSql += ' AND month = ?'; filterParams.push(parseInt(month, 10)); }
+        if (dept && dept !== 'all') { filterSql += ' AND department_code = ?'; filterParams.push(dept); }
 
-      // 1. Overall stats
-      const overall = await env.DB.prepare(`
-        SELECT 
-          COUNT(*) as total_inspections,
-          COALESCE(ROUND(AVG(score_percent), 1), 100.0) as average_score,
-          COALESCE(SUM(total_ok), 0) as total_ok,
-          COALESCE(SUM(total_no), 0) as total_no,
-          COALESCE(SUM(total_na), 0) as total_na,
-          COUNT(DISTINCT auditor_id) as active_auditors,
-          COUNT(DISTINCT department_code) as active_departments
-        FROM inspections ${filterSql}
-      `).bind(...filterParams).first();
+        // 1. Overall stats
+        let overall: any = {
+          total_inspections: 0,
+          average_score: 100.0,
+          total_ok: 0,
+          total_no: 0,
+          total_na: 0,
+          active_auditors: 0,
+          active_departments: 0,
+        };
+        try {
+          let ovStmt = env.DB.prepare(`
+            SELECT 
+              COUNT(*) as total_inspections,
+              COALESCE(ROUND(AVG(score_percent), 1), 100.0) as average_score,
+              COALESCE(SUM(total_ok), 0) as total_ok,
+              COALESCE(SUM(total_no), 0) as total_no,
+              COALESCE(SUM(total_na), 0) as total_na,
+              COUNT(DISTINCT auditor_id) as active_auditors,
+              COUNT(DISTINCT department_code) as active_departments
+            FROM inspections ${filterSql}
+          `);
+          if (filterParams.length > 0) ovStmt = ovStmt.bind(...filterParams);
+          const ovRes = await ovStmt.first();
+          if (ovRes) {
+            overall = {
+              total_inspections: ovRes.total_inspections || 0,
+              average_score: ovRes.average_score !== undefined && ovRes.average_score !== null ? ovRes.average_score : 100.0,
+              total_ok: ovRes.total_ok || 0,
+              total_no: ovRes.total_no || 0,
+              total_na: ovRes.total_na || 0,
+              active_auditors: ovRes.active_auditors || 0,
+              active_departments: ovRes.active_departments || 0,
+            };
+          }
+        } catch (ovErr) {
+          console.warn('Failed to get overall stats:', ovErr);
+        }
 
-      // 2. Department Breakdown
-      const { results: deptStats } = await env.DB.prepare(`
-        SELECT 
-          d.code,
-          d.name_th,
-          d.name_en,
-          COUNT(i.id) as inspections_count,
-          COALESCE(ROUND(AVG(i.score_percent), 1), 0) as average_score,
-          COALESCE(SUM(i.total_ok), 0) as total_ok,
-          COALESCE(SUM(i.total_no), 0) as total_no,
-          COUNT(DISTINCT i.auditor_id) as auditor_count
-        FROM departments d
-        LEFT JOIN inspections i ON d.code = i.department_code ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''}
-        GROUP BY d.code, d.name_th, d.name_en
-        ORDER BY d.code ASC
-      `).all();
+        // 2. Department Breakdown
+        let deptStats: any[] = [];
+        try {
+          const dsRes = await env.DB.prepare(`
+            SELECT 
+              d.code,
+              d.name_th,
+              d.name_en,
+              COUNT(i.id) as inspections_count,
+              COALESCE(ROUND(AVG(i.score_percent), 1), 0) as average_score,
+              COALESCE(SUM(i.total_ok), 0) as total_ok,
+              COALESCE(SUM(i.total_no), 0) as total_no,
+              COUNT(DISTINCT i.auditor_id) as auditor_count
+            FROM departments d
+            LEFT JOIN inspections i ON d.code = i.department_code ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''}
+            GROUP BY d.code, d.name_th, d.name_en
+            ORDER BY d.code ASC
+          `).all();
+          deptStats = dsRes.results || [];
+        } catch (dsErr) {
+          console.warn('Failed to get deptStats:', dsErr);
+        }
 
-      // 3. Layer Breakdown
-      const { results: layerStats } = await env.DB.prepare(`
-        SELECT 
-          layer,
-          COUNT(*) as count,
-          COALESCE(ROUND(AVG(score_percent), 1), 0) as average_score,
-          COALESCE(SUM(total_no), 0) as defects_count
-        FROM inspections ${filterSql}
-        GROUP BY layer
-        ORDER BY layer ASC
-      `).bind(...filterParams).all();
+        // 3. Layer Breakdown
+        let layerStats: any[] = [];
+        try {
+          let lsStmt = env.DB.prepare(`
+            SELECT 
+              layer,
+              COUNT(*) as count,
+              COALESCE(ROUND(AVG(score_percent), 1), 0) as average_score,
+              COALESCE(SUM(total_no), 0) as defects_count
+            FROM inspections ${filterSql}
+            GROUP BY layer
+            ORDER BY layer ASC
+          `);
+          if (filterParams.length > 0) lsStmt = lsStmt.bind(...filterParams);
+          const lsRes = await lsStmt.all();
+          layerStats = lsRes.results || [];
+        } catch (lsErr) {
+          console.warn('Failed to get layerStats:', lsErr);
+        }
 
-      // 4. Recent Defects (with images)
-      const { results: recentDefects } = await env.DB.prepare(`
-        SELECT 
-          ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
-          ii.action_plan, COALESCE(ii.fix_detail, '') as fix_detail, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
-          COALESCE(ii.defect_status, 'pending') as defect_status,
-          COALESCE(ii.fix_image_url, '') as fix_image_url,
-          i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
-        FROM inspection_items ii
-        JOIN inspections i ON ii.inspection_id = i.id
-        WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''}
-        ORDER BY ii.id DESC
-        LIMIT 10
-      `).all();
+        // 4. Recent Defects (with images & fallback if columns missing)
+        let recentDefects: any[] = [];
+        const deptFilter = dept && dept !== 'all' ? `AND i.department_code = '${dept.replace(/'/g, "''")}'` : '';
+        try {
+          const res = await env.DB.prepare(`
+            SELECT 
+              ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
+              ii.action_plan, COALESCE(ii.fix_detail, '') as fix_detail, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
+              COALESCE(ii.defect_status, 'pending') as defect_status,
+              COALESCE(ii.fix_image_url, '') as fix_image_url,
+              i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
+            FROM inspection_items ii
+            JOIN inspections i ON ii.inspection_id = i.id
+            WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''} ${deptFilter}
+            ORDER BY ii.id DESC
+            LIMIT 10
+          `).all();
+          recentDefects = res.results || [];
+        } catch (defectErr) {
+          console.warn('Fallback recentDefects query without fix columns:', defectErr);
+          try {
+            const res = await env.DB.prepare(`
+              SELECT 
+                ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
+                ii.action_plan, '' as fix_detail, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
+                'pending' as defect_status,
+                '' as fix_image_url,
+                i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
+              FROM inspection_items ii
+              JOIN inspections i ON ii.inspection_id = i.id
+              WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''} ${deptFilter}
+              ORDER BY ii.id DESC
+              LIMIT 10
+            `).all();
+            recentDefects = res.results || [];
+          } catch (e2) {
+            recentDefects = [];
+          }
+        }
 
-      // 5. Total system users count
-      const userCounts = await env.DB.prepare(`
-        SELECT 
-          COUNT(*) as total,
-          SUM(CASE WHEN role = 'layer1' OR role = 'leader' OR role = 'inspector' THEN 1 ELSE 0 END) as layer1_users,
-          SUM(CASE WHEN role = 'layer2' OR role = 'supervisor' THEN 1 ELSE 0 END) as layer2_users,
-          SUM(CASE WHEN role = 'layer3' OR role = 'manager' THEN 1 ELSE 0 END) as layer3_users,
-          SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admin_users,
-          SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_users
-        FROM users
-      `).first();
+        // 5. Total system users count
+        let userCounts: any = {
+          total: 0,
+          layer1_users: 0,
+          layer2_users: 0,
+          layer3_users: 0,
+          admin_users: 0,
+          pending_users: 0,
+        };
+        try {
+          const uc = await env.DB.prepare(`
+            SELECT 
+              COUNT(*) as total,
+              COALESCE(SUM(CASE WHEN role = 'layer1' OR role = 'leader' OR role = 'inspector' THEN 1 ELSE 0 END), 0) as layer1_users,
+              COALESCE(SUM(CASE WHEN role = 'layer2' OR role = 'supervisor' THEN 1 ELSE 0 END), 0) as layer2_users,
+              COALESCE(SUM(CASE WHEN role = 'layer3' OR role = 'manager' THEN 1 ELSE 0 END), 0) as layer3_users,
+              COALESCE(SUM(CASE WHEN role = 'admin' OR role = 'superadmin' THEN 1 ELSE 0 END), 0) as admin_users,
+              COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) as pending_users
+            FROM users
+          `).first();
+          if (uc) {
+            userCounts = {
+              total: uc.total || 0,
+              layer1_users: uc.layer1_users || 0,
+              layer2_users: uc.layer2_users || 0,
+              layer3_users: uc.layer3_users || 0,
+              admin_users: uc.admin_users || 0,
+              pending_users: uc.pending_users || 0,
+            };
+          }
+        } catch (uErr) {
+          console.warn('Failed to get userCounts:', uErr);
+        }
 
-      return jsonResponse({
-        overall,
-        deptStats,
-        layerStats,
-        recentDefects,
-        userCounts,
-      });
+        return jsonResponse({
+          overall,
+          deptStats,
+          layerStats,
+          recentDefects,
+          userCounts,
+        });
+      } catch (err: any) {
+        console.error('Failed to get dashboard stats:', err);
+        return jsonResponse({ error: 'Failed to get dashboard stats: ' + err.message }, 500);
+      }
     }
 
     // Comprehensive Data Export (Excel & Photos) - Requirement 2: เฉพาะระดับ Admin ขึ้นไป
@@ -1523,7 +1628,7 @@ export default {
       }
 
       try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+        await ensureDbColumns(env.DB);
       } catch (e) {}
 
       const year = url.searchParams.get('year');
@@ -1596,16 +1701,7 @@ export default {
       const itemId = parseInt(url.pathname.split('/')[3], 10);
 
       try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
-      } catch (e) {}
-      try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN fix_image_url TEXT").run();
-      } catch (e) {}
-      try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN fix_image_key TEXT").run();
-      } catch (e) {}
-      try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN fix_detail TEXT").run();
+        await ensureDbColumns(env.DB);
       } catch (e) {}
 
       const formData = await request.formData().catch(() => null);
@@ -1668,7 +1764,7 @@ export default {
       const itemId = parseInt(url.pathname.split('/')[3], 10);
 
       try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+        await ensureDbColumns(env.DB);
       } catch (e) {}
 
       const body: any = await request.json().catch(() => ({}));
@@ -1699,7 +1795,7 @@ export default {
       const newStatus = body.status === 'resolved' ? 'resolved' : body.status === 'reviewing' ? 'reviewing' : 'pending';
 
       try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+        await ensureDbColumns(env.DB);
       } catch (e) {}
 
       await env.DB.prepare('UPDATE inspection_items SET defect_status = ? WHERE id = ?').bind(newStatus, itemId).run();
@@ -1720,7 +1816,7 @@ export default {
       const itemId = parseInt(url.pathname.split('/')[3], 10);
 
       try {
-        await env.DB.prepare("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'").run();
+        await ensureDbColumns(env.DB);
       } catch (e) {}
 
       const item: any = await env.DB.prepare('SELECT * FROM inspection_items WHERE id = ?').bind(itemId).first();

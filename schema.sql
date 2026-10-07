@@ -99,6 +99,10 @@ CREATE TABLE inspection_items (
     due_date TEXT, -- วันที่กำหนดเสร็จ
     image_url TEXT, -- ลิงก์รูปภาพ Cloudflare R2
     image_key TEXT, -- ชื่อไฟล์/คีย์ใน R2
+    defect_status TEXT DEFAULT 'pending', -- สถานะการแก้ไข: 'pending', 'reviewing', 'resolved'
+    fix_image_url TEXT, -- รูปภาพหลังแก้ไข
+    fix_image_key TEXT, -- ชื่อไฟล์รูปหลังแก้ไขใน R2
+    fix_detail TEXT, -- รายละเอียดการแก้ไข
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (inspection_id) REFERENCES inspections(id) ON DELETE CASCADE
 );

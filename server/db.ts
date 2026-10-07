@@ -20,6 +20,12 @@ export function initDatabase() {
     const schemaSql = fs.readFileSync(path.resolve(process.cwd(), 'schema.sql'), 'utf-8');
     db.exec(schemaSql);
   }
+
+  // Ensure newer columns exist
+  try { db.exec("ALTER TABLE inspection_items ADD COLUMN defect_status TEXT DEFAULT 'pending'"); } catch (e) {}
+  try { db.exec("ALTER TABLE inspection_items ADD COLUMN fix_image_url TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE inspection_items ADD COLUMN fix_image_key TEXT"); } catch (e) {}
+  try { db.exec("ALTER TABLE inspection_items ADD COLUMN fix_detail TEXT"); } catch (e) {}
 }
 
 export default db;

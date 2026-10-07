@@ -58,27 +58,51 @@ router.get('/stats', (req: any, res: Response) => {
     `).all(...filterParams);
 
     // 4. Recent Defects (with images)
-    const recentDefects = db.prepare(`
-      SELECT 
-        ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
-        ii.action_plan, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
-        i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
-      FROM inspection_items ii
-      JOIN inspections i ON ii.inspection_id = i.id
-      WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year as string, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''}
-      ORDER BY ii.id DESC
-      LIMIT 10
-    `).all();
+    let recentDefects: any[] = [];
+    try {
+      recentDefects = db.prepare(`
+        SELECT 
+          ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
+          ii.action_plan, COALESCE(ii.fix_detail, '') as fix_detail, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
+          COALESCE(ii.defect_status, 'pending') as defect_status,
+          COALESCE(ii.fix_image_url, '') as fix_image_url,
+          i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
+        FROM inspection_items ii
+        JOIN inspections i ON ii.inspection_id = i.id
+        WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year as string, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month as string, 10)}` : ''} ${department && department !== 'all' ? `AND i.department_code = '${department}'` : ''}
+        ORDER BY ii.id DESC
+        LIMIT 10
+      `).all();
+    } catch (defectErr) {
+      console.warn('Fallback recentDefects query:', defectErr);
+      try {
+        recentDefects = db.prepare(`
+          SELECT 
+            ii.id, ii.inspection_id, ii.question, ii.finding_topic, ii.severity,
+            ii.action_plan, '' as fix_detail, ii.responsible_person, ii.due_date, ii.image_url, ii.layer,
+            'pending' as defect_status,
+            '' as fix_image_url,
+            i.department_code, i.inspection_code, i.audit_date, i.mc_and_products, i.auditor_name
+          FROM inspection_items ii
+          JOIN inspections i ON ii.inspection_id = i.id
+          WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year as string, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month as string, 10)}` : ''} ${department && department !== 'all' ? `AND i.department_code = '${department}'` : ''}
+          ORDER BY ii.id DESC
+          LIMIT 10
+        `).all();
+      } catch (e2) {
+        recentDefects = [];
+      }
+    }
 
     // 5. Total system users count
     const userCounts = db.prepare(`
       SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN role = 'layer1' OR role = 'leader' OR role = 'inspector' THEN 1 ELSE 0 END) as layer1_users,
-        SUM(CASE WHEN role = 'layer2' OR role = 'supervisor' THEN 1 ELSE 0 END) as layer2_users,
-        SUM(CASE WHEN role = 'layer3' OR role = 'manager' THEN 1 ELSE 0 END) as layer3_users,
-        SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as admin_users,
-        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_users
+        COALESCE(SUM(CASE WHEN role = 'layer1' OR role = 'leader' OR role = 'inspector' THEN 1 ELSE 0 END), 0) as layer1_users,
+        COALESCE(SUM(CASE WHEN role = 'layer2' OR role = 'supervisor' THEN 1 ELSE 0 END), 0) as layer2_users,
+        COALESCE(SUM(CASE WHEN role = 'layer3' OR role = 'manager' THEN 1 ELSE 0 END), 0) as layer3_users,
+        COALESCE(SUM(CASE WHEN role = 'admin' OR role = 'superadmin' THEN 1 ELSE 0 END), 0) as admin_users,
+        COALESCE(SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END), 0) as pending_users
       FROM users
     `).get();
 

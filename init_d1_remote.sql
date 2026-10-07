@@ -88,6 +88,10 @@ CREATE TABLE inspection_items (
     due_date TEXT,
     image_url TEXT,
     image_key TEXT,
+    defect_status TEXT DEFAULT 'pending',
+    fix_image_url TEXT,
+    fix_image_key TEXT,
+    fix_detail TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (inspection_id) REFERENCES inspections(id) ON DELETE CASCADE
 );
