@@ -179,10 +179,13 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                     name="username"
                     value={formData.username}
                     onChange={handleChange}
-                    placeholder={language === 'en' ? 'e.g. somchai.m' : 'เช่น somchai.m หรือ admin'}
+                    placeholder={language === 'en' ? 'Type TE followed by employee ID' : 'พิมพ์ TE แล้วตามด้วยรหัสพนักงาน'}
                     className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
                   />
                 </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {language === 'en' ? '* Type TE followed by employee ID (e.g. TE123456)' : '* พิมพ์ TE แล้วตามด้วยรหัสพนักงาน เช่น TE123456'}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
