@@ -21,6 +21,8 @@ import {
   FileSpreadsheet,
   Trash2,
   ShieldAlert,
+  ThumbsUp,
+  ThumbsDown,
   Camera
 } from 'lucide-react';
 import { ExportDataModal } from './ExportDataModal';
@@ -639,8 +641,8 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <div className="space-y-3">
               {/* Layer 1 */}
               {(() => {
-                const l1Count = stats?.layerStats?.find(l => l.layer.includes('1'))?.count ?? 0;
-                const l1Defects = stats?.layerStats?.find(l => l.layer.includes('1'))?.defects_count ?? 0;
+                const l1Count = stats?.layerStats?.find(l => l.layer?.includes('1'))?.count ?? 0;
+                const l1Defects = stats?.layerStats?.find(l => l.layer?.includes('1'))?.defects_count ?? 0;
                 return (
                   <div className="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-200 space-y-2">
                     <div className="flex items-center justify-between">
@@ -669,8 +671,8 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
               {/* Layer 2 */}
               {(() => {
-                const l2Count = stats?.layerStats?.find(l => l.layer.includes('2'))?.count ?? 0;
-                const l2Defects = stats?.layerStats?.find(l => l.layer.includes('2'))?.defects_count ?? 0;
+                const l2Count = stats?.layerStats?.find(l => l.layer?.includes('2'))?.count ?? 0;
+                const l2Defects = stats?.layerStats?.find(l => l.layer?.includes('2'))?.defects_count ?? 0;
                 return (
                   <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2">
                     <div className="flex items-center justify-between">
@@ -699,8 +701,8 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
               {/* Layer 3 */}
               {(() => {
-                const l3Count = stats?.layerStats?.find(l => l.layer.includes('3'))?.count ?? 0;
-                const l3Score = stats?.layerStats?.find(l => l.layer.includes('3'))?.average_score ?? 0;
+                const l3Count = stats?.layerStats?.find(l => l.layer?.includes('3'))?.count ?? 0;
+                const l3Score = stats?.layerStats?.find(l => l.layer?.includes('3'))?.average_score ?? 0;
                 return (
                   <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-2">
                     <div className="flex items-center justify-between">

@@ -21,7 +21,7 @@ interface PieChartProps {
 }
 
 export const PieChart: React.FC<PieChartProps> = ({
-  data,
+  data = [],
   title,
   subtitle,
   centerValue,
@@ -31,7 +31,8 @@ export const PieChart: React.FC<PieChartProps> = ({
   emptyText = 'ไม่มีข้อมูล',
   className = '',
 }) => {
-  const total = data.reduce((sum, d) => sum + (d.value || 0), 0);
+  const safeData = Array.isArray(data) ? data : [];
+  const total = safeData.reduce((sum, d) => sum + (d?.value || 0), 0);
   const radius = (size - donutWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
@@ -64,7 +65,7 @@ export const PieChart: React.FC<PieChartProps> = ({
               strokeDasharray={circumference}
             />
           ) : (
-            data.map((slice, index) => {
+            safeData.map((slice, index) => {
               if (!slice.value || slice.value <= 0) return null;
               const percent = (slice.value / total) * 100;
               const strokeDasharray = `${(percent / 100) * circumference} ${circumference}`;
@@ -121,7 +122,7 @@ export const PieChart: React.FC<PieChartProps> = ({
         )}
 
         <div className="space-y-1.5">
-          {data.map((slice, i) => {
+          {safeData.map((slice, i) => {
             const pct = total > 0 ? ((slice.value / total) * 100).toFixed(1) : '0';
             return (
               <div key={i} className="flex items-center justify-between text-xs">
