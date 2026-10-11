@@ -120,22 +120,48 @@ router.get('/', (req: AuthRequest, res: Response) => {
 
     const inspections = db.prepare(sql).all(...params);
 
-    // Summary statistics (filtered for non-admin)
-    let statsSql = `
-      SELECT 
-        COUNT(*) as total_inspections,
-        SUM(total_ok) as grand_total_ok,
-        SUM(total_no) as grand_total_no,
-        SUM(total_na) as grand_total_na,
-        ROUND(AVG(score_percent), 2) as average_score
-      FROM inspections
-    `;
+    // Summary statistics (filtered by the exact same query parameters)
+    let statsWhere = ' WHERE 1=1';
     const statsParams: any[] = [];
+    if (department && department !== 'all') {
+      statsWhere += ' AND department_code = ?';
+      statsParams.push(department);
+    }
+    if (year && year !== 'all') {
+      statsWhere += ' AND year = ?';
+      statsParams.push(parseInt(year as string, 10));
+    }
+    if (month && month !== 'all') {
+      statsWhere += ' AND month = ?';
+      statsParams.push(parseInt(month as string, 10));
+    }
+    if (layer && layer !== 'all') {
+      statsWhere += ' AND layer = ?';
+      statsParams.push(layer);
+    }
+    if (filterCode) {
+      statsWhere += ' AND inspection_code = ?';
+      statsParams.push(filterCode);
+    }
+    if (search) {
+      statsWhere += ' AND (mc_and_products LIKE ? OR auditor_name LIKE ?)';
+      statsParams.push(`%${search}%`, `%${search}%`);
+    }
     if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
       const userDept = req.user.department || 'MOLD';
-      statsSql += ' WHERE (department_code = ? OR auditor_id = ?)';
+      statsWhere += ' AND (department_code = ? OR auditor_id = ?)';
       statsParams.push(userDept, req.user.id);
     }
+
+    const statsSql = `
+      SELECT 
+        COUNT(*) as total_inspections,
+        COALESCE(SUM(total_ok), 0) as grand_total_ok,
+        COALESCE(SUM(total_no), 0) as grand_total_no,
+        COALESCE(SUM(total_na), 0) as grand_total_na,
+        COALESCE(ROUND(AVG(score_percent), 2), 100.0) as average_score
+      FROM inspections ${statsWhere}
+    `;
 
     const stats = db.prepare(statsSql).get(...statsParams);
 

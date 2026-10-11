@@ -207,7 +207,7 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       <option value="WH">{language === 'en' ? 'Warehouse' : 'Warehouse (คลังสินค้า)'}</option>
                       <option value="QC">{language === 'en' ? 'QC (Quality Control)' : 'QC (ควบคุมคุณภาพ)'}</option>
                       <option value="STAMPING">{language === 'en' ? 'Stamping' : 'Stamping (ปั๊มขึ้นรูป)'}</option>
-                      <option value="TOOL">{language === 'en' ? 'Tooling' : 'Tooling (แม่พิมพ์/เครื่องมือ)'}</option>
+                      <option value="TOOL">{language === 'en' ? 'Toll Room' : 'Toll Room (แม่พิมพ์/เครื่องมือ)'}</option>
                       <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
                     </select>
                   </div>

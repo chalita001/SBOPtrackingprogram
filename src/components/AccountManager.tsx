@@ -263,7 +263,7 @@ export const AccountManager: React.FC = () => {
             <option value="WH">Warehouse</option>
             <option value="QC">QC</option>
             <option value="STAMPING">Stamping</option>
-            <option value="TOOL">Tooling</option>
+            <option value="TOOL">Toll Room</option>
             <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
           </select>
         </div>
@@ -669,7 +669,7 @@ export const AccountManager: React.FC = () => {
                   <option value="WH">Warehouse</option>
                   <option value="QC">QC</option>
                   <option value="STAMPING">Stamping</option>
-                  <option value="TOOL">Tooling</option>
+                  <option value="TOOL">Toll Room</option>
                   <option value="SAFETY">{language === 'en' ? 'Safety / EHS' : 'Safety / EHS (ความปลอดภัย)'}</option>
                 </select>
               </div>

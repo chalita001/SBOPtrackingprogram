@@ -249,7 +249,7 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   <option value="WH">Warehouse (คลังสินค้า)</option>
                   <option value="QC">QC (ควบคุมคุณภาพ)</option>
                   <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
-                  <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                  <option value="TOOL">Toll Room (แม่พิมพ์/เครื่องมือ)</option>
                   <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
                 </select>
               </div>

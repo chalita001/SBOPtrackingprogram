@@ -122,7 +122,7 @@ INSERT INTO departments (code, name_th, name_en, description) VALUES ('ASSY', '�
 INSERT INTO departments (code, name_th, name_en, description) VALUES ('WH', 'แผนกคลังสินค้า (Warehouse)', 'Warehouse Department', 'Raw materials, Parts, and Finished Goods Storage');
 INSERT INTO departments (code, name_th, name_en, description) VALUES ('QC', 'แผนกควบคุมคุณภาพ (QC)', 'Quality Control Department', 'Quality Assurance and Inspection');
 INSERT INTO departments (code, name_th, name_en, description) VALUES ('STAMPING', 'แผนกปั๊มขึ้นรูป (Stamping)', 'Stamping Department', 'Metal Stamping and Pressing');
-INSERT INTO departments (code, name_th, name_en, description) VALUES ('TOOL', 'แผนกแม่พิมพ์และเครื่องมือ (Tooling)', 'Tooling Department', 'Tool and Die Making and Repair');
+INSERT INTO departments (code, name_th, name_en, description) VALUES ('TOOL', 'แผนกแม่พิมพ์และเครื่องมือ (Toll Room)', 'Toll Room', 'Tool and Die Making and Repair');
 
 INSERT INTO users (first_name, last_name, phone, email, department, position, responsible_area, role, status, password_hash, approved_at)
 VALUES ('ผู้ดูแลระบบ', 'ส่วนกลาง (Admin)', '081-234-5678', 'admin@sbop.com', 'FACILITY', 'EHS Safety Manager', 'All Areas', 'admin', 'approved', '$2b$10$n.Amq4Ep/qxcwptS7uLmzurWRkhwuaTyGGdB0Wk6m24GPN2n8Kziu', CURRENT_TIMESTAMP);

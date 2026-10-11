@@ -21,11 +21,10 @@ import {
   FileSpreadsheet,
   Trash2,
   ShieldAlert,
-  ThumbsUp,
-  ThumbsDown,
   Camera
 } from 'lucide-react';
 import { ExportDataModal } from './ExportDataModal';
+import { PieChart, PieChartSlice } from './PieChart';
 
 interface DashboardStats {
   overall: {
@@ -36,6 +35,12 @@ interface DashboardStats {
     total_na: number;
     active_auditors: number;
     active_departments: number;
+  };
+  defectStats?: {
+    total_defects: number;
+    resolved_defects: number;
+    reviewing_defects: number;
+    pending_defects: number;
   };
   deptStats: Array<{
     code: string;
@@ -91,10 +96,12 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filters
-  const currentYear = new Date().getFullYear().toString();
+  // Filters: Requirement 7 - default filter to current year and current month on first entry
+  const now = new Date();
+  const currentYear = now.getFullYear().toString();
+  const currentMonth = (now.getMonth() + 1).toString();
   const [selectedYear, setSelectedYear] = useState<string>(currentYear);
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
   const [selectedDept, setSelectedDept] = useState<string>('all');
 
   // Image Preview Modal
@@ -266,7 +273,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 <option value="WH" className="bg-slate-900 text-white">Warehouse</option>
                 <option value="QC" className="bg-slate-900 text-white">QC</option>
                 <option value="STAMPING" className="bg-slate-900 text-white">Stamping</option>
-                <option value="TOOL" className="bg-slate-900 text-white">Tooling</option>
+                <option value="TOOL" className="bg-slate-900 text-white">Toll Room</option>
                 <option value="SAFETY" className="bg-slate-900 text-white">{language === 'en' ? 'Safety' : 'Safety'}</option>
               </select>
             </div>
@@ -354,7 +361,9 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
             <span className="text-3xl font-black text-slate-900">
               {overall?.total_inspections ?? 0}
             </span>
-            <span className="text-xs font-semibold text-slate-500">{t.timesUnit}</span>
+            <span className="text-xs font-semibold text-slate-500">
+              {selectedDept !== 'all' ? `/ 40 ${t.timesUnit}` : t.timesUnit}
+            </span>
           </div>
           <div className="mt-2 text-[11px] text-slate-500 flex items-center gap-1">
             <span>
@@ -451,6 +460,66 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
         </div>
       </div>
 
+      {/* 2.5 Filtered Visual Analytics (Pie Charts based on Filtered Data) - Requirement 5 & 7 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Chart 1: Safety Compliance (OK vs NO) */}
+        <PieChart
+          title={language === 'th' ? 'สัดส่วนผลตรวจความปลอดภัย (OK / NO)' : 'Safety Compliance (OK vs NO)'}
+          subtitle={
+            selectedDept === 'all'
+              ? (language === 'th' ? `ข้อมูลรวมทุกแผนก (${selectedMonth === 'all' ? 'ทุกเดือน' : `เดือน ${selectedMonth}`}/${selectedYear})` : `All Departments (${selectedMonth}/${selectedYear})`)
+              : (language === 'th' ? `เฉพาะแผนก ${selectedDept} (${selectedMonth === 'all' ? 'ทุกเดือน' : `เดือน ${selectedMonth}`}/${selectedYear})` : `Department ${selectedDept} (${selectedMonth}/${selectedYear})`)
+          }
+          centerValue={`${avgScore}%`}
+          centerLabel={language === 'th' ? 'คะแนนเฉลี่ย' : 'Avg Score'}
+          data={[
+            {
+              label: language === 'th' ? 'ผ่าน (OK)' : 'Passed (OK)',
+              value: overall?.total_ok ?? 0,
+              color: '#10B981',
+            },
+            {
+              label: language === 'th' ? 'ไม่ผ่าน (NO)' : 'Defects (NO)',
+              value: overall?.total_no ?? 0,
+              color: '#EF4444',
+            },
+          ]}
+        />
+
+        {/* Chart 2: Defect Resolution Status (แก้ไขแล้ว vs ยังไม่แก้ไข) */}
+        <PieChart
+          title={language === 'th' ? 'สถานะการแก้ไขข้อผิดปกติ (Defect Resolution)' : 'Defect Resolution Status'}
+          subtitle={
+            selectedDept === 'all'
+              ? (language === 'th' ? 'ติดตามการแก้ไขปัญหาทุกแผนกตามตัวกรอง' : 'Defect tracking across all departments')
+              : (language === 'th' ? `ติดตามการแก้ไขปัญหาของแผนก ${selectedDept}` : `Defect tracking for ${selectedDept}`)
+          }
+          centerValue={
+            (stats?.defectStats?.total_defects ?? (overall?.total_no ?? 0)) > 0
+              ? `${Math.round(((stats?.defectStats?.resolved_defects ?? 0) / (stats?.defectStats?.total_defects || 1)) * 100)}%`
+              : '100%'
+          }
+          centerLabel={language === 'th' ? 'แก้ไขแล้ว' : 'Resolved'}
+          data={[
+            {
+              label: language === 'th' ? 'แก้ไขแล้ว (Resolved)' : 'Resolved',
+              value: stats?.defectStats?.resolved_defects ?? 0,
+              color: '#10B981',
+            },
+            {
+              label: language === 'th' ? 'รอตรวจสอบ (Reviewing)' : 'Under Review',
+              value: stats?.defectStats?.reviewing_defects ?? 0,
+              color: '#F59E0B',
+            },
+            {
+              label: language === 'th' ? 'ยังไม่แก้ไข (Pending)' : 'Unresolved',
+              value: stats?.defectStats?.pending_defects ?? (overall?.total_no ?? 0),
+              color: '#EF4444',
+            },
+          ]}
+        />
+      </div>
+
       {/* 3. Main Dashboard Grid: Department Performance Table + Layer Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (2 cols): 7 Departments Matrix */}
@@ -468,7 +537,9 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               </div>
             </div>
             <span className="text-xs text-slate-400 font-semibold bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-              {language === 'th' ? '7 แผนก' : '7 Departments'}
+              {language === 'th'
+                ? `${(stats?.deptStats || []).filter((dept) => selectedDept === 'all' || dept.code === selectedDept).length} แผนก`
+                : `${(stats?.deptStats || []).filter((dept) => selectedDept === 'all' || dept.code === selectedDept).length} Departments`}
             </span>
           </div>
 
@@ -485,7 +556,9 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {stats?.deptStats?.map((dept) => {
+                {stats?.deptStats
+                  ?.filter((dept) => selectedDept === 'all' || dept.code === selectedDept)
+                  .map((dept) => {
                   const score = Number(dept.average_score || 0);
                   const isDeptHealthy = dept.inspections_count > 0 ? score >= 85 : true;
                   const deptDisplayName = language === 'th' ? dept.name_th : dept.name_en;
@@ -499,7 +572,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
                       <td className="py-3 px-3 text-center">
                         <span className="font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-lg">
-                          {dept.inspections_count}
+                          {dept.code === 'SAFETY' ? `${dept.inspections_count} ${t.timesUnit}` : `${language === 'th' ? 'ทำแล้ว ' : ''}${dept.inspections_count} / 40 ${t.timesUnit}`}
                         </span>
                       </td>
 
@@ -565,55 +638,94 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
 
             <div className="space-y-3">
               {/* Layer 1 */}
-              <div className="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#F37021]"></span>
-                    <strong className="text-xs text-slate-900 font-bold">{t.layer1Header}</strong>
+              {(() => {
+                const l1Count = stats?.layerStats?.find(l => l.layer.includes('1'))?.count ?? 0;
+                const l1Defects = stats?.layerStats?.find(l => l.layer.includes('1'))?.defects_count ?? 0;
+                return (
+                  <div className="p-3.5 rounded-2xl bg-orange-50/60 border border-orange-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#F37021]"></span>
+                        <strong className="text-xs text-slate-900 font-bold">{t.layer1Header}</strong>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {l1Count >= 40 && (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full">
+                            ✓ {language === 'th' ? 'ถึงเป้าขั้นต่ำ' : 'Target met'}
+                          </span>
+                        )}
+                        <span className="text-[10px] bg-orange-100 text-[#F37021] font-bold px-2 py-0.5 rounded-full">
+                          {t.layer1Subheader}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
+                      <span>{t.auditedCount} <strong className="text-slate-900">{l1Count} / 40 {t.timesUnit}</strong></span>
+                      <span>{t.defectsCountLabel} <strong className="text-red-600">{l1Defects} {t.itemsUnit}</strong></span>
+                    </div>
                   </div>
-                  <span className="text-[10px] bg-orange-100 text-[#F37021] font-bold px-2 py-0.5 rounded-full">
-                    {t.layer1Subheader}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-                  <span>{t.auditedCount} <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('1'))?.count ?? 0} {t.timesUnit}</strong></span>
-                  <span>{t.defectsCountLabel} <strong className="text-red-600">{stats?.layerStats?.find(l => l.layer.includes('1'))?.defects_count ?? 0} {t.itemsUnit}</strong></span>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Layer 2 */}
-              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
-                    <strong className="text-xs text-indigo-950 font-bold">{t.layer2Header}</strong>
+              {(() => {
+                const l2Count = stats?.layerStats?.find(l => l.layer.includes('2'))?.count ?? 0;
+                const l2Defects = stats?.layerStats?.find(l => l.layer.includes('2'))?.defects_count ?? 0;
+                return (
+                  <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                        <strong className="text-xs text-indigo-950 font-bold">{t.layer2Header}</strong>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {l2Count >= 4 && (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full">
+                            ✓ {language === 'th' ? 'ถึงเป้าขั้นต่ำ' : 'Target met'}
+                          </span>
+                        )}
+                        <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
+                          {t.layer2Subheader}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
+                      <span>{t.auditedCount} <strong className="text-slate-900">{l2Count} / 4 {t.timesUnit}</strong></span>
+                      <span>{t.defectsCountLabel} <strong className="text-red-600">{l2Defects} {t.itemsUnit}</strong></span>
+                    </div>
                   </div>
-                  <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
-                    {t.layer2Subheader}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-                  <span>{t.auditedCount} <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('2'))?.count ?? 0} {t.timesUnit}</strong></span>
-                  <span>{t.defectsCountLabel} <strong className="text-red-600">{stats?.layerStats?.find(l => l.layer.includes('2'))?.defects_count ?? 0} {t.itemsUnit}</strong></span>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Layer 3 */}
-              <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
-                    <strong className="text-xs text-purple-950 font-bold">{t.layer3Header}</strong>
+              {(() => {
+                const l3Count = stats?.layerStats?.find(l => l.layer.includes('3'))?.count ?? 0;
+                const l3Score = stats?.layerStats?.find(l => l.layer.includes('3'))?.average_score ?? 0;
+                return (
+                  <div className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-purple-600"></span>
+                        <strong className="text-xs text-purple-950 font-bold">{t.layer3Header}</strong>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {l3Count >= 1 && (
+                          <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded-full">
+                            ✓ {language === 'th' ? 'ถึงเป้าขั้นต่ำ' : 'Target met'}
+                          </span>
+                        )}
+                        <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
+                          {t.layer3Subheader}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
+                      <span>{t.auditedCount} <strong className="text-slate-900">{l3Count} / 1 {t.timesUnit}</strong></span>
+                      <span>{t.avgScoreCol}: <strong className="text-purple-700">{l3Score}%</strong></span>
+                    </div>
                   </div>
-                  <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full">
-                    {t.layer3Subheader}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-slate-600 pt-1">
-                  <span>{t.auditedCount} <strong className="text-slate-900">{stats?.layerStats?.find(l => l.layer.includes('3'))?.count ?? 0} {t.timesUnit}</strong></span>
-                  <span>{t.avgScoreCol}: <strong className="text-purple-700">{stats?.layerStats?.find(l => l.layer.includes('3'))?.average_score ?? 0}%</strong></span>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           </div>
 

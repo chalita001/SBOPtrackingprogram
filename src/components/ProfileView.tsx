@@ -182,7 +182,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
   const targetQuota = stats.targetMonthly || getDefaultTarget(user.role);
   const thisMonthDone = stats.thisMonthCount || 0;
-  const progressPercent = isSafetyUser ? 0 : Math.min(100, Math.round((thisMonthDone / targetQuota) * 100));
+  const progressPercent = isSafetyUser ? 0 : Math.round((thisMonthDone / targetQuota) * 100);
   const remainingCount = isSafetyUser ? 0 : Math.max(0, targetQuota - thisMonthDone);
   const isTargetAchieved = !isSafetyUser && thisMonthDone >= targetQuota;
 
@@ -370,8 +370,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
                   {isTargetAchieved ? (
                     <span className="text-emerald-800 font-semibold">
                       {language === 'en'
-                        ? `Excellent team work! Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) has completed ${thisMonthDone} audits this month, reaching 100% of the target. (Your contribution: ${stats.myThisMonthCount || 0} audits)`
-                        : `ยอดเยี่ยมมาก! ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ทำการตรวจเช็คครบตามเป้าหมายของเดือนแล้ว (${thisMonthDone} ครั้ง) โดยคุณช่วยตรวจไป ${stats.myThisMonthCount || 0} ครั้ง`}
+                        ? `Excellent team work! Department ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) has reached the minimum target (${thisMonthDone} / ${targetQuota} audits) and can continue auditing. (Your contribution: ${stats.myThisMonthCount || 0} audits)`
+                        : `ยอดเยี่ยมมาก! ทีมแผนก ${stats.departmentCode || user.department} (${stats.targetLayer || 'Layer 1'}) ทำการตรวจเช็คครบตามเป้าหมายขั้นต่ำแล้ว (${thisMonthDone} / ${targetQuota} ครั้ง) และสามารถตรวจเพิ่มเติมได้อย่างต่อเนื่อง โดยคุณช่วยตรวจไป ${stats.myThisMonthCount || 0} ครั้ง`}
                     </span>
                   ) : (
                     <span className="text-slate-700">

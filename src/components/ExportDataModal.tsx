@@ -599,7 +599,7 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
               <option value="WH">Warehouse</option>
               <option value="QC">QC</option>
               <option value="STAMPING">Stamping</option>
-              <option value="TOOL">Tooling</option>
+              <option value="TOOL">Toll Room</option>
               <option value="SAFETY">Safety / EHS</option>
             </select>
 

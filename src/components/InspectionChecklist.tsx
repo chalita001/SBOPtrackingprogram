@@ -164,19 +164,21 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
             const availableForL1 = codes.find((c: any) => !c.has_layer1);
             if (availableForL1) {
               setInspectionCode(availableForL1.inspection_code);
-              if (availableForL1.mc_and_products) setMcAndProducts(availableForL1.mc_and_products);
+              // Requirement 6: New inspection must ALWAYS be blank, never prefill previous answers
+              setMcAndProducts('');
             } else {
               // Use global next code (across all departments)
               setInspectionCode(nextCode);
               setIsCustomCode(true);
               setCustomCodeInput(nextCode);
+              setMcAndProducts('');
             }
           } else {
             const exists = codes.some((c: any) => c.inspection_code === inspectionCode);
             if (!exists) {
               const availableForL1 = codes.find((c: any) => !c.has_layer1) || codes[0];
               setInspectionCode(availableForL1.inspection_code);
-              if (availableForL1.mc_and_products && !mcAndProducts) setMcAndProducts(availableForL1.mc_and_products);
+              setMcAndProducts('');
             }
           }
         } else {
@@ -194,6 +196,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       } else if (layer === 'Layer 1') {
         // No codes for this dept yet — use globalNextCode
         setInspectionCode(nextCode);
+        setMcAndProducts('');
       }
     });
   }, [departmentCode, year, month, layer]);
@@ -230,12 +233,17 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       setIsCustomCode(true);
       setCustomCodeInput(globalNextCode);
       setInspectionCode(globalNextCode);
+      setMcAndProducts('');
     } else {
       setIsCustomCode(false);
       setInspectionCode(codeVal);
       const item = availableCodes.find((c: any) => c.inspection_code === codeVal);
       if (item) {
-        if (item.mc_and_products) setMcAndProducts(item.mc_and_products);
+        if (layer !== 'Layer 1' && item.mc_and_products) {
+          setMcAndProducts(item.mc_and_products);
+        } else if (layer === 'Layer 1') {
+          setMcAndProducts('');
+        }
         if (item.shift) setShift(item.shift);
       }
     }
@@ -401,7 +409,9 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
     if (!mcAndProducts.trim()) {
       setFeedback({
-        text: language === 'en' ? 'Please specify machine and product details (M/C and Products)' : 'กรุณากรอกข้อมูลเครื่องจักรและผลิตภัณฑ์ (M/C and Products)',
+        text: language === 'en'
+          ? 'Please specify Machine / Product / Area details before saving (Required)'
+          : 'กรุณากรอกข้อมูลเครื่องจักร/ผลิตภัณฑ์/พื้นที่ ก่อนทำการบันทึก (จำเป็นต้องระบุทุกครั้ง)',
         type: 'error'
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -475,6 +485,20 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
       };
 
       const res = await api.createInspection(payload);
+      // Requirement 6: Reset mcAndProducts and shift to start clean new form
+      setMcAndProducts('');
+      setShift('');
+      setItems((prev) => prev.map((item) => ({
+        ...item,
+        result: null,
+        findingTopic: '',
+        severity: 'Minor',
+        actionPlan: '',
+        responsiblePerson: '',
+        dueDate: '',
+        imageUrl: '',
+        imageKey: '',
+      })));
       await fetchCodes();
 
       if (res.defectsFound > 0) {
@@ -826,6 +850,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                         setIsCustomCode(true);
                         setCustomCodeInput(globalNextCode);
                         setInspectionCode(globalNextCode);
+                        setMcAndProducts('');
                       }}
                       className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg text-xs transition shadow-sm"
                     >
@@ -1271,7 +1296,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                     <option value="WH">Warehouse (คลังสินค้า)</option>
                                     <option value="QC">QC (ควบคุมคุณภาพ)</option>
                                     <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
-                                    <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                                    <option value="TOOL">Toll Room (แม่พิมพ์/เครื่องมือ)</option>
                                     <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
                                   </select>
                                 </div>

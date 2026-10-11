@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api, normalizeImageUrl } from '../services/api';
 import { localizeQuestion } from '../i18n/translations';
+import { PieChart, PieChartSlice } from './PieChart';
 import { 
   AlertTriangle, 
   ExternalLink, 
@@ -9,6 +10,7 @@ import {
   User, 
   Bell, 
   CheckCircle, 
+  CheckCircle2,
   Filter, 
   Send,
   Building2,
@@ -20,6 +22,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Clock,
+  PieChart as PieIcon,
   X
 } from 'lucide-react';
 
@@ -30,6 +33,8 @@ export const DefectTracker: React.FC = () => {
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterDept, setFilterDept] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<string>('all');
+  const [filterMonth, setFilterMonth] = useState<string>('all');
 
   // Deletion state
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -109,8 +114,43 @@ export const DefectTracker: React.FC = () => {
       const current = d.defect_status || 'pending';
       if (current !== filterStatus) return false;
     }
+    if (d.auditDate) {
+      const [y, m] = d.auditDate.split('-');
+      if (filterYear !== 'all' && y !== filterYear) return false;
+      if (filterMonth !== 'all' && parseInt(m, 10) !== parseInt(filterMonth, 10)) return false;
+    }
     return true;
   });
+
+  // Calculate dynamic defect statistics for Pie Chart and Summary Cards
+  const totalDefectsCount = filteredDefects.length;
+  const resolvedDefectsCount = filteredDefects.filter((d) => d.defect_status === 'resolved').length;
+  const reviewingDefectsCount = filteredDefects.filter((d) => d.defect_status === 'reviewing').length;
+  const pendingDefectsCount = filteredDefects.filter((d) => !d.defect_status || d.defect_status === 'pending').length;
+  const unresolvedDefectsCount = totalDefectsCount - resolvedDefectsCount;
+  const resolutionPercent = totalDefectsCount > 0 ? Math.round((resolvedDefectsCount / totalDefectsCount) * 100) : 0;
+
+  const defectSlices: PieChartSlice[] = [
+    {
+      label: language === 'th' ? 'แก้ไขแล้ว' : 'Resolved',
+      value: resolvedDefectsCount,
+      color: '#10B981',
+    },
+    {
+      label: language === 'th' ? 'ยังไม่แก้ไข' : 'Pending',
+      value: pendingDefectsCount,
+      color: '#EF4444',
+    },
+    ...(reviewingDefectsCount > 0
+      ? [
+          {
+            label: language === 'th' ? 'รอตรวจสอบ' : 'Reviewing',
+            value: reviewingDefectsCount,
+            color: '#F59E0B',
+          },
+        ]
+      : []),
+  ];
 
   // Requirement 2: Open modal to input fix details, action plan, and attach After photo
   const handleOpenFixModal = (defect: any) => {
@@ -404,16 +444,97 @@ export const DefectTracker: React.FC = () => {
           </div>
         )}
 
-        {/* Criteria Note from TE-EHS-053 */}
-        <div className="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1.5">
-          <div className="font-bold text-slate-800 flex items-center gap-1.5">
-            <span>{t.criteriaTitle}</span>
+        {/* Top Info Grid: Criteria Note + Defect Resolution Pie Chart + Summary Metrics (Requirement 5) */}
+        <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+          {/* Criteria Note from TE-EHS-053 */}
+          <div className="lg:col-span-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-200 text-xs text-slate-600 space-y-2 flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>{t.criteriaTitle}</span>
+              </div>
+              <div className="text-[11px] leading-relaxed">
+                <strong className="text-amber-700 font-semibold">• Minor:</strong> {t.minorDesc}
+              </div>
+              <div className="text-[11px] leading-relaxed">
+                <strong className="text-red-700 font-semibold">• Major:</strong> {t.majorDesc}
+              </div>
+            </div>
+            <div className="pt-2 border-t border-slate-200/60 text-[10px] text-slate-400 font-medium">
+              TE Connectivity Standard TE-EHS-053
+            </div>
           </div>
-          <div>
-            <strong className="text-amber-700">• Minor:</strong> {t.minorDesc}
+
+          {/* Pie Chart: Defect Resolution Ratio (Requirement 5) */}
+          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-3 shadow-xs">
+            <PieChart
+              title={language === 'th' ? 'สัดส่วนการแก้ไขปัญหา (ตาม Filter)' : 'Defect Resolution Ratio'}
+              subtitle={language === 'th' ? 'แก้ไขแล้ว vs ยังไม่แก้ไข (อ้างอิงฟิลเตอร์ปัจจุบัน)' : 'Resolved vs Unresolved by filter'}
+              data={defectSlices}
+              centerValue={`${resolutionPercent}%`}
+              centerLabel={language === 'th' ? 'แก้ไขแล้ว' : 'Resolved'}
+              size={130}
+              donutWidth={18}
+              emptyText={language === 'th' ? 'ไม่มีข้อบกพร่อง' : 'No Defects'}
+              className="border-0 shadow-none p-1"
+            />
           </div>
-          <div>
-            <strong className="text-red-700">• Major:</strong> {t.majorDesc}
+
+          {/* Summary KPI Cards: Total / Resolved / Pending */}
+          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2">
+            {/* Total Defects */}
+            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                  {language === 'th' ? 'ปัญหาที่พบทั้งหมด' : 'Total Defects'}
+                </span>
+                <span className="text-lg font-black text-slate-900 leading-none">
+                  {totalDefectsCount}
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium ml-1">
+                  {language === 'th' ? 'รายการ' : 'items'}
+                </span>
+              </div>
+              <div className="p-2 rounded-lg bg-slate-200/70 text-slate-600">
+                <PieIcon className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Resolved */}
+            <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">
+                  {language === 'th' ? 'แก้ไขแล้ว' : 'Resolved'}
+                </span>
+                <span className="text-lg font-black text-emerald-700 leading-none">
+                  {resolvedDefectsCount}
+                </span>
+                <span className="text-[10px] text-emerald-600 font-semibold ml-1">
+                  ({resolutionPercent}%)
+                </span>
+              </div>
+              <div className="p-2 rounded-lg bg-emerald-100 text-emerald-700">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+            </div>
+
+            {/* Unresolved / Pending */}
+            <div className="bg-red-50/70 border border-red-200/80 rounded-xl p-3 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 block">
+                  {language === 'th' ? 'ยังไม่แก้ไข' : 'Unresolved'}
+                </span>
+                <span className="text-lg font-black text-red-700 leading-none">
+                  {unresolvedDefectsCount}
+                </span>
+                <span className="text-[10px] text-red-500 font-medium ml-1">
+                  {reviewingDefectsCount > 0 ? `(รอตรวจ ${reviewingDefectsCount})` : language === 'th' ? 'รายการ' : 'items'}
+                </span>
+              </div>
+              <div className="p-2 rounded-lg bg-red-100 text-red-700">
+                <AlertTriangle className="w-4 h-4" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -425,6 +546,32 @@ export const DefectTracker: React.FC = () => {
             <Filter className="w-4 h-4 text-slate-400" />
             <span>{t.filterLabel}:</span>
           </div>
+
+          {/* Year Filter */}
+          <select
+            value={filterYear}
+            onChange={(e) => setFilterYear(e.target.value)}
+            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+          >
+            <option value="all">{language === 'th' ? 'ทุกปี' : 'All Years'}</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+
+          {/* Month Filter */}
+          <select
+            value={filterMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+          >
+            <option value="all">{language === 'th' ? 'ทุกเดือน' : 'All Months'}</option>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <option key={m} value={m.toString()}>
+                {language === 'th' ? `เดือน ${m}` : `Month ${m}`}
+              </option>
+            ))}
+          </select>
 
           {/* Severity */}
           <select
@@ -463,7 +610,7 @@ export const DefectTracker: React.FC = () => {
               <option value="WH">Warehouse</option>
               <option value="QC">QC</option>
               <option value="STAMPING">Stamping</option>
-              <option value="TOOL">Tooling</option>
+              <option value="TOOL">Toll Room</option>
               <option value="SAFETY">{language === 'en' ? 'Safety' : 'Safety'}</option>
             </select>
           ) : (
@@ -828,7 +975,7 @@ export const DefectTracker: React.FC = () => {
                     <option value="WH">Warehouse (คลังสินค้า)</option>
                     <option value="QC">QC (ควบคุมคุณภาพ)</option>
                     <option value="STAMPING">Stamping (ปั๊มขึ้นรูป)</option>
-                    <option value="TOOL">Tooling (แม่พิมพ์/เครื่องมือ)</option>
+                    <option value="TOOL">Toll Room (แม่พิมพ์/เครื่องมือ)</option>
                     <option value="SAFETY">Safety / ความปลอดภัย (EHS)</option>
                   </select>
                 </div>

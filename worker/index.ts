@@ -1101,23 +1101,33 @@ export default {
 
         const { results } = await env.DB.prepare(sql).bind(...params).all();
 
-        let statsSql = `
-          SELECT 
-            COUNT(*) as total_inspections,
-            SUM(total_ok) as grand_total_ok,
-            SUM(total_no) as grand_total_no,
-            SUM(total_na) as grand_total_na,
-            ROUND(AVG(score_percent), 2) as average_score
-          FROM inspections
-        `;
+        let statsWhere = ' WHERE 1=1';
         const statsParams: any[] = [];
+        if (dept && dept !== 'all') { statsWhere += ' AND department_code = ?'; statsParams.push(dept); }
+        if (year && year !== 'all') { statsWhere += ' AND year = ?'; statsParams.push(parseInt(year, 10)); }
+        if (month && month !== 'all') { statsWhere += ' AND month = ?'; statsParams.push(parseInt(month, 10)); }
+        if (layer && layer !== 'all') { statsWhere += ' AND layer = ?'; statsParams.push(layer); }
+        if (code && code !== 'all') { statsWhere += ' AND inspection_code = ?'; statsParams.push(code); }
+
         if (!isPrivilegedUser && !isGuestOrPublic && currentUser) {
           const userDept = currentUser.department || 'MOLD';
-          statsSql += ' WHERE (department_code = ? OR auditor_id = ?)';
+          statsWhere += ' AND (department_code = ? OR auditor_id = ?)';
           statsParams.push(userDept, currentUser.id);
         }
 
-        const stats = await env.DB.prepare(statsSql).bind(...statsParams).first();
+        const statsSql = `
+          SELECT 
+            COUNT(*) as total_inspections,
+            COALESCE(SUM(total_ok), 0) as grand_total_ok,
+            COALESCE(SUM(total_no), 0) as grand_total_no,
+            COALESCE(SUM(total_na), 0) as grand_total_na,
+            COALESCE(ROUND(AVG(score_percent), 2), 100.0) as average_score
+          FROM inspections ${statsWhere}
+        `;
+
+        let statsStmt = env.DB.prepare(statsSql);
+        if (statsParams.length > 0) statsStmt = statsStmt.bind(...statsParams);
+        const stats = await statsStmt.first();
 
         return jsonResponse({ inspections: results, stats });
       }
@@ -1506,6 +1516,7 @@ export default {
               COUNT(DISTINCT i.auditor_id) as auditor_count
             FROM departments d
             LEFT JOIN inspections i ON d.code = i.department_code ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''}
+            ${dept && dept !== 'all' ? `WHERE d.code = '${dept.replace(/'/g, "''")}'` : ''}
             GROUP BY d.code, d.name_th, d.name_en
             ORDER BY d.code ASC
           `).all();
@@ -1608,12 +1619,38 @@ export default {
           console.warn('Failed to get userCounts:', uErr);
         }
 
+        // 6. Defect resolution stats (for Pie Chart)
+        let defectStats: any = { total_defects: 0, resolved_defects: 0, reviewing_defects: 0, pending_defects: 0 };
+        try {
+          const dfRes: any = await env.DB.prepare(`
+            SELECT 
+              COUNT(*) as total_defects,
+              COALESCE(SUM(CASE WHEN ii.defect_status = 'resolved' THEN 1 ELSE 0 END), 0) as resolved_defects,
+              COALESCE(SUM(CASE WHEN ii.defect_status = 'reviewing' THEN 1 ELSE 0 END), 0) as reviewing_defects,
+              COALESCE(SUM(CASE WHEN ii.defect_status IS NULL OR ii.defect_status = 'pending' THEN 1 ELSE 0 END), 0) as pending_defects
+            FROM inspection_items ii
+            JOIN inspections i ON ii.inspection_id = i.id
+            WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month, 10)}` : ''} ${deptFilter}
+          `).first();
+          if (dfRes) {
+            defectStats = {
+              total_defects: dfRes.total_defects || 0,
+              resolved_defects: dfRes.resolved_defects || 0,
+              reviewing_defects: dfRes.reviewing_defects || 0,
+              pending_defects: dfRes.pending_defects || 0,
+            };
+          }
+        } catch (dfErr) {
+          console.warn('Failed to get defectStats in worker:', dfErr);
+        }
+
         return jsonResponse({
           overall,
           deptStats,
           layerStats,
           recentDefects,
           userCounts,
+          defectStats,
         });
       } catch (err: any) {
         console.error('Failed to get dashboard stats:', err);

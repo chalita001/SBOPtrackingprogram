@@ -41,6 +41,7 @@ router.get('/stats', (req: any, res: Response) => {
         COUNT(DISTINCT i.auditor_id) as auditor_count
       FROM departments d
       LEFT JOIN inspections i ON d.code = i.department_code ${year && year !== 'all' ? `AND i.year = ${parseInt(year as string, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month as string, 10)}` : ''}
+      ${department && department !== 'all' ? `WHERE d.code = '${department}'` : ''}
       GROUP BY d.code, d.name_th, d.name_en
       ORDER BY d.code ASC
     `).all();
@@ -106,12 +107,30 @@ router.get('/stats', (req: any, res: Response) => {
       FROM users
     `).get();
 
+    // 6. Defect resolution stats (for Pie Chart)
+    let defectStats = { total_defects: 0, resolved_defects: 0, reviewing_defects: 0, pending_defects: 0 };
+    try {
+      defectStats = db.prepare(`
+        SELECT 
+          COUNT(*) as total_defects,
+          COALESCE(SUM(CASE WHEN ii.defect_status = 'resolved' THEN 1 ELSE 0 END), 0) as resolved_defects,
+          COALESCE(SUM(CASE WHEN ii.defect_status = 'reviewing' THEN 1 ELSE 0 END), 0) as reviewing_defects,
+          COALESCE(SUM(CASE WHEN ii.defect_status IS NULL OR ii.defect_status = 'pending' THEN 1 ELSE 0 END), 0) as pending_defects
+        FROM inspection_items ii
+        JOIN inspections i ON ii.inspection_id = i.id
+        WHERE ii.result = 'NO' ${year && year !== 'all' ? `AND i.year = ${parseInt(year as string, 10)}` : ''} ${month && month !== 'all' ? `AND i.month = ${parseInt(month as string, 10)}` : ''} ${department && department !== 'all' ? `AND i.department_code = '${department}'` : ''}
+      `).get() as any || defectStats;
+    } catch (e) {
+      console.warn('Failed to calculate defectStats:', e);
+    }
+
     return res.json({
       overall,
       deptStats,
       layerStats,
       recentDefects,
       userCounts,
+      defectStats,
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

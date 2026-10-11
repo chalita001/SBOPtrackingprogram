@@ -48,7 +48,7 @@ const DEPARTMENTS = [
   { code: 'ASSY', nameTh: 'Assembly (แผนกประกอบ)', nameEn: 'Assembly' },
   { code: 'WH', nameTh: 'Warehouse (คลังสินค้า)', nameEn: 'Warehouse' },
   { code: 'STAMPING', nameTh: 'Stamping (ปั๊มขึ้นรูป)', nameEn: 'Stamping' },
-  { code: 'TOOL', nameTh: 'Tooling (แม่พิมพ์/เครื่องมือ)', nameEn: 'Tooling' },
+  { code: 'TOOL', nameTh: 'Toll Room (แม่พิมพ์/เครื่องมือ)', nameEn: 'Toll Room' },
 ];
 
 const LAYERS = ['All', 'Layer 1', 'Layer 2', 'Layer 3'];
