@@ -1361,9 +1361,9 @@ export default {
       }
     }
 
-    // Update inspection datetime (Superadmin or Admin)
+    // Update inspection datetime (Superadmin only)
     if (url.pathname.match(/^\/api\/inspections\/\d+\/datetime$/) && request.method === 'PUT') {
-      if (!currentUser || (currentUser.role !== 'superadmin' && currentUser.role !== 'admin')) {
+      if (!currentUser || currentUser.role !== 'superadmin') {
         return jsonResponse({ error: 'Forbidden: Superadmin access required' }, 403);
       }
       const id = parseInt(url.pathname.split('/')[3], 10);

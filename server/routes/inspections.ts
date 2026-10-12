@@ -371,10 +371,10 @@ router.delete('/:id', (req: AuthRequest, res: Response) => {
   }
 });
 
-// 5. Update inspection audit_date and shift (Superadmin or Admin)
+// 5. Update inspection audit_date and shift (Superadmin only)
 router.put('/:id/datetime', (req: AuthRequest, res: Response) => {
   try {
-    if (!req.user || (req.user.role !== 'superadmin' && req.user.role !== 'admin')) {
+    if (!req.user || req.user.role !== 'superadmin') {
       return res.status(403).json({ error: 'Forbidden: Superadmin access required' });
     }
 

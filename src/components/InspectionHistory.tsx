@@ -47,7 +47,7 @@ export const InspectionHistory: React.FC = () => {
   } | null>(null);
 
   const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
-  const canEditDateTime = user?.role === 'superadmin' || user?.role === 'admin';
+  const canEditDateTime = user?.role === 'superadmin';
 
   // Edit Audit Date & Shift Modal State (Superadmin)
   const [editingDateTimeInspection, setEditingDateTimeInspection] = useState<any | null>(null);
