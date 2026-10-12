@@ -15,7 +15,9 @@ import {
   X, 
   ExternalLink,
   Search,
-  FileText
+  FileText,
+  Pencil,
+  Clock
 } from 'lucide-react';
 import { InspectionCodeHistoryModal } from './InspectionCodeHistoryModal';
 
@@ -45,6 +47,49 @@ export const InspectionHistory: React.FC = () => {
   } | null>(null);
 
   const isPrivileged = user?.role === 'admin' || user?.role === 'superadmin';
+  const canEditDateTime = user?.role === 'superadmin' || user?.role === 'admin';
+
+  // Edit Audit Date & Shift Modal State (Superadmin)
+  const [editingDateTimeInspection, setEditingDateTimeInspection] = useState<any | null>(null);
+  const [editAuditDate, setEditAuditDate] = useState<string>('');
+  const [editShift, setEditShift] = useState<string>('เช้า');
+  const [savingDateTime, setSavingDateTime] = useState<boolean>(false);
+
+  const handleOpenEditDateTime = (ins: any) => {
+    setEditingDateTimeInspection(ins);
+    setEditAuditDate(ins.audit_date || '');
+    setEditShift(ins.shift || 'เช้า');
+  };
+
+  const handleSaveDateTime = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDateTimeInspection || !editAuditDate) return;
+
+    setSavingDateTime(true);
+    try {
+      await api.updateInspectionDateTime(editingDateTimeInspection.id, {
+        auditDate: editAuditDate.trim(),
+        shift: editShift.trim()
+      });
+
+      // Update activeInspection if currently viewing it in detail modal
+      if (activeInspection && activeInspection.id === editingDateTimeInspection.id) {
+        setActiveInspection({
+          ...activeInspection,
+          audit_date: editAuditDate.trim(),
+          shift: editShift.trim()
+        });
+      }
+
+      setEditingDateTimeInspection(null);
+      await loadHistory();
+      await loadCodeList();
+    } catch (err: any) {
+      alert((language === 'en' ? 'Failed to update date & shift: ' : 'ไม่สามารถแก้ไขวันเวลาตรวจได้: ') + (err.message || ''));
+    } finally {
+      setSavingDateTime(false);
+    }
+  };
 
   // Available inspection codes list for Quick Document Viewer dropdown
   const [codeList, setCodeList] = useState<any[]>([]);
@@ -343,6 +388,16 @@ export const InspectionHistory: React.FC = () => {
                         <span>#{ins.inspection_code || '001'}</span>
                         <ExternalLink className="w-2.5 h-2.5" />
                       </button>
+                      {canEditDateTime && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditDateTime(ins)}
+                          className="p-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 transition"
+                          title={language === 'th' ? 'แก้ไขวันที่/กะตรวจ (Superadmin)' : 'Edit date & shift (Superadmin)'}
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                      )}
                     </div>
                     <div className="text-xs text-slate-700 font-semibold mt-1 flex items-center gap-1.5">
                       <span className="text-[#F37021] font-bold">{ins.department_code}</span>
@@ -385,7 +440,17 @@ export const InspectionHistory: React.FC = () => {
                 </div>
 
                 {/* Mobile Card Actions */}
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 flex-wrap">
+                  {canEditDateTime && (
+                    <button
+                      onClick={() => handleOpenEditDateTime(ins)}
+                      className="px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition flex items-center gap-1"
+                      title={language === 'th' ? 'แก้ไขวันที่และกะตรวจ (Superadmin)' : 'Edit inspection date & shift'}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>{language === 'th' ? 'แก้วันที่/กะ' : 'Edit Date'}</span>
+                    </button>
+                  )}
                   <button
                     onClick={() => handleViewDetails(ins.id)}
                     className="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#F37021] text-xs font-bold transition flex items-center gap-1"
@@ -451,7 +516,7 @@ export const InspectionHistory: React.FC = () => {
                 inspections.map((ins) => (
                   <tr key={ins.id} className="hover:bg-slate-50/80 transition">
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-bold text-slate-900">{ins.audit_date}</span>
                         <button
                           type="button"
@@ -467,8 +532,30 @@ export const InspectionHistory: React.FC = () => {
                           <span>#{ins.inspection_code || '001'}</span>
                           <ExternalLink className="w-2.5 h-2.5 text-[#F37021]" />
                         </button>
+                        {canEditDateTime && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditDateTime(ins)}
+                            className="p-1 rounded hover:bg-amber-100 text-amber-700 hover:text-amber-800 transition"
+                            title={language === 'th' ? 'แก้ไขวันที่และกะตรวจ (Superadmin)' : 'Edit date & shift (Superadmin)'}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                        )}
                       </div>
-                      <div className="text-[11px] text-slate-500">{ins.shift}</div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
+                        <span>{ins.shift}</span>
+                        {canEditDateTime && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditDateTime(ins)}
+                            className="text-[10px] text-amber-700 hover:text-amber-800 hover:underline font-medium"
+                            title={language === 'th' ? 'แก้ไขเวลา/กะตรวจ' : 'Edit shift/date'}
+                          >
+                            {language === 'th' ? '(แก้ไขเวลา)' : '(edit)'}
+                          </button>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-3 px-4">
@@ -521,6 +608,15 @@ export const InspectionHistory: React.FC = () => {
 
                     <td className="py-3 px-4 text-center">
                       <div className="flex items-center justify-center gap-1.5">
+                        {canEditDateTime && (
+                          <button
+                            onClick={() => handleOpenEditDateTime(ins)}
+                            className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition"
+                            title={language === 'th' ? 'แก้ไขวันที่และกะตรวจ (Superadmin)' : 'Edit inspection date & shift (Superadmin)'}
+                          >
+                            <Calendar className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleViewDetails(ins.id)}
                           className="p-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-[#F37021] transition"
@@ -569,9 +665,24 @@ export const InspectionHistory: React.FC = () => {
                 <h3 className="text-lg font-bold">
                   {t.inspectionDetailTitle} {activeInspection.department_code} ({activeInspection.layer})
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {t.auditDate}: {activeInspection.audit_date} | {activeInspection.shift} | {t.auditor}: {activeInspection.auditor_name}
-                </p>
+                <div className="text-xs text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
+                  <span>{t.auditDate}: <strong className="text-white">{activeInspection.audit_date}</strong></span>
+                  <span>|</span>
+                  <span><strong className="text-white">{activeInspection.shift}</strong></span>
+                  <span>|</span>
+                  <span>{t.auditor}: <strong className="text-white">{activeInspection.auditor_name}</strong></span>
+                  {canEditDateTime && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditDateTime(activeInspection)}
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-[11px] font-semibold transition cursor-pointer"
+                      title={language === 'th' ? 'แก้ไขวันเวลาตรวจ (Superadmin)' : 'Edit inspection date & shift'}
+                    >
+                      <Pencil className="w-3 h-3" />
+                      <span>{language === 'th' ? 'แก้ไขวันเวลาตรวจ' : 'Edit Date & Shift'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setActiveInspection(null)}
@@ -693,6 +804,99 @@ export const InspectionHistory: React.FC = () => {
           year={codeHistoryTarget.year}
           month={codeHistoryTarget.month}
         />
+      )}
+
+      {/* Edit Date & Shift Modal (Super Admin / Admin) */}
+      {editingDateTimeInspection && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full overflow-hidden">
+            <div className="bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-white" />
+                <h3 className="font-bold text-base">
+                  {language === 'th' ? 'แก้ไขวันที่ตรวจและกะ (Super Admin)' : 'Edit Audit Date & Shift'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingDateTimeInspection(null)}
+                className="p-1 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDateTime} className="p-6 space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-1">
+                <div className="font-bold flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-700" />
+                  <span>
+                    {language === 'th'
+                      ? `ใบตรวจรหัส #${editingDateTimeInspection.inspection_code || '001'} - ${editingDateTimeInspection.department_code} (${editingDateTimeInspection.layer})`
+                      : `Inspection #${editingDateTimeInspection.inspection_code || '001'} - ${editingDateTimeInspection.department_code} (${editingDateTimeInspection.layer})`}
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800">
+                  {language === 'th'
+                    ? 'ผู้ตรวจ: ' + (editingDateTimeInspection.auditor_name || '-') + ' | จุดตรวจ: ' + (editingDateTimeInspection.mc_and_products || '-')
+                    : 'Auditor: ' + (editingDateTimeInspection.auditor_name || '-')}
+                </p>
+                <p className="text-[11px] text-amber-700">
+                  {language === 'th'
+                    ? '💡 การเปลี่ยนวันที่ตรวจจะปรับข้อมูลเดือนและปีที่แสดงในสรุป Dashboard ให้อัตโนมัติ'
+                    : '💡 Updating the audit date will automatically update the month and year in dashboard statistics.'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  {language === 'th' ? 'วันที่ตรวจ (Audit Date) *' : 'Audit Date *'}
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={editAuditDate}
+                  onChange={(e) => setEditAuditDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:bg-white transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  {language === 'th' ? 'กะการทำงาน (Shift) *' : 'Shift *'}
+                </label>
+                <select
+                  value={editShift}
+                  onChange={(e) => setEditShift(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:bg-white transition"
+                >
+                  <option value="เช้า">{language === 'th' ? 'กะเช้า (เช้า)' : 'Morning Shift (เช้า)'}</option>
+                  <option value="บ่าย">{language === 'th' ? 'กะบ่าย (บ่าย)' : 'Afternoon Shift (บ่าย)'}</option>
+                  <option value="ดึก">{language === 'th' ? 'กะดึก (ดึก)' : 'Night Shift (ดึก)'}</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  disabled={savingDateTime}
+                  onClick={() => setEditingDateTimeInspection(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-100 transition disabled:opacity-50"
+                >
+                  {language === 'th' ? 'ยกเลิก' : 'Cancel'}
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingDateTime || !editAuditDate}
+                  className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shadow-amber-600/20 transition flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {savingDateTime && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{language === 'th' ? 'บันทึกการแก้ไข' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

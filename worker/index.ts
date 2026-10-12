@@ -1361,6 +1361,48 @@ export default {
       }
     }
 
+    // Update inspection datetime (Superadmin or Admin)
+    if (url.pathname.match(/^\/api\/inspections\/\d+\/datetime$/) && request.method === 'PUT') {
+      if (!currentUser || (currentUser.role !== 'superadmin' && currentUser.role !== 'admin')) {
+        return jsonResponse({ error: 'Forbidden: Superadmin access required' }, 403);
+      }
+      const id = parseInt(url.pathname.split('/')[3], 10);
+      const body: any = await request.json();
+      const { auditDate, shift } = body;
+
+      if (!auditDate) {
+        return jsonResponse({ error: 'Audit date is required' }, 400);
+      }
+
+      const existing: any = await env.DB.prepare('SELECT id, audit_date, shift, year, month FROM inspections WHERE id = ?').bind(id).first();
+      if (!existing) {
+        return jsonResponse({ error: 'Inspection not found' }, 404);
+      }
+
+      const dateParts = auditDate.split('-');
+      const newYear = parseInt(dateParts[0], 10) || existing.year;
+      const newMonth = parseInt(dateParts[1], 10) || existing.month;
+      const newShift = (shift !== undefined && shift !== null ? shift : existing.shift).toString().trim();
+
+      await env.DB.prepare(`
+        UPDATE inspections 
+        SET audit_date = ?, shift = ?, year = ?, month = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).bind(auditDate.trim(), newShift, newYear, newMonth, id).run();
+
+      return jsonResponse({
+        success: true,
+        message: 'Inspection date and shift updated successfully',
+        inspection: {
+          id,
+          audit_date: auditDate.trim(),
+          shift: newShift,
+          year: newYear,
+          month: newMonth
+        }
+      });
+    }
+
     // Update inspection items (e.g. Layer 2 / Layer 3 editing Layer 1 answers)
     if (url.pathname.match(/^\/api\/inspections\/\d+\/items$/) && request.method === 'PUT') {
       if (!currentUser) return jsonResponse({ error: 'Unauthorized' }, 401);

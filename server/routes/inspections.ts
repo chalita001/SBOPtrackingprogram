@@ -371,6 +371,54 @@ router.delete('/:id', (req: AuthRequest, res: Response) => {
   }
 });
 
+// 5. Update inspection audit_date and shift (Superadmin or Admin)
+router.put('/:id/datetime', (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user || (req.user.role !== 'superadmin' && req.user.role !== 'admin')) {
+      return res.status(403).json({ error: 'Forbidden: Superadmin access required' });
+    }
+
+    const id = parseInt(req.params.id, 10);
+    const { auditDate, shift } = req.body;
+
+    if (!auditDate) {
+      return res.status(400).json({ error: 'Audit date is required' });
+    }
+
+    const existing = db.prepare('SELECT id, audit_date, shift, year, month FROM inspections WHERE id = ?').get(id) as any;
+    if (!existing) {
+      return res.status(404).json({ error: 'Inspection not found' });
+    }
+
+    // Parse year and month from auditDate (format: YYYY-MM-DD)
+    const dateParts = auditDate.split('-');
+    const newYear = parseInt(dateParts[0], 10) || existing.year;
+    const newMonth = parseInt(dateParts[1], 10) || existing.month;
+    const newShift = (shift !== undefined && shift !== null ? shift : existing.shift).toString().trim();
+
+    db.prepare(`
+      UPDATE inspections 
+      SET audit_date = ?, shift = ?, year = ?, month = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(auditDate.trim(), newShift, newYear, newMonth, id);
+
+    return res.json({
+      success: true,
+      message: 'Inspection date and shift updated successfully',
+      inspection: {
+        id,
+        audit_date: auditDate.trim(),
+        shift: newShift,
+        year: newYear,
+        month: newMonth
+      }
+    });
+  } catch (err: any) {
+    console.error('Update inspection datetime error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // Update defect status ('resolved' / 'pending')
 router.patch('/defects/:id/status', (req: AuthRequest, res: Response) => {
   try {

@@ -104,6 +104,8 @@ export const api = {
   deleteInspection: (id: number) => request(`/inspections/${id}`, { method: 'DELETE' }),
   updateInspectionItems: (id: number, items: any[]) =>
     request(`/inspections/${id}/items`, { method: 'PUT', body: JSON.stringify({ items }) }),
+  updateInspectionDateTime: (id: number, data: { auditDate: string; shift?: string }) =>
+    request(`/inspections/${id}/datetime`, { method: 'PUT', body: JSON.stringify(data) }),
 
 
   // Upload Photo to Cloudflare R2
