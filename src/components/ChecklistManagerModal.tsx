@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { MM_CHECKLIST_QUESTIONS, MOLD_CHECKLIST_QUESTIONS } from '../data/defaultChecklistTemplates';
 import {
   Sliders,
   Plus,
@@ -110,9 +111,20 @@ export const ChecklistManagerModal: React.FC<ChecklistManagerModalProps> = ({
     setFeedback(null);
     try {
       const data = await api.getChecklistTemplates(selectedDept);
-      setItems(data.items || []);
+      let loaded = (data.items || []) as ChecklistTemplateItem[];
+      if (loaded.length === 0) {
+        if (selectedDept === 'MM') loaded = MM_CHECKLIST_QUESTIONS as any;
+        else if (selectedDept === 'MOLD') loaded = MOLD_CHECKLIST_QUESTIONS as any;
+      }
+      setItems(loaded);
     } catch (err: any) {
-      setFeedback({ type: 'error', message: err.message || 'ไม่สามารถโหลดรายการคำถามได้' });
+      if (selectedDept === 'MM') {
+        setItems(MM_CHECKLIST_QUESTIONS as any);
+      } else if (selectedDept === 'MOLD') {
+        setItems(MOLD_CHECKLIST_QUESTIONS as any);
+      } else {
+        setFeedback({ type: 'error', message: err.message || 'ไม่สามารถโหลดรายการคำถามได้' });
+      }
     } finally {
       setLoading(false);
     }

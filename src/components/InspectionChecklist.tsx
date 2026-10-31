@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api, normalizeImageUrl } from '../services/api';
+import { MM_CHECKLIST_QUESTIONS, MOLD_CHECKLIST_QUESTIONS } from '../data/defaultChecklistTemplates';
 import { 
   ClipboardCheck, 
   CheckCircle2, 
@@ -285,7 +286,18 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     api.getChecklistTemplates(departmentCode, layer)
       .then((data) => {
         if (!isMounted) return;
-        const initialItems: ChecklistItemState[] = (data.items || []).map((tmpl: any) => ({
+        let rawItems = data.items || [];
+        
+        // Robust fallback: if backend returns 0 items for MM or MOLD, load bundled official questions
+        if (rawItems.length === 0) {
+          if (departmentCode === 'MM') {
+            rawItems = MM_CHECKLIST_QUESTIONS.filter((q) => !layer || q.layer === layer);
+          } else if (departmentCode === 'MOLD') {
+            rawItems = MOLD_CHECKLIST_QUESTIONS.filter((q) => !layer || q.layer === layer);
+          }
+        }
+
+        const initialItems: ChecklistItemState[] = rawItems.map((tmpl: any) => ({
           templateItemId: tmpl.id,
           question: language === 'en'
             ? (tmpl.question_en || localizeQuestion(tmpl.question_th, 'en'))
@@ -309,7 +321,40 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         setItems(initialItems);
       })
       .catch((err) => {
-        if (isMounted) setFeedback({ text: (language === 'th' ? 'ไม่สามารถโหลดรายการตรวจเช็คได้: ' : 'Failed to load checklist: ') + err.message, type: 'error' });
+        if (!isMounted) return;
+        let fallbackItems: any[] = [];
+        if (departmentCode === 'MM') {
+          fallbackItems = MM_CHECKLIST_QUESTIONS.filter((q) => !layer || q.layer === layer);
+        } else if (departmentCode === 'MOLD') {
+          fallbackItems = MOLD_CHECKLIST_QUESTIONS.filter((q) => !layer || q.layer === layer);
+        }
+
+        if (fallbackItems.length > 0) {
+          const initialItems: ChecklistItemState[] = fallbackItems.map((tmpl: any) => ({
+            templateItemId: tmpl.id,
+            question: language === 'en'
+              ? (tmpl.question_en || localizeQuestion(tmpl.question_th, 'en'))
+              : (tmpl.question_th || tmpl.question_en),
+            category: localizeCategory(tmpl.category || 'General', language),
+            subcategory: localizeSubcategory(tmpl.subcategory || '', language),
+            method: localizeMethod(tmpl.method || (language === 'th' ? 'สังเกตและตรวจสอบ' : 'Observe & Audit'), language),
+            layer: tmpl.layer || layer,
+            result: '',
+            findingTopic: '',
+            severity: 'Minor',
+            actionPlan: '',
+            responsiblePerson: '',
+            responsibleDept: departmentCode,
+            isCustomResponsible: false,
+            dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0],
+            imageUrl: '',
+            imageKey: '',
+            uploadingImage: false,
+          }));
+          setItems(initialItems);
+        } else {
+          setFeedback({ text: (language === 'th' ? 'ไม่สามารถโหลดรายการตรวจเช็คได้: ' : 'Failed to load checklist: ') + err.message, type: 'error' });
+        }
       })
       .finally(() => {
         if (isMounted) setLoading(false);

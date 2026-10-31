@@ -251,7 +251,7 @@ export const InspectionHistory: React.FC = () => {
   const filteredInspections = useMemo(() => {
     let list = inspections;
 
-    // Filter by selected auditor
+    // 1. Filter by selected auditor
     if (selectedAuditor !== 'all') {
       const audLower = selectedAuditor.toLowerCase().trim();
       list = list.filter((ins: any) => {
@@ -260,28 +260,24 @@ export const InspectionHistory: React.FC = () => {
       });
     }
 
-    // Filter by search query across mc_and_products, auditor_name, inspection_code, department_code, shift, audit_date, comments
-    const q = searchTerm.trim().toLowerCase();
+    // 2. Filter SPECIFICALLY by inspection code only (เลขใบตรวจ เช่น 001, 002 หรือ 1 เท่านั้น)
+    const q = searchTerm.trim().toLowerCase().replace(/^#/, '');
     if (q) {
       list = list.filter((ins: any) => {
-        const mc = (ins.mc_and_products || '').toLowerCase();
-        const aud = (ins.auditor_name || '').toLowerCase();
-        const code = (ins.inspection_code || '').toLowerCase();
-        const dept = (ins.department_code || '').toLowerCase();
-        const shift = (ins.shift || '').toLowerCase();
-        const date = (ins.audit_date || '').toLowerCase();
-        const layer = (ins.layer || '').toLowerCase();
-        const comments = (ins.comments || '').toLowerCase();
-        return (
-          mc.includes(q) ||
-          aud.includes(q) ||
-          code.includes(q) ||
-          dept.includes(q) ||
-          shift.includes(q) ||
-          date.includes(q) ||
-          layer.includes(q) ||
-          comments.includes(q)
-        );
+        const rawCode = String(ins.inspection_code || '').trim().toLowerCase().replace(/^#/, '');
+        if (!rawCode) return false;
+
+        // Substring or exact match (e.g. "001" or "01")
+        if (rawCode.includes(q)) return true;
+
+        // Numeric match (e.g. typing "1" matches "001")
+        const qNum = parseInt(q, 10);
+        const codeNum = parseInt(rawCode, 10);
+        if (!isNaN(qNum) && !isNaN(codeNum) && qNum === codeNum) {
+          return true;
+        }
+
+        return false;
       });
     }
 
@@ -540,16 +536,21 @@ export const InspectionHistory: React.FC = () => {
           </div>
         </div>
 
-        {/* 5. 🔍 ช่องค้นหาแบบ Instant Real-time Filter (Requirement 3) */}
+        {/* 5. 🔍 ช่องค้นหาเฉพาะเลขใบตรวจ เช่น 001 เท่านั้น */}
         <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+            <div className="absolute left-3 top-2 flex items-center gap-1.5 pointer-events-none">
+              <Search className="w-4 h-4 text-[#F37021]" />
+              <span className="text-[10px] font-extrabold text-[#F37021] bg-orange-100/90 px-1.5 py-0.5 rounded border border-orange-200">
+                #เลขใบตรวจ
+              </span>
+            </div>
             <input
               type="text"
-              placeholder={language === 'en' ? 'Instant filter: machine, product, auditor, code #, shift, comments...' : 'ค้นหาทันที: เครื่องจักร, ชิ้นงาน, ผู้ตรวจ, รหัสใบตรวจ #, กะ, หมายเหตุ...'}
+              placeholder={language === 'en' ? 'Search inspection code only (e.g. 001, 002, 1)...' : 'ค้นหาเฉพาะเลขใบตรวจ เช่น 001, 002 หรือ 1 เท่านั้น...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
+              className="w-full pl-28 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-[#F37021] focus:bg-white transition"
             />
             {searchTerm && (
               <button
@@ -582,24 +583,28 @@ export const InspectionHistory: React.FC = () => {
         </div>
       </div>
 
-      {/* Auditor / User Inspection Count Banner (Requirements 3 & 4) */}
+      {/* Auditor / Inspection Code Count Banner (Requirements 3 & 4) */}
       {(selectedAuditor !== 'all' || searchTerm.trim() !== '') && (
         <div className="p-3.5 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-orange-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#F37021] text-white flex items-center justify-center shadow-xs shrink-0">
-              <UserCheck className="w-5 h-5" />
+              {searchTerm.trim() ? <FileText className="w-5 h-5" /> : <UserCheck className="w-5 h-5" />}
             </div>
             <div>
               <div className="text-[11px] text-orange-950/70 font-semibold">
                 {selectedAuditor !== 'all'
                   ? (language === 'en' ? 'Auditor Inspection Summary' : 'สถิติการตรวจของผู้ตรวจ / User ในแผนก')
-                  : (language === 'en' ? 'Instant Search Results' : `ผลการกรองค้นหา: "${searchTerm.trim()}"`)}
+                  : (language === 'en' ? 'Filter by Inspection Code Only' : 'ผลการกรองเฉพาะเลขใบตรวจ')}
               </div>
               <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                <span>{selectedAuditor !== 'all' ? selectedAuditor : searchTerm.trim()}</span>
-                {selectedAuditor !== 'all' && (
+                <span>{selectedAuditor !== 'all' ? selectedAuditor : `ใบตรวจ #${searchTerm.trim().replace(/^#/, '')}`}</span>
+                {selectedAuditor !== 'all' ? (
                   <span className="text-[11px] font-medium text-orange-700 bg-orange-100/80 px-2 py-0.5 rounded-full border border-orange-200">
                     {departmentUsers.find((u) => u.name === selectedAuditor)?.position || (language === 'en' ? 'User' : 'ผู้ตรวจ')}
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-[#F37021] bg-orange-100/80 px-2 py-0.5 rounded-full border border-orange-200">
+                    Doc Code Only
                   </span>
                 )}
               </div>

@@ -1,4 +1,6 @@
 import { Router, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import db from '../db.js';
 
 const router = Router();
@@ -23,7 +25,39 @@ router.get('/templates/:deptCode', (req, res: Response) => {
 
     sql += " ORDER BY CASE layer WHEN 'Layer 1' THEN 1 WHEN 'Layer 2' THEN 2 WHEN 'Layer 3' THEN 3 ELSE 4 END, row_in_excel ASC, item_order ASC";
 
-    const items = db.prepare(sql).all(...params);
+    let items = db.prepare(sql).all(...params);
+
+    if (items.length === 0 && (deptCode.toUpperCase() === 'MM' || deptCode.toUpperCase() === 'MOLD')) {
+      try {
+        const masterPath = path.resolve(process.cwd(), 'master_sbop_questions.json');
+        if (fs.existsSync(masterPath)) {
+          const master = JSON.parse(fs.readFileSync(masterPath, 'utf-8'));
+          const target = master[deptCode.toUpperCase()];
+          if (target?.items) {
+            const insertTmpl = db.prepare(`
+              INSERT INTO checklist_templates (department_code, layer, category, subcategory, method, item_order, question_th, question_en, row_in_excel)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            for (const it of target.items) {
+              insertTmpl.run(
+                deptCode.toUpperCase(),
+                it.layer,
+                it.category || '',
+                it.subcategory || '',
+                it.method || '',
+                it.item_order || 1,
+                it.question || '',
+                it.question_en || '',
+                it.row_in_excel || null
+              );
+            }
+            items = db.prepare(sql).all(...params);
+          }
+        }
+      } catch (seedErr) {
+        console.error('Error auto-seeding templates for ' + deptCode, seedErr);
+      }
+    }
 
     // Group items by Layer and then Category for structured display
     const grouped: Record<string, Record<string, any[]>> = {};

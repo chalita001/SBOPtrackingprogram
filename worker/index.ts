@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { questionTranslationsEn, categoryTranslationsEn, subcategoryTranslationsEn, methodTranslationsEn } from '../src/i18n/translations';
+import { MM_CHECKLIST_QUESTIONS, MOLD_CHECKLIST_QUESTIONS } from '../src/data/defaultChecklistTemplates';
 
 export interface Env {
   DB: D1Database;
@@ -204,6 +205,25 @@ export default {
           }
         } catch (sErr) {
           console.error('Safety template seeding notice:', sErr);
+        }
+
+        // Ensure default checklist questions exist for MM (Mold Maintenance)
+        try {
+          const mmTmplCount: any = await env.DB.prepare(
+            "SELECT COUNT(*) as cnt FROM checklist_templates WHERE department_code = 'MM'"
+          ).first();
+          if (!mmTmplCount || mmTmplCount.cnt === 0) {
+            const insertStmt = env.DB.prepare(`
+              INSERT INTO checklist_templates (department_code, layer, category, subcategory, method, item_order, question_th, question_en, row_in_excel)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            const batchStmts = MM_CHECKLIST_QUESTIONS.map((item) => insertStmt.bind(
+              'MM', item.layer, item.category, item.subcategory, item.method, item.item_order, item.question_th, item.question_en, item.row_in_excel || null
+            ));
+            await env.DB.batch(batchStmts);
+          }
+        } catch (mErr) {
+          console.error('MM template seeding notice:', mErr);
         }
 
         // Ensure defect tracking columns exist in inspection_items
@@ -665,10 +685,29 @@ export default {
 
       sql += " ORDER BY CASE layer WHEN 'Layer 1' THEN 1 WHEN 'Layer 2' THEN 2 WHEN 'Layer 3' THEN 3 ELSE 4 END, row_in_excel ASC, item_order ASC";
 
-      const { results } = await env.DB.prepare(sql).bind(...params).all();
+      let results = (await env.DB.prepare(sql).bind(...params).all()).results || [];
+
+      // Auto-fallback and background D1 seed if empty for MM or MOLD
+      if (results.length === 0 && (deptCode === 'MM' || deptCode === 'MOLD')) {
+        const defaultList = deptCode === 'MM' ? MM_CHECKLIST_QUESTIONS : MOLD_CHECKLIST_QUESTIONS;
+        try {
+          const insertStmt = env.DB.prepare(`
+            INSERT INTO checklist_templates (department_code, layer, category, subcategory, method, item_order, question_th, question_en, row_in_excel)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `);
+          const batchStmts = defaultList.map((item) => insertStmt.bind(
+            deptCode, item.layer, item.category, item.subcategory, item.method, item.item_order, item.question_th, item.question_en, item.row_in_excel || null
+          ));
+          env.DB.batch(batchStmts).catch((bErr) => console.error('D1 batch insert error:', bErr));
+        } catch (e) {
+          console.error('Batch prep error:', e);
+        }
+
+        results = layer ? (defaultList.filter((it) => it.layer === layer) as any[]) : (defaultList as any[]);
+      }
 
       const grouped: Record<string, Record<string, any[]>> = {};
-      for (const item of (results || []) as any[]) {
+      for (const item of results as any[]) {
         if (!item.question_en && item.question_th) {
           item.question_en = questionTranslationsEn[item.question_th.trim()] || item.question_th;
         }
@@ -684,7 +723,7 @@ export default {
 
       return jsonResponse({
         departmentCode: deptCode,
-        total: results?.length || 0,
+        total: results.length,
         items: results,
         grouped,
       });
@@ -1140,8 +1179,9 @@ export default {
         if (code && code !== 'all') { sql += ' AND i.inspection_code = ?'; params.push(code); }
         if (auditor && auditor !== 'all') { sql += ' AND i.auditor_name = ?'; params.push(auditor); }
         if (search) {
-          sql += ' AND (i.mc_and_products LIKE ? OR i.auditor_name LIKE ? OR i.inspection_code LIKE ? OR i.department_code LIKE ? OR i.comments LIKE ?)';
-          params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+          const cleanCode = search.replace(/#/g, '').trim();
+          sql += ' AND (i.inspection_code LIKE ? OR i.inspection_code = ?)';
+          params.push(`%${cleanCode}%`, cleanCode);
         }
 
         // Non-admin/superadmin users see all inspection data within their chosen department or default to their department / audits;
@@ -1174,8 +1214,9 @@ export default {
         if (code && code !== 'all') { statsWhere += ' AND inspection_code = ?'; statsParams.push(code); }
         if (auditor && auditor !== 'all') { statsWhere += ' AND auditor_name = ?'; statsParams.push(auditor); }
         if (search) {
-          statsWhere += ' AND (mc_and_products LIKE ? OR auditor_name LIKE ? OR inspection_code LIKE ? OR department_code LIKE ? OR comments LIKE ?)';
-          statsParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+          const cleanCode = search.replace(/#/g, '').trim();
+          statsWhere += ' AND (inspection_code LIKE ? OR inspection_code = ?)';
+          statsParams.push(`%${cleanCode}%`, cleanCode);
         }
 
         if (!isPrivilegedUser && !isGuestOrPublic && currentUser) {

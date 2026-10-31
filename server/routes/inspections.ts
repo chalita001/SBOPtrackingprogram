@@ -107,8 +107,9 @@ router.get('/', (req: AuthRequest, res: Response) => {
       params.push(auditor);
     }
     if (search) {
-      sql += ' AND (i.mc_and_products LIKE ? OR i.auditor_name LIKE ? OR i.inspection_code LIKE ? OR i.department_code LIKE ? OR i.comments LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      const cleanCode = (search as string).replace(/#/g, '').trim();
+      sql += ' AND (i.inspection_code LIKE ? OR i.inspection_code = ?)';
+      params.push(`%${cleanCode}%`, cleanCode);
     }
 
     // Non-admin users see inspections within their selected department or default to their department / audits;
@@ -160,8 +161,9 @@ router.get('/', (req: AuthRequest, res: Response) => {
       statsParams.push(auditor);
     }
     if (search) {
-      statsWhere += ' AND (mc_and_products LIKE ? OR auditor_name LIKE ? OR inspection_code LIKE ? OR department_code LIKE ? OR comments LIKE ?)';
-      statsParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+      const cleanCode = (search as string).replace(/#/g, '').trim();
+      statsWhere += ' AND (inspection_code LIKE ? OR inspection_code = ?)';
+      statsParams.push(`%${cleanCode}%`, cleanCode);
     }
     if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
       if (!department || department === 'all') {
