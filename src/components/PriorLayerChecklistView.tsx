@@ -397,9 +397,6 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                 <span>{language === 'th' ? 'ประเด็นความเสี่ยง:' : 'Safety Finding:'} {item.finding_topic || (language === 'th' ? 'พบข้อผิดปกติ' : 'Defect Anomaly')}</span>
                               )}
                             </div>
-                            <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-red-200 text-red-900 border border-red-300 shrink-0">
-                              {item.severity || 'Major'}
-                            </span>
                           </div>
 
                           {isEditing ? (
@@ -455,7 +452,8 @@ export const PriorLayerChecklistView: React.FC<PriorLayerChecklistViewProps> = (
                                         }}
                                         className="w-full px-2 py-1 bg-white border border-slate-300 rounded text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#F37021]"
                                       >
-                                        <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                                        <option value="MOLD">Molding (แผนกฉีดขึ้นรูป)</option>
+                                        <option value="MM">Mold Maintenance (แผนกซ่อมบำรุงแม่พิมพ์)</option>
                                         <option value="FACILITY">Facility (สาธารณูปโภค)</option>
                                         <option value="ASSY">Assembly (แผนกประกอบ)</option>
                                         <option value="WH">Warehouse (คลังสินค้า)</option>

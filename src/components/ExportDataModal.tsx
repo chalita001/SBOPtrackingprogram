@@ -593,7 +593,8 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
               className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold"
             >
               <option value="all">{language === 'th' ? 'ทุกแผนก (All Depts)' : 'All Departments'}</option>
-              <option value="MOLD">Molding / MM</option>
+              <option value="MOLD">Molding</option>
+              <option value="MM">Mold Maintenance</option>
               <option value="FACILITY">Facility</option>
               <option value="ASSY">Assembly</option>
               <option value="WH">Warehouse</option>
@@ -812,17 +813,8 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-slate-800">
-                    {language === 'th' ? 'ความรุนแรง:' : 'Severity:'}
+                    {language === 'th' ? `รูปภาพทั้งหมด (${photoDefects.length} รายการ)` : `Total Photos (${photoDefects.length})`}
                   </span>
-                  <select
-                    value={selectedSeverity}
-                    onChange={(e) => setSelectedSeverity(e.target.value)}
-                    className="px-2.5 py-1 bg-white border border-slate-300 rounded-lg text-xs font-semibold"
-                  >
-                    <option value="all">{language === 'th' ? 'ทั้งหมด (All)' : 'All'}</option>
-                    <option value="Major">Major Only (รุนแรง)</option>
-                    <option value="Minor">Minor Only (เล็กน้อย)</option>
-                  </select>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -881,15 +873,6 @@ export const ExportDataModal: React.FC<ExportDataModalProps> = ({
                             alt="Evidence"
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute top-2 left-2">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                isMajor ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'
-                              }`}
-                            >
-                              {item.severity || 'Minor'}
-                            </span>
-                          </div>
 
                           <div className="absolute top-2 right-2">
                             <div className={`w-6 h-6 rounded-lg flex items-center justify-center border shadow ${

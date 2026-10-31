@@ -17,7 +17,8 @@ import {
   Search,
   FileText,
   Pencil,
-  Clock
+  Clock,
+  UserCheck
 } from 'lucide-react';
 import { InspectionCodeHistoryModal } from './InspectionCodeHistoryModal';
 
@@ -31,6 +32,9 @@ export const InspectionHistory: React.FC = () => {
   const [selectedDept, setSelectedDept] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedAuditor, setSelectedAuditor] = useState<string>('all');
+  const [auditorList, setAuditorList] = useState<any[]>([]);
+  const [loadingAuditors, setLoadingAuditors] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   // Selected inspection for detail modal
@@ -117,6 +121,27 @@ export const InspectionHistory: React.FC = () => {
     }
   };
 
+  const loadAuditors = async () => {
+    setLoadingAuditors(true);
+    try {
+      const params: any = {};
+      if (selectedYear !== 'all') params.year = selectedYear;
+      if (selectedMonth !== 'all') params.month = selectedMonth;
+      if (!isPrivileged) {
+        params.department = user?.department || 'MOLD';
+      } else if (selectedDept !== 'all') {
+        params.department = selectedDept;
+      }
+      const data = await api.getAuditorsSummary(params);
+      setAuditorList(data || []);
+    } catch (err) {
+      console.warn('Failed to load auditors list:', err);
+      setAuditorList([]);
+    } finally {
+      setLoadingAuditors(false);
+    }
+  };
+
   const loadHistory = async () => {
     setLoading(true);
     try {
@@ -128,6 +153,7 @@ export const InspectionHistory: React.FC = () => {
       }
       if (selectedYear !== 'all') params.year = selectedYear;
       if (selectedMonth !== 'all') params.month = selectedMonth;
+      if (selectedAuditor !== 'all') params.auditor = selectedAuditor;
       if (searchTerm.trim()) params.search = searchTerm.trim();
 
       const data = await api.getInspections(params);
@@ -141,9 +167,13 @@ export const InspectionHistory: React.FC = () => {
   };
 
   useEffect(() => {
+    loadAuditors();
+  }, [selectedDept, selectedYear, selectedMonth]);
+
+  useEffect(() => {
     loadHistory();
     loadCodeList();
-  }, [selectedDept, selectedYear, selectedMonth]);
+  }, [selectedDept, selectedYear, selectedMonth, selectedAuditor]);
 
   const handleViewDetails = async (id: number) => {
     setLoadingDetails(true);
@@ -238,7 +268,7 @@ export const InspectionHistory: React.FC = () => {
       {/* Filter Bar */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3 sm:space-y-0 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
         {/* Search */}
-        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
+        <div className="relative w-full sm:flex-1 sm:min-w-[180px]">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
             type="text"
@@ -248,6 +278,31 @@ export const InspectionHistory: React.FC = () => {
             onKeyDown={(e) => e.key === 'Enter' && loadHistory()}
             className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-[#F37021]"
           />
+        </div>
+
+        {/* Auditor Selector / Count Filter (Requirements 3 & 4 - Box from screenshot) */}
+        <div className="relative w-full sm:w-auto sm:min-w-[220px]">
+          <UserCheck className="w-4 h-4 text-[#F37021] absolute left-3 top-2.5 pointer-events-none" />
+          <select
+            value={selectedAuditor}
+            onChange={(e) => setSelectedAuditor(e.target.value)}
+            className={`w-full pl-9 pr-8 py-2 rounded-xl text-xs font-semibold border transition cursor-pointer appearance-none ${
+              selectedAuditor !== 'all'
+                ? 'bg-orange-50 border-orange-300 text-orange-900 ring-2 ring-orange-200'
+                : 'bg-slate-50 border-slate-200 text-slate-700'
+            }`}
+            title={language === 'en' ? 'Select auditor to view inspection count' : 'เลือกผู้ตรวจเพื่อดูจำนวนครั้งที่ตรวจ'}
+          >
+            <option value="all">
+              {language === 'en' ? '👤 All Auditors (ผู้ตรวจทั้งหมด)' : '👤 ผู้ตรวจทั้งหมด (All Auditors)'}
+            </option>
+            {auditorList.map((a) => (
+              <option key={a.auditor_name} value={a.auditor_name}>
+                {a.auditor_name} ({a.audit_count} {language === 'en' ? 'times' : 'ครั้ง'}{selectedMonth !== 'all' ? (language === 'en' ? ' this mo.' : ' เดือนนี้') : ''})
+              </option>
+            ))}
+          </select>
+          <div className="absolute right-3 top-2.5 pointer-events-none text-slate-400 text-xs">▼</div>
         </div>
 
         {/* Filters: 3-column grid on mobile, flex row on sm */}
@@ -261,6 +316,7 @@ export const InspectionHistory: React.FC = () => {
             >
               <option value="all">{t.allDepartments}</option>
               <option value="MOLD">Molding</option>
+              <option value="MM">Mold Maintenance</option>
               <option value="FACILITY">Facility</option>
               <option value="ASSY">Assembly</option>
               <option value="WH">Warehouse</option>
@@ -272,7 +328,7 @@ export const InspectionHistory: React.FC = () => {
           ) : (
             <div className="px-2.5 sm:px-3 py-2 bg-orange-50 border border-orange-200 text-[#F37021] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 truncate">
               <Building2 className="w-3.5 h-3.5 shrink-0" />
-              <span>{user?.department || 'MOLD'}</span>
+              <span>{user?.department === 'MOLD' ? 'Molding' : (user?.department === 'MM' ? 'Mold Maintenance' : (user?.department || 'MOLD'))}</span>
             </div>
           )}
 
@@ -354,6 +410,60 @@ export const InspectionHistory: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Auditor / User Inspection Count Banner (Requirements 3 & 4) */}
+      {(selectedAuditor !== 'all' || (searchTerm.trim() !== '' && !loading)) && (
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-orange-50 via-amber-50 to-orange-50 border border-orange-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3 animate-fadeIn">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#F37021] text-white flex items-center justify-center shadow-xs shrink-0">
+              <UserCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-[11px] text-orange-950/70 font-semibold">
+                {selectedAuditor !== 'all'
+                  ? (language === 'en' ? 'Auditor Inspection Summary' : 'สถิติการตรวจของผู้ตรวจ')
+                  : (language === 'en' ? 'Search Results by User / Keyword' : `ผลการค้นหาข้อมูล: "${searchTerm.trim()}"`)}
+              </div>
+              <div className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span>{selectedAuditor !== 'all' ? selectedAuditor : searchTerm.trim()}</span>
+                {selectedAuditor !== 'all' && (
+                  <span className="text-[11px] font-medium text-orange-700 bg-orange-100/80 px-2 py-0.5 rounded-full border border-orange-200">
+                    {language === 'en' ? 'Auditor' : 'ผู้ตรวจ'}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="text-right">
+              <div className="text-[11px] text-slate-500 font-medium">
+                {selectedMonth !== 'all'
+                  ? (language === 'en' ? `Inspected in Month ${selectedMonth}/${selectedYear !== 'all' ? selectedYear : ''}:` : `ตรวจไปแล้วสำหรับเดือน ${selectedMonth}/${selectedYear !== 'all' ? selectedYear : ''}:`)
+                  : (language === 'en' ? 'Total Inspections Conducted:' : 'ตรวจไปแล้วทั้งหมด:')}
+              </div>
+              <div className="text-xl font-extrabold text-[#F37021] flex items-baseline justify-end gap-1">
+                <span>
+                  {selectedAuditor !== 'all'
+                    ? (auditorList.find((a) => a.auditor_name === selectedAuditor)?.audit_count || stats?.total_inspections || 0)
+                    : (stats?.total_inspections || 0)}
+                </span>
+                <span className="text-xs font-semibold text-slate-600">{language === 'en' ? 'times' : 'ครั้ง'}</span>
+              </div>
+            </div>
+            {selectedAuditor !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setSelectedAuditor('all')}
+                className="px-2.5 py-1.5 rounded-xl bg-white border border-orange-300 text-orange-700 hover:bg-orange-100 text-xs font-semibold transition shadow-2xs"
+                title={language === 'en' ? 'Show all auditors' : 'แสดงผู้ตรวจทั้งหมด'}
+              >
+                {language === 'en' ? 'Clear' : 'ดูทุกคน'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Inspections Container: Desktop Table + Mobile Card View */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -752,7 +862,7 @@ export const InspectionHistory: React.FC = () => {
                       {item.result === 'NO' && (
                         <div className="mt-2 pt-2 border-t border-red-200 text-slate-700 space-y-1.5">
                           <div className="font-semibold text-red-700">
-                            {t.findingTopic} ({item.severity || 'Minor'}): {item.finding_topic}
+                            {t.findingTopic}: {item.finding_topic}
                           </div>
                           {item.action_plan && (
                             <div className="text-[11px] text-slate-600">

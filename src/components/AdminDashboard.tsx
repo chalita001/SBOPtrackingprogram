@@ -270,6 +270,7 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
               >
                 <option value="all" className="bg-slate-900 text-white">{t.allDepartments}</option>
                 <option value="MOLD" className="bg-slate-900 text-white">Molding</option>
+                <option value="MM" className="bg-slate-900 text-white">Mold Maintenance</option>
                 <option value="FACILITY" className="bg-slate-900 text-white">Facility</option>
                 <option value="ASSY" className="bg-slate-900 text-white">Assembly</option>
                 <option value="WH" className="bg-slate-900 text-white">Warehouse</option>
@@ -811,9 +812,6 @@ export const AdminDashboard: React.FC<{ onNavigateToAccounts?: () => void; onNav
                   {/* Badge Row */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-red-100 text-red-800 border border-red-200">
-                        {defect.severity || 'Minor'}
-                      </span>
                       {defect.defect_status === 'resolved' ? (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>

@@ -201,7 +201,8 @@ export const RegisterModal: React.FC<RegisterModalProps> = ({
                       onChange={handleChange}
                       className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#F37021] focus:bg-white transition font-medium"
                     >
-                      <option value="MOLD">{language === 'en' ? 'Molding / MM' : 'Molding / MM (แผนกฉีด)'}</option>
+                      <option value="MOLD">{language === 'en' ? 'Molding' : 'Molding (แผนกฉีดขึ้นรูป)'}</option>
+                      <option value="MM">{language === 'en' ? 'Mold Maintenance' : 'Mold Maintenance (แผนกซ่อมบำรุงแม่พิมพ์)'}</option>
                       <option value="FACILITY">{language === 'en' ? 'Facility' : 'Facility (สาธารณูปโภค)'}</option>
                       <option value="ASSY">{language === 'en' ? 'Assembly' : 'Assembly (แผนกประกอบ)'}</option>
                       <option value="WH">{language === 'en' ? 'Warehouse' : 'Warehouse (คลังสินค้า)'}</option>

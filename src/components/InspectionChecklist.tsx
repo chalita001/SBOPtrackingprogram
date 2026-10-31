@@ -1224,17 +1224,6 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                   <AlertTriangle className="w-4 h-4 text-red-600" />
                                   <span>{t.defectDetails}</span>
                                 </span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[11px] text-slate-600 font-normal">{t.severity}:</span>
-                                  <select
-                                    value={item.severity}
-                                    onChange={(e) => handleItemFieldChange(itemIndex, 'severity', e.target.value)}
-                                    className="px-2 py-0.5 rounded bg-white border border-red-300 text-[11px] font-bold text-red-700"
-                                  >
-                                    <option value="Minor">{t.severityMinor}</option>
-                                    <option value="Major">{t.severityMajor}</option>
-                                  </select>
-                                </div>
                               </div>
 
                               {/* Finding topic */}
@@ -1290,7 +1279,8 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
                                     }}
                                     className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-[#F37021]"
                                   >
-                                    <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                                    <option value="MOLD">Molding (แผนกฉีดขึ้นรูป)</option>
+                                    <option value="MM">Mold Maintenance (แผนกซ่อมบำรุงแม่พิมพ์)</option>
                                     <option value="FACILITY">Facility (สาธารณูปโภค)</option>
                                     <option value="ASSY">Assembly (แผนกประกอบ)</option>
                                     <option value="WH">Warehouse (คลังสินค้า)</option>

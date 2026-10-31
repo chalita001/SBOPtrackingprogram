@@ -43,7 +43,8 @@ interface ChecklistManagerModalProps {
 const DEPARTMENTS = [
   { code: 'QC', nameTh: 'QC (ควบคุมคุณภาพ)', nameEn: 'Quality Control (QC)' },
   { code: 'SAFETY', nameTh: 'Safety / EHS (ความปลอดภัย)', nameEn: 'Safety / EHS' },
-  { code: 'MOLD', nameTh: 'Molding / MM (แผนกฉีด)', nameEn: 'Molding / MM' },
+  { code: 'MOLD', nameTh: 'Molding (แผนกฉีดขึ้นรูป)', nameEn: 'Molding' },
+  { code: 'MM', nameTh: 'Mold Maintenance (แผนกซ่อมบำรุงแม่พิมพ์)', nameEn: 'Mold Maintenance' },
   { code: 'FACILITY', nameTh: 'Facility (สาธารณูปโภค)', nameEn: 'Facility' },
   { code: 'ASSY', nameTh: 'Assembly (แผนกประกอบ)', nameEn: 'Assembly' },
   { code: 'WH', nameTh: 'Warehouse (คลังสินค้า)', nameEn: 'Warehouse' },

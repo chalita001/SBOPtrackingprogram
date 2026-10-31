@@ -818,6 +818,14 @@ export const questionTranslationsEn: Record<string, string> = {
     "Air blow gun complies with safety standards and is undamaged",
   "รถ  Electric Stacker หรือ Powered Hand Pallet มีการตรวจเช็ค สภาพพร้อมใช้งาน":
     "Electric Stacker or Powered Hand Pallet inspected and in ready-to-use condition",
+  "Electric Stacker หรือ Powered Hand Pallet มีการตรวจเช็ค สภาพพร้อมใช้งาน":
+    "Electric Stacker or Powered Hand Pallet inspected and in ready-to-use condition",
+  "Guard Cover Purge Mat'L ได้มาตรฐาน":
+    "Purge material guard cover meets standard",
+  "สภาพของประแจขัน Mold":
+    "Condition of mold wrench is in acceptable standard",
+  "สวมถุงมือขณะทำงานกับ Dry Ice หรือสารเคมี":
+    "Wear protective gloves when working with dry ice or chemicals",
   "เครื่องเย็บมีสภาพสมบูรณ์ พร้อมใช้งาน":
     "Stitching/stapling machine in complete, operable condition",
   "รถเข็น มีสภาพสมบูรณ์ และจัดเก็บในพื้นที่ที่กำหนด ไม่วางพิงกับเรื่องจักร หรืออุปกรณ์อื่นๆ":

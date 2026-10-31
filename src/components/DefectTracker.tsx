@@ -30,7 +30,6 @@ export const DefectTracker: React.FC = () => {
   const { user, t, language } = useAuth();
   const [defects, setDefects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterDept, setFilterDept] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterYear, setFilterYear] = useState<string>('all');
@@ -108,7 +107,6 @@ export const DefectTracker: React.FC = () => {
   }, []);
 
   const filteredDefects = defects.filter((d) => {
-    if (filterSeverity !== 'all' && d.severity !== filterSeverity) return false;
     if (filterDept !== 'all' && d.departmentCode !== filterDept) return false;
     if (filterStatus !== 'all') {
       const current = d.defect_status || 'pending';
@@ -308,7 +306,6 @@ export const DefectTracker: React.FC = () => {
         `- Department: ${defect.departmentCode}\n` +
         `- Location/Machine: ${defect.mcAndProducts || '-'}\n` +
         `- Issue/Topic: ${defect.finding_topic || defect.question}\n` +
-        `- Severity: ${defect.severity || 'Minor'}\n` +
         `- Action Plan: ${defect.action_plan || 'Please specify plan'}\n` +
         `- Target Due Date: ${defect.due_date || 'ASAP'}\n` +
         `- Auditor: ${defect.auditorName || '-'}\n\n` +
@@ -318,7 +315,6 @@ export const DefectTracker: React.FC = () => {
         `- แผนก: ${defect.departmentCode}\n` +
         `- จุดตรวจ/เครื่องจักร: ${defect.mcAndProducts || '-'}\n` +
         `- ประเด็นที่พบ: ${defect.finding_topic || defect.question}\n` +
-        `- ระดับความรุนแรง: ${defect.severity || 'Minor'}\n` +
         `- แผนการแก้ไข: ${defect.action_plan || 'ระบุมาตรการแก้ไข'}\n` +
         `- กำหนดเสร็จ: ${defect.due_date || 'โดยเร็ว'}\n` +
         `- ผู้ตรวจประเมิน: ${defect.auditorName || '-'}\n\n` +
@@ -444,29 +440,10 @@ export const DefectTracker: React.FC = () => {
           </div>
         )}
 
-        {/* Top Info Grid: Criteria Note + Defect Resolution Pie Chart + Summary Metrics (Requirement 5) */}
+        {/* Top Info Grid: Defect Resolution Pie Chart + Summary Metrics */}
         <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-          {/* Criteria Note from TE-EHS-053 */}
-          <div className="lg:col-span-4 p-4 rounded-2xl bg-slate-50/80 border border-slate-200 text-xs text-slate-600 space-y-2 flex flex-col justify-between">
-            <div className="space-y-1.5">
-              <div className="font-bold text-slate-800 flex items-center gap-1.5 text-xs">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                <span>{t.criteriaTitle}</span>
-              </div>
-              <div className="text-[11px] leading-relaxed">
-                <strong className="text-amber-700 font-semibold">• Minor:</strong> {t.minorDesc}
-              </div>
-              <div className="text-[11px] leading-relaxed">
-                <strong className="text-red-700 font-semibold">• Major:</strong> {t.majorDesc}
-              </div>
-            </div>
-            <div className="pt-2 border-t border-slate-200/60 text-[10px] text-slate-400 font-medium">
-              TE Connectivity Standard TE-EHS-053
-            </div>
-          </div>
-
-          {/* Pie Chart: Defect Resolution Ratio (Requirement 5) */}
-          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/90 p-3 shadow-xs">
+          {/* Pie Chart: Defect Resolution Ratio */}
+          <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs">
             <PieChart
               title={language === 'th' ? 'สัดส่วนการแก้ไขปัญหา (ตาม Filter)' : 'Defect Resolution Ratio'}
               subtitle={language === 'th' ? 'แก้ไขแล้ว vs ยังไม่แก้ไข (อ้างอิงฟิลเตอร์ปัจจุบัน)' : 'Resolved vs Unresolved by filter'}
@@ -481,7 +458,7 @@ export const DefectTracker: React.FC = () => {
           </div>
 
           {/* Summary KPI Cards: Total / Resolved / Pending */}
-          <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2">
+          <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-2.5">
             {/* Total Defects */}
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3 flex items-center justify-between">
               <div>
@@ -573,17 +550,6 @@ export const DefectTracker: React.FC = () => {
             ))}
           </select>
 
-          {/* Severity */}
-          <select
-            value={filterSeverity}
-            onChange={(e) => setFilterSeverity(e.target.value)}
-            className="px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold"
-          >
-            <option value="all">{t.allSeverities}</option>
-            <option value="Major">{t.majorOnly}</option>
-            <option value="Minor">{t.minorOnly}</option>
-          </select>
-
           {/* Status Filter */}
           <select
             value={filterStatus}
@@ -605,6 +571,7 @@ export const DefectTracker: React.FC = () => {
             >
               <option value="all">{t.allDepartments}</option>
               <option value="MOLD">Molding</option>
+              <option value="MM">Mold Maintenance</option>
               <option value="FACILITY">Facility</option>
               <option value="ASSY">Assembly</option>
               <option value="WH">Warehouse</option>
@@ -641,12 +608,12 @@ export const DefectTracker: React.FC = () => {
           </div>
         ) : (
           filteredDefects.map((d, index) => {
-            const isMajor = d.severity === 'Major';
+            const isResolved = d.defect_status === 'resolved';
             return (
               <div
                 key={d.id || index}
                 className={`bg-white rounded-2xl border p-5 shadow-sm space-y-4 transition ${
-                  isMajor ? 'border-red-200 hover:border-red-400' : 'border-amber-200 hover:border-amber-400'
+                  isResolved ? 'border-emerald-200 hover:border-emerald-400' : 'border-red-200 hover:border-red-400'
                 }`}
               >
                 {/* Header */}
@@ -661,13 +628,6 @@ export const DefectTracker: React.FC = () => {
                         </span>
                       </span>
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                            isMajor ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-                          }`}
-                        >
-                          {d.severity || 'Minor'}
-                        </span>
                         {d.defect_status === 'resolved' ? (
                           <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
@@ -922,11 +882,6 @@ export const DefectTracker: React.FC = () => {
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1 mb-4">
               <div className="flex items-center justify-between font-bold text-slate-800">
                 <span>{notifyModalDefect.departmentCode} • #{notifyModalDefect.inspectionCode || '001'}</span>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] ${
-                  notifyModalDefect.severity === 'Major' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
-                }`}>
-                  {notifyModalDefect.severity || 'Minor'}
-                </span>
               </div>
               <div className="text-slate-600 truncate">
                 <strong>{t.findingTopic}:</strong> {notifyModalDefect.finding_topic || notifyModalDefect.question}
@@ -969,7 +924,8 @@ export const DefectTracker: React.FC = () => {
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-amber-500 focus:bg-white"
                   >
                     <option value="all">{language === 'en' ? '-- All Departments --' : '-- ทุกแผนก --'}</option>
-                    <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                    <option value="MOLD">Molding (แผนกฉีดขึ้นรูป)</option>
+                    <option value="MM">Mold Maintenance (แผนกซ่อมบำรุงแม่พิมพ์)</option>
                     <option value="FACILITY">Facility (สาธารณูปโภค)</option>
                     <option value="ASSY">Assembly (แผนกประกอบ)</option>
                     <option value="WH">Warehouse (คลังสินค้า)</option>

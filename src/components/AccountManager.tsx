@@ -258,6 +258,7 @@ export const AccountManager: React.FC = () => {
           >
             <option value="all">{t.allDepartments}</option>
             <option value="MOLD">Molding</option>
+            <option value="MM">Mold Maintenance</option>
             <option value="FACILITY">Facility</option>
             <option value="ASSY">Assembly</option>
             <option value="WH">Warehouse</option>
@@ -663,7 +664,8 @@ export const AccountManager: React.FC = () => {
                   onChange={(e) => setNewDept(e.target.value)}
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:ring-2 focus:ring-[#F37021]"
                 >
-                  <option value="MOLD">Molding / MM</option>
+                  <option value="MOLD">Molding</option>
+                  <option value="MM">Mold Maintenance</option>
                   <option value="FACILITY">Facility</option>
                   <option value="ASSY">Assembly</option>
                   <option value="WH">Warehouse</option>

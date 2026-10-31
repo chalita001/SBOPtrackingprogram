@@ -527,9 +527,6 @@ export const InspectionCodeHistoryModal: React.FC<InspectionCodeHistoryModalProp
                                   </span>
                                   <span>{def.finding_topic || def.question}</span>
                                 </div>
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-red-100 text-red-800 shrink-0">
-                                  {def.severity || 'Minor'}
-                                </span>
                               </div>
 
                               <div className="text-[11px] text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-1 pt-1 border-t border-slate-100">

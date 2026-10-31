@@ -343,7 +343,8 @@ export const AccountInfoModal: React.FC<AccountInfoModalProps> = ({ isOpen, onCl
                       onChange={(e) => setDepartment(e.target.value)}
                       className="w-full px-3.5 py-2 bg-purple-50/50 border border-purple-300 rounded-xl text-sm text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
                     >
-                      <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                      <option value="MOLD">Molding (แผนกฉีดขึ้นรูป)</option>
+                      <option value="MM">Mold Maintenance (แผนกซ่อมบำรุงแม่พิมพ์)</option>
                       <option value="FACILITY">Facility (สาธารณูปโภค)</option>
                       <option value="ASSY">Assembly (แผนกประกอบ)</option>
                       <option value="WH">Warehouse (คลังสินค้า)</option>

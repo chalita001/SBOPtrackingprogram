@@ -243,7 +243,8 @@ export const NotificationsModal: React.FC<NotificationsModalProps> = ({
                   className="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
                 >
                   <option value="all">{language === 'en' ? '-- All Departments --' : '-- ทุกแผนก --'}</option>
-                  <option value="MOLD">Molding / MM (แผนกฉีด)</option>
+                  <option value="MOLD">Molding (แผนกฉีดขึ้นรูป)</option>
+                  <option value="MM">Mold Maintenance (แผนกซ่อมบำรุงแม่พิมพ์)</option>
                   <option value="FACILITY">Facility (สาธารณูปโภค)</option>
                   <option value="ASSY">Assembly (แผนกประกอบ)</option>
                   <option value="WH">Warehouse (คลังสินค้า)</option>

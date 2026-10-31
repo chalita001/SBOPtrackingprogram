@@ -100,6 +100,18 @@ export const api = {
     const query = new URLSearchParams(cleanParams).toString();
     return request(`/inspections/code-list${query ? `?${query}` : ''}`);
   },
+  getAuditorsSummary: (params?: { year?: number | string; month?: number | string; department?: string }) => {
+    const cleanParams: Record<string, string> = {};
+    if (params) {
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== '' && v !== 'all') {
+          cleanParams[k] = String(v);
+        }
+      });
+    }
+    const query = new URLSearchParams(cleanParams).toString();
+    return request(`/inspections/auditors/summary${query ? `?${query}` : ''}`);
+  },
   createInspection: (data: any) => request('/inspections', { method: 'POST', body: JSON.stringify(data) }),
   deleteInspection: (id: number) => request(`/inspections/${id}`, { method: 'DELETE' }),
   updateInspectionItems: (id: number, items: any[]) =>

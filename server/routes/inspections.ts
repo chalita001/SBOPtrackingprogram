@@ -67,10 +67,10 @@ router.get('/prior-layers', (req: AuthRequest, res: Response) => {
   }
 });
 
-// 1. List inspections with filters (department, year, month, layer, code)
+// 1. List inspections with filters (department, year, month, layer, code, auditor)
 router.get('/', (req: AuthRequest, res: Response) => {
   try {
-    const { department, year, month, layer, code, inspection_code, search } = req.query;
+    const { department, year, month, layer, code, inspection_code, search, auditor } = req.query;
 
     let sql = `
       SELECT i.*, d.name_th as department_name_th, d.name_en as department_name_en,
@@ -101,6 +101,10 @@ router.get('/', (req: AuthRequest, res: Response) => {
     if (filterCode) {
       sql += ' AND i.inspection_code = ?';
       params.push(filterCode);
+    }
+    if (auditor && auditor !== 'all') {
+      sql += ' AND i.auditor_name = ?';
+      params.push(auditor);
     }
     if (search) {
       sql += ' AND (i.mc_and_products LIKE ? OR i.auditor_name LIKE ?)';
@@ -143,6 +147,10 @@ router.get('/', (req: AuthRequest, res: Response) => {
       statsWhere += ' AND inspection_code = ?';
       statsParams.push(filterCode);
     }
+    if (auditor && auditor !== 'all') {
+      statsWhere += ' AND auditor_name = ?';
+      statsParams.push(auditor);
+    }
     if (search) {
       statsWhere += ' AND (mc_and_products LIKE ? OR auditor_name LIKE ?)';
       statsParams.push(`%${search}%`, `%${search}%`);
@@ -166,6 +174,52 @@ router.get('/', (req: AuthRequest, res: Response) => {
     const stats = db.prepare(statsSql).get(...statsParams);
 
     return res.json({ inspections, stats });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 1.1 Get summary of auditors with audit counts (filtered by department, year, month)
+router.get('/auditors/summary', (req: AuthRequest, res: Response) => {
+  try {
+    const { department, year, month } = req.query;
+
+    let sql = `
+      SELECT 
+        i.auditor_name,
+        COUNT(*) as audit_count,
+        MAX(i.audit_date) as last_audit_date,
+        COALESCE(ROUND(AVG(i.score_percent), 2), 100.0) as average_score
+      FROM inspections i
+      WHERE 1=1
+    `;
+    const params: any[] = [];
+
+    if (department && department !== 'all') {
+      sql += ' AND i.department_code = ?';
+      params.push(department);
+    }
+    if (year && year !== 'all') {
+      sql += ' AND i.year = ?';
+      params.push(parseInt(year as string, 10));
+    }
+    if (month && month !== 'all') {
+      sql += ' AND i.month = ?';
+      params.push(parseInt(month as string, 10));
+    }
+
+    const isPrivilegedUser = req.user?.role === 'admin' || req.user?.role === 'superadmin';
+    const isGuestOrPublic = !req.user || req.user?.role === 'guest';
+    if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
+      const userDept = req.user.department || 'MOLD';
+      sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
+      params.push(userDept, req.user.id);
+    }
+
+    sql += ' GROUP BY i.auditor_name ORDER BY audit_count DESC, i.auditor_name ASC';
+
+    const auditors = db.prepare(sql).all(...params);
+    return res.json(auditors);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

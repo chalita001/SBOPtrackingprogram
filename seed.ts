@@ -13,7 +13,8 @@ sqlLines.push('');
 
 // 1. Departments
 const departments = [
-  ['MOLD', 'แผนกฉีดขึ้นรูป (Molding / MM)', 'Molding / MM Department', 'Injection Molding and Maintenance'],
+  ['MOLD', 'แผนกฉีดขึ้นรูป (Molding)', 'Molding Department', 'Injection Molding Operations'],
+  ['MM', 'แผนกซ่อมบำรุงแม่พิมพ์ (Mold Maintenance)', 'Mold Maintenance Department', 'Mold Maintenance and Tool Servicing'],
   ['FACILITY', 'แผนกสาธารณูปโภค (Facility)', 'Facility Department', 'Utilities, Safety, and Plant Infrastructure'],
   ['ASSY', 'แผนกประกอบ (Assembly)', 'Assembly Department', 'Component and Final Assembly Lines'],
   ['WH', 'แผนกคลังสินค้า (Warehouse)', 'Warehouse Department', 'Raw materials, Parts, and Finished Goods Storage'],
