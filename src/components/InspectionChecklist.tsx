@@ -54,6 +54,18 @@ interface ChecklistItemState {
   uploadingImage?: boolean;
 }
 
+const DEFAULT_DEPARTMENTS = [
+  { code: 'MOLD', name_th: 'แผนกฉีดขึ้นรูป (Molding)', name_en: 'Molding Department', total_questions: 47 },
+  { code: 'MM', name_th: 'แผนกซ่อมบำรุงแม่พิมพ์ (Mold Maintenance)', name_en: 'Mold Maintenance Department', total_questions: 47 },
+  { code: 'FACILITY', name_th: 'แผนกสาธารณูปโภค (Facility)', name_en: 'Facility Department', total_questions: 39 },
+  { code: 'ASSY', name_th: 'แผนกประกอบ (Assembly)', name_en: 'Assembly Department', total_questions: 35 },
+  { code: 'WH', name_th: 'แผนกคลังสินค้า (Warehouse)', name_en: 'Warehouse Department', total_questions: 41 },
+  { code: 'QC', name_th: 'แผนกควบคุมคุณภาพ (QC)', name_en: 'Quality Control Department', total_questions: 37 },
+  { code: 'STAMPING', name_th: 'แผนกปั๊มขึ้นรูป (Stamping)', name_en: 'Stamping Department', total_questions: 40 },
+  { code: 'TOOL', name_th: 'แผนกแม่พิมพ์และเครื่องมือ (Toll Room)', name_en: 'Toll Room', total_questions: 37 },
+  { code: 'SAFETY', name_th: 'แผนกความปลอดภัย (Safety / EHS)', name_en: 'Safety / EHS Department', total_questions: 6 }
+];
+
 export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ onSuccessSave }) => {
   const { user, language, t } = useAuth();
 
@@ -100,7 +112,7 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
 
   // Items State
   const [items, setItems] = useState<ChecklistItemState[]>([]);
-  const [departments, setDepartments] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>(DEFAULT_DEPARTMENTS);
   const [usersDirectory, setUsersDirectory] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -110,11 +122,10 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
   const [priorLayersData, setPriorLayersData] = useState<{ layer1: any; layer2: any } | null>(null);
   const [loadingPrior, setLoadingPrior] = useState<boolean>(false);
 
-  // Is department locked? (Locked if user has a department and is not admin/superadmin/SAFETY)
-  // SAFETY dept users can inspect any department — they are cross-department auditors
+  // Allow selecting department freely so user can choose Molding or Mold Maintenance
   const isSafetyUser = (user?.department || '').toUpperCase() === 'SAFETY';
   const isPrivilegedUser = user?.role === 'admin' || user?.role === 'superadmin' || isSafetyUser;
-  const isDeptLocked = Boolean(user?.department && !isPrivilegedUser);
+  const isDeptLocked = false;
 
   // Enforce layer lock when userRoleLayer is set
   useEffect(() => {
@@ -123,12 +134,23 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
     }
   }, [userRoleLayer]);
 
-  // Load Departments & enforce user's department
+  // Load Departments & sanitize names
   useEffect(() => {
     api.getDepartments().then((data) => {
-      setDepartments(data || []);
-      if (user?.department && !isPrivilegedUser) {
-        setDepartmentCode(user.department);
+      if (Array.isArray(data) && data.length > 0) {
+        const sanitized = data.map((d: any) => {
+          if (d.code === 'MOLD') {
+            return { ...d, name_th: 'แผนกฉีดขึ้นรูป (Molding)', name_en: 'Molding Department' };
+          }
+          if (d.code === 'MM') {
+            return { ...d, name_th: 'แผนกซ่อมบำรุงแม่พิมพ์ (Mold Maintenance)', name_en: 'Mold Maintenance Department' };
+          }
+          return d;
+        });
+        if (!sanitized.some((d: any) => d.code === 'MM')) {
+          sanitized.splice(1, 0, { code: 'MM', name_th: 'แผนกซ่อมบำรุงแม่พิมพ์ (Mold Maintenance)', name_en: 'Mold Maintenance Department', total_questions: 47 });
+        }
+        setDepartments(sanitized);
       }
     }).catch(console.error);
 
@@ -604,35 +626,29 @@ export const InspectionChecklist: React.FC<{ onSuccessSave?: () => void }> = ({ 
         <form onSubmit={handleSave} className="mt-6 space-y-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            {/* 1. Department (Locked to user's department) */}
+            {/* 1. Department */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-[#F37021]" />
                   <span>{t.department}</span>
                 </label>
-                {isDeptLocked && (
-                  <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5 border border-amber-200">
-                    <Lock className="w-2.5 h-2.5" />
-                    <span>{t.lockedDepartmentNotice}</span>
-                  </span>
-                )}
               </div>
               <select
-                disabled={isDeptLocked}
                 value={departmentCode}
                 onChange={(e) => setDepartmentCode(e.target.value)}
-                className={`w-full px-3.5 py-2.5 border rounded-xl text-xs font-semibold text-slate-800 transition ${
-                  isDeptLocked 
-                    ? 'bg-slate-100 border-slate-300 cursor-not-allowed text-slate-600'
-                    : 'bg-slate-50 border-slate-300 focus:ring-2 focus:ring-[#F37021] focus:bg-white'
-                }`}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 focus:ring-2 focus:ring-[#F37021] focus:bg-white rounded-xl text-xs font-semibold text-slate-800 transition cursor-pointer"
               >
-                {departments.map((d) => (
-                  <option key={d.code} value={d.code}>
-                    {language === 'en' ? (d.name_en || d.code) : d.name_th} ({d.total_questions || 0} {t.itemsCountUnit})
-                  </option>
-                ))}
+                {departments.map((d) => {
+                  let label = language === 'en' ? (d.name_en || d.code) : d.name_th;
+                  if (d.code === 'MOLD') label = language === 'en' ? 'Molding' : 'แผนกฉีดขึ้นรูป (Molding)';
+                  if (d.code === 'MM') label = language === 'en' ? 'Mold Maintenance' : 'แผนกซ่อมบำรุงแม่พิมพ์ (Mold Maintenance)';
+                  return (
+                    <option key={d.code} value={d.code}>
+                      {label} ({d.total_questions || 47} {t.itemsCountUnit})
+                    </option>
+                  );
+                })}
               </select>
             </div>
 

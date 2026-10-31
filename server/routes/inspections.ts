@@ -107,17 +107,25 @@ router.get('/', (req: AuthRequest, res: Response) => {
       params.push(auditor);
     }
     if (search) {
-      sql += ' AND (i.mc_and_products LIKE ? OR i.auditor_name LIKE ?)';
-      params.push(`%${search}%`, `%${search}%`);
+      sql += ' AND (i.mc_and_products LIKE ? OR i.auditor_name LIKE ? OR i.inspection_code LIKE ? OR i.department_code LIKE ? OR i.comments LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    // Non-admin users see all inspections within their department; Admins, Superadmins, and Guests see all departments
-    const isPrivilegedUser = req.user?.role === 'admin' || req.user?.role === 'superadmin';
+    // Non-admin users see inspections within their selected department or default to their department / audits;
+    // Admins, Superadmins, Managers, Supervisors, and Guests see all departments
+    const isPrivilegedUser = req.user?.role === 'admin' || req.user?.role === 'superadmin' || req.user?.role === 'manager' || req.user?.role === 'supervisor';
     const isGuestOrPublic = !req.user || req.user?.role === 'guest';
     if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
-      const userDept = req.user.department || 'MOLD';
-      sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
-      params.push(userDept, req.user.id);
+      if (!department || department === 'all') {
+        const userDept = req.user.department || 'MOLD';
+        if (userDept === 'MOLD' || userDept === 'MM') {
+          sql += ' AND (i.department_code IN ("MOLD", "MM") OR i.auditor_id = ?)';
+          params.push(req.user.id);
+        } else {
+          sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
+          params.push(userDept, req.user.id);
+        }
+      }
     }
 
     sql += ' ORDER BY i.audit_date DESC, i.id DESC';
@@ -152,13 +160,20 @@ router.get('/', (req: AuthRequest, res: Response) => {
       statsParams.push(auditor);
     }
     if (search) {
-      statsWhere += ' AND (mc_and_products LIKE ? OR auditor_name LIKE ?)';
-      statsParams.push(`%${search}%`, `%${search}%`);
+      statsWhere += ' AND (mc_and_products LIKE ? OR auditor_name LIKE ? OR inspection_code LIKE ? OR department_code LIKE ? OR comments LIKE ?)';
+      statsParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
     if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
-      const userDept = req.user.department || 'MOLD';
-      statsWhere += ' AND (department_code = ? OR auditor_id = ?)';
-      statsParams.push(userDept, req.user.id);
+      if (!department || department === 'all') {
+        const userDept = req.user.department || 'MOLD';
+        if (userDept === 'MOLD' || userDept === 'MM') {
+          statsWhere += ' AND (department_code IN ("MOLD", "MM") OR auditor_id = ?)';
+          statsParams.push(req.user.id);
+        } else {
+          statsWhere += ' AND (department_code = ? OR auditor_id = ?)';
+          statsParams.push(userDept, req.user.id);
+        }
+      }
     }
 
     const statsSql = `
@@ -208,12 +223,19 @@ router.get('/auditors/summary', (req: AuthRequest, res: Response) => {
       params.push(parseInt(month as string, 10));
     }
 
-    const isPrivilegedUser = req.user?.role === 'admin' || req.user?.role === 'superadmin';
+    const isPrivilegedUser = req.user?.role === 'admin' || req.user?.role === 'superadmin' || req.user?.role === 'manager' || req.user?.role === 'supervisor';
     const isGuestOrPublic = !req.user || req.user?.role === 'guest';
     if (!isPrivilegedUser && !isGuestOrPublic && req.user) {
-      const userDept = req.user.department || 'MOLD';
-      sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
-      params.push(userDept, req.user.id);
+      if (!department || department === 'all') {
+        const userDept = req.user.department || 'MOLD';
+        if (userDept === 'MOLD' || userDept === 'MM') {
+          sql += ' AND (i.department_code IN ("MOLD", "MM") OR i.auditor_id = ?)';
+          params.push(req.user.id);
+        } else {
+          sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
+          params.push(userDept, req.user.id);
+        }
+      }
     }
 
     sql += ' GROUP BY i.auditor_name ORDER BY audit_count DESC, i.auditor_name ASC';

@@ -5,8 +5,25 @@ import { sendAccountStatusEmail } from '../email.js';
 
 const router = Router();
 
-// Apply admin protection to all user management routes
+// Apply authentication to all user routes
 router.use(authenticate);
+
+// Public approved users directory (accessible by all authenticated users)
+router.get('/directory', (_req: AuthRequest, res: Response) => {
+  try {
+    const users = db.prepare(`
+      SELECT id, username, first_name, last_name, email, department, position, role, avatar_url
+      FROM users 
+      WHERE status = 'approved'
+      ORDER BY department ASC, first_name ASC
+    `).all();
+    return res.json(users);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Apply admin protection to administrative user management routes
 router.use(requireAdmin);
 
 // List all users with filtering by department, status, role

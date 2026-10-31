@@ -168,6 +168,16 @@ export default {
           ON CONFLICT(code) DO UPDATE SET name_th = excluded.name_th, name_en = excluded.name_en;
         `).run();
 
+        // Ensure 'MOLD' (Molding) and 'MM' (Mold Maintenance) departments are separated
+        await env.DB.prepare(`
+          UPDATE departments SET name_th = 'แผนกฉีดขึ้นรูป (Molding)', name_en = 'Molding Department', description = 'Injection Molding Operations' WHERE code = 'MOLD';
+        `).run();
+        await env.DB.prepare(`
+          INSERT INTO departments (code, name_th, name_en, description)
+          VALUES ('MM', 'แผนกซ่อมบำรุงแม่พิมพ์ (Mold Maintenance)', 'Mold Maintenance Department', 'Mold Maintenance and Tool Servicing')
+          ON CONFLICT(code) DO UPDATE SET name_th = excluded.name_th, name_en = excluded.name_en;
+        `).run();
+
         // Update historic registration notifications to type 'registration_alert' so regular users do not see them
         await env.DB.prepare(`
           UPDATE notifications 
@@ -1060,6 +1070,46 @@ export default {
       });
     }
 
+    // Auditor inspection summary
+    if (url.pathname === '/api/inspections/auditors/summary' && request.method === 'GET') {
+      const dept = url.searchParams.get('department');
+      const year = url.searchParams.get('year');
+      const month = url.searchParams.get('month');
+
+      let sql = `
+        SELECT 
+          i.auditor_name,
+          COUNT(*) as audit_count,
+          MAX(i.audit_date) as last_audit_date,
+          COALESCE(ROUND(AVG(i.score_percent), 2), 100.0) as average_score
+        FROM inspections i
+        WHERE 1=1
+      `;
+      const params: any[] = [];
+      if (dept && dept !== 'all') { sql += ' AND i.department_code = ?'; params.push(dept); }
+      if (year && year !== 'all') { sql += ' AND i.year = ?'; params.push(parseInt(year, 10)); }
+      if (month && month !== 'all') { sql += ' AND i.month = ?'; params.push(parseInt(month, 10)); }
+
+      const isPrivilegedUser = currentUser?.role === 'admin' || currentUser?.role === 'superadmin' || currentUser?.role === 'manager' || currentUser?.role === 'supervisor';
+      const isGuestOrPublic = !currentUser || currentUser?.role === 'guest';
+      if (!isPrivilegedUser && !isGuestOrPublic && currentUser) {
+        if (!dept || dept === 'all') {
+          const userDept = currentUser.department || 'MOLD';
+          if (userDept === 'MOLD' || userDept === 'MM') {
+            sql += ' AND (i.department_code IN ("MOLD", "MM") OR i.auditor_id = ?)';
+            params.push(currentUser.id);
+          } else {
+            sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
+            params.push(userDept, currentUser.id);
+          }
+        }
+      }
+
+      sql += ' GROUP BY i.auditor_name ORDER BY audit_count DESC, i.auditor_name ASC';
+      const { results } = await env.DB.prepare(sql).bind(...params).all();
+      return jsonResponse(results || []);
+    }
+
     // Inspections: List & Create
     if (url.pathname === '/api/inspections') {
       if (request.method === 'POST' && !currentUser) {
@@ -1072,6 +1122,8 @@ export default {
         const month = url.searchParams.get('month');
         const layer = url.searchParams.get('layer');
         const code = url.searchParams.get('code') || url.searchParams.get('inspection_code');
+        const search = url.searchParams.get('search');
+        const auditor = url.searchParams.get('auditor');
 
         let sql = `
           SELECT i.*, d.name_th as department_name_th, d.name_en as department_name_en,
@@ -1086,15 +1138,27 @@ export default {
         if (month && month !== 'all') { sql += ' AND i.month = ?'; params.push(parseInt(month, 10)); }
         if (layer && layer !== 'all') { sql += ' AND i.layer = ?'; params.push(layer); }
         if (code && code !== 'all') { sql += ' AND i.inspection_code = ?'; params.push(code); }
+        if (auditor && auditor !== 'all') { sql += ' AND i.auditor_name = ?'; params.push(auditor); }
+        if (search) {
+          sql += ' AND (i.mc_and_products LIKE ? OR i.auditor_name LIKE ? OR i.inspection_code LIKE ? OR i.department_code LIKE ? OR i.comments LIKE ?)';
+          params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
 
-        // Non-admin/superadmin users see all inspection data within their own department; Admins and Superadmins see all departments
-        // Guests or visitors without accounts see all departments
-        const isPrivilegedUser = currentUser?.role === 'admin' || currentUser?.role === 'superadmin';
+        // Non-admin/superadmin users see all inspection data within their chosen department or default to their department / audits;
+        // Admins, Superadmins, Managers, Supervisors, and Guests see all departments
+        const isPrivilegedUser = currentUser?.role === 'admin' || currentUser?.role === 'superadmin' || currentUser?.role === 'manager' || currentUser?.role === 'supervisor';
         const isGuestOrPublic = !currentUser || currentUser?.role === 'guest';
         if (!isPrivilegedUser && !isGuestOrPublic && currentUser) {
-          const userDept = currentUser.department || 'MOLD';
-          sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
-          params.push(userDept, currentUser.id);
+          if (!dept || dept === 'all') {
+            const userDept = currentUser.department || 'MOLD';
+            if (userDept === 'MOLD' || userDept === 'MM') {
+              sql += ' AND (i.department_code IN ("MOLD", "MM") OR i.auditor_id = ?)';
+              params.push(currentUser.id);
+            } else {
+              sql += ' AND (i.department_code = ? OR i.auditor_id = ?)';
+              params.push(userDept, currentUser.id);
+            }
+          }
         }
 
         sql += ' ORDER BY i.audit_date DESC, i.id DESC';
@@ -1108,11 +1172,23 @@ export default {
         if (month && month !== 'all') { statsWhere += ' AND month = ?'; statsParams.push(parseInt(month, 10)); }
         if (layer && layer !== 'all') { statsWhere += ' AND layer = ?'; statsParams.push(layer); }
         if (code && code !== 'all') { statsWhere += ' AND inspection_code = ?'; statsParams.push(code); }
+        if (auditor && auditor !== 'all') { statsWhere += ' AND auditor_name = ?'; statsParams.push(auditor); }
+        if (search) {
+          statsWhere += ' AND (mc_and_products LIKE ? OR auditor_name LIKE ? OR inspection_code LIKE ? OR department_code LIKE ? OR comments LIKE ?)';
+          statsParams.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+        }
 
         if (!isPrivilegedUser && !isGuestOrPublic && currentUser) {
-          const userDept = currentUser.department || 'MOLD';
-          statsWhere += ' AND (department_code = ? OR auditor_id = ?)';
-          statsParams.push(userDept, currentUser.id);
+          if (!dept || dept === 'all') {
+            const userDept = currentUser.department || 'MOLD';
+            if (userDept === 'MOLD' || userDept === 'MM') {
+              statsWhere += ' AND (department_code IN ("MOLD", "MM") OR auditor_id = ?)';
+              statsParams.push(currentUser.id);
+            } else {
+              statsWhere += ' AND (department_code = ? OR auditor_id = ?)';
+              statsParams.push(userDept, currentUser.id);
+            }
+          }
         }
 
         const statsSql = `
